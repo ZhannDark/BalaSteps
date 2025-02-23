@@ -1,0 +1,175 @@
+.register-container {
+  display: flex;
+  margin-top: 55px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 600pxpx;
+  padding: 40px 0;
+}
+
+.register-steps {
+  width: 50%;
+  margin-bottom: 50px;
+}
+
+.step-title {
+  font-family: "Roboto", serif;
+  font-size: 18px;
+  font-weight: lighter;
+  color: #4B163B;
+}
+
+.ant-steps-item-process .ant-steps-item-icon {
+  background-color: #4B163B !important;
+  border-color: #4B163B !important;
+  color: white !important;
+}
+
+.ant-steps-item-finish .ant-steps-item-icon {
+  background-color: #4B163B !important;
+  border-color: #4B163B !important;
+  color: white !important;
+}
+
+.ant-steps-item-wait .ant-steps-item-icon {
+  background-color: transparent !important;
+  border-color: #4B163B !important;
+  color: white !important;
+}
+
+.ant-steps-item-tail::after {
+  background-color: #4B163B !important;
+  height: 2px !important;
+}
+
+.ant-steps-item-finish .ant-steps-item-icon .anticon {
+  color: white !important;
+}
+
+.register-form-container {
+  background: #f8f8f8;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 40%;
+  border: 1px solid #426B1F;
+  text-align: center;
+}
+
+.register-title {
+  font-family: 'Newsreader', serif;
+  font-size: 32px;
+  font-weight: bold;
+  color: #4B244A;
+  margin-bottom: 20px;
+}
+
+.register-form {
+  width: 100%;
+}
+
+.input-name {
+  font-family: "Alegreya Sans", sans-serif!important;
+  line-height: 1.4;
+  font-size: 16px;
+}
+
+.register-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #426B1F;
+  border-radius: 5px;
+}
+
+.password-mismatch .ant-form-item-explain-error {
+  color: red !important;
+  font-size: 14px;
+  margin-top: 5px;
+}
+
+.register-button-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.register-button {
+  background-color: #426B1F !important;
+  color: white !important;
+  width: 157px;
+  padding: 6px 33px;
+  font-size: 20px;
+  border-radius: 10px;
+  font-weight: lighter;
+  margin-left: 60px;
+  font-family: "Almendra", serif;
+  text-align: center;
+}
+
+.register-button:hover {
+  background-color: #629432 !important;
+}
+
+.login-link {
+  font-size: 17px;
+  font-family: "Alegreya Sans", serif;
+  color: #426B1F;
+  margin-top: 13px;
+  white-space: nowrap;
+  margin-right: 20px;
+
+  :hover {
+    color: #7ec040
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #E2E3E0;
+  padding: 10px 20px;
+  height: 60px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+}
+
+.logo {
+  height: 40px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 30px;
+}
+
+.link {
+  text-decoration: none;
+  color: black;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.auth-buttons {
+  display: flex;
+  align-items: center;
+}
+
+.login-btn {
+  background-color: #426B1F;
+  color: white;
+  font-size: 14px;
+  padding: 5px 15px;
+  border-radius: 5px;
+}
+
+.login-btn:hover {
+  background-color: #365517;
+}

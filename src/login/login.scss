@@ -1,0 +1,69 @@
+.login-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: #f8f8f8;
+}
+
+.login-form-container {
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 585px;
+  height: 417px;
+  text-align: center;
+  border: 1px solid #426B1F;
+}
+
+.login-title {
+  font-family: 'Newsreader', serif;
+  font-size: 32px;
+  font-weight: bold;
+  color: #4B244A;
+  margin-bottom: 20px;
+}
+
+.login-form {
+  width: 100%;
+}
+
+.login-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #426B1F;
+  border-radius: 5px;
+}
+
+.login-button {
+  background-color: #426B1F;
+  color: white;
+  width: 150px;
+  padding: 5px 50px;
+  font-family: "Almendra", serif;
+  font-size: 20px;
+  margin-top: 20px;
+  border-radius: 10px;
+}
+
+.login-button:hover {
+  background-color: #629432 !important;
+}
+
+.login-links {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+  font-size: 16px;
+}
+
+.forgot-password, .new-user {
+  color: #426B1F;
+  text-decoration: none;
+  font-family: "Alegreya Sans", serif;
+}
+
+.forgot-password:hover, .new-user:hover {
+  text-decoration: underline;
+}
