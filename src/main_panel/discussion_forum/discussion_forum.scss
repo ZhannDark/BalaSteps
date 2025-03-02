@@ -1,0 +1,104 @@
+.discussion-forum {
+  display: flex;
+  min-height: 100vh;
+  background: #f5f5f5;
+
+  .sidebar {
+    width: 250px;
+    background: #ede9df;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-right: 2px solid #d3c4a6;
+
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+      color: #5c3d2e;
+      margin-bottom: 20px;
+    }
+
+    .menu {
+      width: 100%;
+
+      .ant-menu-item {
+        font-size: 16px;
+        padding: 15px;
+        color: #5c3d2e;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        background: #ffffff;
+        border: 1px solid #d3c4a6;
+        text-align: left;
+
+        &:hover {
+          background: #dacdbb;
+        }
+      }
+    }
+  }
+
+  .main-layout {
+    flex-grow: 1;
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px;
+      background: #ede9df;
+      border-bottom: 2px solid #d3c4a6;
+
+      .header-title {
+        font-size: 28px;
+        color: #5c3d2e;
+        font-weight: bold;
+      }
+
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+
+        .search-bar {
+          width: 250px;
+          border-radius: 8px;
+        }
+
+        .create-button {
+          background-color: #5c3d2e;
+          color: white;
+          border: none;
+          border-radius: 8px;
+          padding: 8px 15px;
+
+          &:hover {
+            background-color: #4a2f23;
+          }
+        }
+      }
+    }
+
+    .content {
+      padding: 20px;
+      background: #ffffff;
+      border-radius: 8px;
+
+      .discussion-table {
+        border: 1px solid #d3c4a6;
+        border-radius: 8px;
+      }
+    }
+  }
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 20px;
+  background: #ede9df;
+  border-top: 2px solid #d3c4a6;
+  font-size: 14px;
+  color: #5c3d2e;
+}

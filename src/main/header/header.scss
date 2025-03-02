@@ -3,7 +3,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Newsreader:wght@300;400;500;700&display=swap');
 
 .header {
-  position: fixed;
+  //position: fixed;
   top: 0;
   left: 0;
   width: 100%;
@@ -12,7 +12,7 @@
   z-index: 1000;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding: 0 20px;
   border-bottom: 1px dotted #4B163B;
 }
@@ -20,6 +20,7 @@
 .logo-container {
   display: flex;
   align-items: center;
+  margin-right: auto;
 }
 
 .logo {
