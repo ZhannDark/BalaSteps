@@ -183,11 +183,13 @@
   line-height: 1.4;
 }
 
-
 .footer {
   background: #E2E3E0;
   padding: 20px 50px;
   height: 60px;
+  bottom: 0;
+  left: 0;
+  width: 100%;
 }
 
 .footer-link {

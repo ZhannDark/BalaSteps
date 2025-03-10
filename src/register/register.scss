@@ -61,14 +61,14 @@
 .register-button {
   background-color: #426B1F !important;
   color: white !important;
-  width: 157px;
-  padding: 6px 33px;
+  width: auto;
+  padding: 6px 20px;
   font-size: 20px;
   border-radius: 10px;
   font-weight: lighter;
-  margin-left: 60px;
   font-family: "Almendra", serif;
   text-align: center;
+  margin-left: 60px;
 }
 
 .register-button:hover {
@@ -81,9 +81,9 @@
   color: #426B1F;
   margin-top: 13px;
   white-space: nowrap;
-  margin-right: 20px;
+  margin-right: 50px;
+}
 
-  :hover {
-    color: #7ec040
-  }
+.login-link-inline .login-link:hover {
+  color: #7ec040
 }

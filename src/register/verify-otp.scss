@@ -1,54 +1,51 @@
 .verify-otp-container {
   display: flex;
-  align-items: center;
   justify-content: center;
-  height: 80vh;
-  background-color: #F8F8F8;
+  align-items: center;
+  height: 100vh;
+  background-color: #f9f9f9;
 }
 
 .verify-otp-box {
-  background-color: #FFFFFF;
-  padding: 30px;
   border: 2px solid #426B1F;
+  padding: 30px;
   border-radius: 10px;
-  text-align: center;
+  background-color: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
 .verify-otp-title {
   font-family: 'Inknut Antiqua', serif;
   color: #4B163B;
+  text-align: center;
   margin-bottom: 10px;
 }
 
 .verify-otp-text {
-  color: #6B8E23;
+  font-family: 'Newsreader', serif;
+  color: #426B1F;
+  text-align: center;
   margin-bottom: 20px;
-  font-size: 16px;
-}
-
-.verify-otp-form {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
 }
 
 .otp-input-item {
-  margin-bottom: 20px;
+  text-align: center;
 }
 
 .otp-input {
-  width: 300px;
   border: 1px solid #426B1F;
   border-radius: 5px;
+  width: 100%;
   padding: 5px;
 }
 
 .verify-otp-button {
   background-color: #426B1F;
-  color: white;
+  color: #fff;
   border: none;
-  padding: 5px 20px;
   border-radius: 5px;
+  width: 100%;
+  margin-top: 20px;
 }
 
 .verify-otp-button:hover {

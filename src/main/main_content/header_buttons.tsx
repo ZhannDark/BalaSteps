@@ -1,9 +1,9 @@
 import Title from 'antd/es/typography/Title';
 import React from 'react';
-import ikomekImage from '../../images/main_content/features/image 1.png';
-import communityImage from '../../images/main_content/features/image 5.png';
-import marketImage from '../../images/main_content/features/image 8.png';
-import aboutUsImage from '../../images/main_content/features/image 7.png';
+import ikomekImage from '../../images/main_content/features/image1.png';
+import communityImage from '../../images/main_content/features/image5.png';
+import marketImage from '../../images/main_content/features/image8.png';
+import aboutUsImage from '../../images/main_content/features/image7.png';
 
 const HeaderButtons = () => {
   const sections = [

@@ -1,8 +1,8 @@
 import Title from 'antd/es/typography/Title';
 import React from 'react';
-import news1 from '../../images/main_content/news/photo3 2.png';
-import news2 from '../../images/main_content/news/photo4 1.png';
-import news3 from '../../images/main_content/news/photo5 1.png';
+import news1 from '../../images/main_content/news/news1.png';
+import news2 from '../../images/main_content/news/news2.png';
+import news3 from '../../images/main_content/news/news3.png';
 
 const News = () => {
   return (

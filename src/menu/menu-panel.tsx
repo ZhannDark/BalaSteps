@@ -1,64 +1,101 @@
-import { Layout, Menu, Typography } from 'antd';
 import {
   CommentOutlined,
-  HomeOutlined,
+  DashboardOutlined,
   InfoCircleOutlined,
-  RobotOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+  QuestionCircleOutlined,
   ShoppingOutlined,
-  UserOutlined,
 } from '@ant-design/icons';
-import React, { useState } from 'react';
+import type { MenuProps } from 'antd';
+import { Button, Menu } from 'antd';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import './menu_panel.scss';
+import img from '../images/logo/main_logo.png';
 
-const MenuPanel = () => {
+type MenuItem = Required<MenuProps>['items'][number] & {
+  path?: string;
+};
+
+const items: MenuItem[] = [
+  {
+    key: '1',
+    icon: <DashboardOutlined />,
+    label: 'Symptom Tracker',
+    path: '/symptom-tracker',
+  },
+  {
+    key: '2',
+    icon: <CommentOutlined />,
+    label: 'Discussion Forum',
+    path: '/discussion-forum',
+  },
+  {
+    key: '3',
+    icon: <InfoCircleOutlined />,
+    label: 'Information Hub',
+    path: '/information-hub',
+  },
+  {
+    key: '4',
+    icon: <ShoppingOutlined />,
+    label: 'Marketplace',
+    path: '/marketplace',
+  },
+  {
+    key: '5',
+    icon: <QuestionCircleOutlined />,
+    label: 'iKomek AI Assistant',
+    path: '/ikomek-ai-assistant',
+  },
+];
+
+interface MenuPanelProps {
+  collapsed: boolean;
+  toggleCollapsed: () => void;
+}
+
+const MenuPanel: React.FC<MenuPanelProps> = ({
+  collapsed,
+  toggleCollapsed,
+}) => {
   const navigate = useNavigate();
-  const { Sider } = Layout;
-  const [collapsed, setCollapsed] = useState(false);
 
-  const handleMenuClick = ({ key }: { key: string }) => {
-    if (key === '1') navigate('/symptom-tracker');
-    if (key === '2') navigate('/discussion-forum');
-    if (key === '3') navigate('/information-hub');
-    if (key === '4') navigate('/marketplace');
-    if (key === '5') navigate('/ikomek-ai-assistant');
-    if (key === '6') navigate('/profile');
+  const handleMenuClick = (e: { key: string }) => {
+    const selectedItem = items.find((item) => item.key === e.key);
+    if (selectedItem?.path) {
+      navigate(selectedItem.path);
+    }
   };
 
   return (
-    <Sider
-      className="sidebar"
-      collapsible
-      collapsed={collapsed}
-      onCollapse={(value) => setCollapsed(value)}
-      theme="light"
-    >
-      <div className="logo">Balasteps</div>
+    <div className={`menu-container ${collapsed ? 'collapsed' : ''}`}>
+      <div className="menu-header">
+        <img
+          className="img"
+          src={img}
+          alt="Logo"
+          style={{ display: collapsed ? 'none' : 'block' }}
+        />
+        <Button
+          type="primary"
+          onClick={toggleCollapsed}
+          className="toggle-button"
+        >
+          {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+        </Button>
+      </div>
       <Menu
         defaultSelectedKeys={['1']}
-        mode="vertical"
-        className="menu"
+        mode="inline"
+        theme="light"
+        inlineCollapsed={collapsed}
+        items={items}
+        className="custom-menu"
         onClick={handleMenuClick}
-      >
-        <Menu.Item key="1" icon={<HomeOutlined />}>
-          Symptom Tracker
-        </Menu.Item>
-        <Menu.Item key="2" icon={<CommentOutlined />}>
-          Discussion Forum
-        </Menu.Item>
-        <Menu.Item key="3" icon={<InfoCircleOutlined />}>
-          Information Hub
-        </Menu.Item>
-        <Menu.Item key="4" icon={<ShoppingOutlined />}>
-          Marketplace
-        </Menu.Item>
-        <Menu.Item key="5" icon={<RobotOutlined />}>
-          iKomek AI Assistant
-        </Menu.Item>
-        <Menu.Item key="6" icon={<UserOutlined />}>
-          Profile
-        </Menu.Item>
-      </Menu>
-    </Sider>
+      />
+    </div>
   );
 };
 

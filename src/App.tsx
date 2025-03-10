@@ -9,34 +9,38 @@ import Footer_Content from './main/main_content/footer';
 import Register from './register/register';
 import Login from './login/login';
 import ForgotPassword from './forget_password/forget_password';
+import Header from './main_panel/main_header/Main_header';
 import SymptomTracker from './main_panel/symptom_tracker/symptom_tracker';
-import Menu from './menu/menu';
-import UserProfile from './main_panel/profile/profile';
-import Panel_header from './main/header/panel_header';
-import VerifyOTP from './register/sendOTP';
+import InfoHub from './main_panel/info_hub/information_hub';
+import SendOTP from './register/sendOTP';
+import InformationHub from './main_panel/info_hub/information_hub';
 
 const App = () => {
   return (
     <Router>
-      <Main_Header />
       <Routes>
         <Route
           path="/"
           element={
             <>
-              <MainContent />
-              <News />
-              <Header_buttons />
+              {/*<Main_Header />*/}
+              {/*<MainContent />*/}
+              {/*<News />*/}
+              {/*<Header_buttons />*/}
+              <SymptomTracker />
             </>
           }
         />
-        <Route path="/register" element={<Register />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/profile" element={<UserProfile />} />
-        <Route path="/verify-otp" element={<VerifyOTP />} />
+        {/*<Route path="/register" element={<Register />} />*/}
+        {/*<Route path="/login" element={<Login />} />*/}
+        {/*<Route path="/forgot-password" element={<ForgotPassword />} />*/}
+        {/*<Route path="/main_header" element={<Header />} />*/}
+        <Route path="/symptom-tracker" element={<SymptomTracker />} />
+        <Route path="/information-hub" element={<InfoHub />} />
+        <Route path="/information-hub" element={<InformationHub />} />
+        {/*<Route path="/send-otp" element={<SendOTP />} />*/}
       </Routes>
-      <Footer_Content />
+      {/*<Footer_Content />*/}
     </Router>
   );
 };

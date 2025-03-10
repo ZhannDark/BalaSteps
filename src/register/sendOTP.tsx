@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Form, Input, Button, message, Typography } from 'antd';
-import { ConfirmationResult } from 'firebase/auth';
 import 'antd/dist/reset.css';
 import './verify-otp.scss';
-import { auth } from '../firebaseConfig';
+import AppHeader from '../main/header/header';
 
 const { Title, Text } = Typography;
 
@@ -12,11 +11,7 @@ const VerifyOTP = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const { phoneNumber, confirmation, userData } = location.state as {
-    phoneNumber: string;
-    confirmation: ConfirmationResult;
-    userData: any;
-  };
+  const { phoneNumber } = location.state as { phoneNumber: string };
 
   const [loading, setLoading] = useState(false);
   const [otp, setOtp] = useState('');
@@ -26,69 +21,75 @@ const VerifyOTP = () => {
       message.error('Please enter the verification code!');
       return;
     }
-
+    console.log(phoneNumber);
     setLoading(true);
     try {
-      // Confirm the OTP
-      const result = await confirmation.confirm(otp);
-      console.log('OTP verified:', result);
-
-      // Send POST request to backend with user data
-      const response = await fetch('https://project-back-81mh.onrender.com/auth/register/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          phone_number: userData.phoneNumber, // Corrected property name
-          full_name: userData.full_name,
-          password: userData.password,
-        }),
-      });
+      const response = await fetch(
+        'https://project-back-81mh.onrender.com/auth/verify-otp/',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            phone_number: phoneNumber,
+            otp: otp,
+          }),
+        }
+      );
 
       const data = await response.json();
 
       if (response.ok) {
-        message.success('Registration successful!');
-        navigate('/login');
+        message.success('Verification successful!');
+        console.log('API Response:', data);
+
+        // You can now redirect to another page if needed
+        navigate('/symptom-tracker');
       } else {
-        message.error(data.message || 'Registration failed. Please try again.');
+        message.error(data?.message || 'Verification failed!');
       }
     } catch (error) {
-      console.error('OTP Verification Error:', error);
-      message.error('Invalid OTP. Please try again.');
+      console.error('Error:', error);
+      message.error('An error occurred while verifying the code.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="verify-otp-container">
-      <div className="verify-otp-box">
-        <Title level={2} className="verify-otp-title">Validate number</Title>
-        <Text className="verify-otp-text">
-          For security reasons, we will send a text message containing a code to verify your mobile number.
-        </Text>
-        <Form layout="vertical" className="verify-otp-form">
-          <Form.Item label="Verification code :" className="otp-input-item">
-            <Input
-              placeholder="Enter OTP"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              className="otp-input"
-            />
-          </Form.Item>
-          <Button
-            type="primary"
-            onClick={handleOTPSubmit}
-            loading={loading}
-            className="verify-otp-button"
-          >
-            Submit Code
-          </Button>
-        </Form>
+    <>
+      <AppHeader></AppHeader>
+      <div className="verify-otp-container">
+        <div className="verify-otp-box">
+          <Title level={2} className="verify-otp-title">
+            Validate number
+          </Title>
+          <Text className="verify-otp-text">
+            For security reasons, we will send a text message containing a code
+            to verify your mobile number.
+          </Text>
+          <Form layout="vertical" className="verify-otp-form">
+            <Form.Item label="Verification code :" className="otp-input-item">
+              <Input
+                placeholder="Enter OTP"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                className="otp-input"
+              />
+            </Form.Item>
+            <Button
+              type="primary"
+              onClick={handleOTPSubmit}
+              loading={loading}
+              className="verify-otp-button"
+            >
+              Verify code
+            </Button>
+          </Form>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

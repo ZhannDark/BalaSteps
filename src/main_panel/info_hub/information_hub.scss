@@ -1,0 +1,49 @@
+.information-hub {
+  padding: 20px;
+  background-color: #f9f9f9;
+
+  .section {
+    margin-bottom: 40px;
+  }
+
+  .ant-card {
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .ant-card-meta-title {
+    font-weight: bold;
+    color: #5c3d2e;
+  }
+
+  .ant-card-meta-description {
+    color: #6b5b4e;
+  }
+
+  .card-placeholder {
+    height: 150px;
+    background-color: #e0e0e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #888;
+    font-size: 14px;
+  }
+
+  .ant-input-search-button {
+    background-color: #8b5a2b;
+    border-color: #8b5a2b;
+    color: #fff;
+  }
+
+  .ant-input-search-button:hover {
+    background-color: #6e4720;
+    border-color: #6e4720;
+  }
+}
+.name-search {
+  display: flex;
+  flex-direction: row;
+}
+
+
