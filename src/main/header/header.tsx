@@ -32,6 +32,9 @@ const AppHeader = () => {
     } else if (location.pathname === '/forgot-password') {
       setShowNav(false);
       setButtonText('Register');
+    } else if (location.pathname === '/send-otp') {
+      setShowNav(false);
+      setButtonText('Login');
     } else {
       setShowNav(true);
       setButtonText('Register');

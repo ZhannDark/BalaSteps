@@ -1,95 +1,209 @@
 import React, { useState } from 'react';
-import { Layout, Menu, Table, Input, Button, Typography } from 'antd';
 import {
-  HomeOutlined,
-  CommentOutlined,
-  InfoCircleOutlined,
-  ShoppingOutlined,
-  RobotOutlined,
-  UserOutlined,
-  BellOutlined,
-  LogoutOutlined,
-  PlusOutlined,
-  SearchOutlined,
-} from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+  Layout,
+  Typography,
+  Input,
+  Button,
+  Card,
+  List,
+  Modal,
+  Form,
+  Select,
+} from 'antd';
+import { SearchOutlined, PlusOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom'; // ✅ Import navigation
 import './discussion_forum.scss';
+import MenuPanel from '../../menu/menu-panel';
+import Main_header from '../main_header/Main_header';
+import dayjs from 'dayjs';
 
-const { Header, Sider, Content } = Layout;
 const { Title } = Typography;
+const { Header, Content } = Layout;
+const { Option } = Select;
+
+interface Thread {
+  id: number;
+  title: string;
+  author: string;
+  createdAt: string;
+  content: string;
+  topic: string;
+}
+
+const topics = [
+  "Child's Condition & Diagnosis",
+  'Therapy & Treatment',
+  'Education & Learning Support',
+  'Parenting & Daily Life',
+  'Community & Socialization',
+  'Legal & Financial Assistance',
+  'Technology & Accessibility',
+];
+
+const initialThreads: Thread[] = [
+  {
+    id: 1,
+    title: 'How to find the best therapy centers?',
+    author: 'John Doe',
+    createdAt: 'March 18, 2025',
+    content: 'Looking for recommendations on therapy centers for my child in Almaty. Any suggestions?',
+    topic: 'Therapy & Treatment',
+  },
+  {
+    id: 2,
+    title: 'Best speech therapy exercises at home',
+    author: 'Jane Smith',
+    createdAt: 'March 17, 2025',
+    content: 'Has anyone tried speech therapy exercises at home? Looking for effective techniques!',
+    topic: 'Education & Learning Support',
+  },
+];
 
 const DiscussionForum: React.FC = () => {
+  const [threads, setThreads] = useState<Thread[]>(initialThreads);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
-  const navigate = useNavigate();
+  const [form] = Form.useForm();
+  const navigate = useNavigate(); // ✅ Use navigation
 
-  const handleMenuClick = (key: string) => {
-    if (key === '1') navigate('/symptom-tracker');
-    if (key === '2') navigate('/discussion-forum');
-    if (key === '3') navigate('/information-hub');
-    if (key === '4') navigate('/marketplace');
-    if (key === '5') navigate('/ikomek-ai-assistant');
-    if (key === '6') navigate('/profile');
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
   };
 
-  const columns = [
-    {
-      title: 'User',
-      dataIndex: 'user',
-      key: 'user',
-    },
-    {
-      title: 'Title',
-      dataIndex: 'title',
-      key: 'title',
-    },
-    {
-      title: 'Content',
-      dataIndex: 'content',
-      key: 'content',
-    },
-    {
-      title: 'Created Date',
-      dataIndex: 'date',
-      key: 'date',
-    },
-  ];
+  const handleTopicFilter = (value: string | null) => {
+    setSelectedTopic(value);
+  };
 
-  const data = [
-    { key: 1, user: 'User1', title: 'Title1', content: 'Content1', date: '23.02.2025' },
-    { key: 2, user: 'User2', title: 'Title2', content: 'Content2', date: '22.02.2025' },
-    { key: 3, user: 'User3', title: 'Title3', content: 'Content3', date: '21.02.2025' },
-    { key: 4, user: 'User4', title: 'Title4', content: 'Content4', date: '20.02.2025' },
-    { key: 5, user: 'User5', title: 'Title5', content: 'Content5', date: '19.02.2025' },
-  ];
+  const showModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleCancel = () => {
+    setIsModalOpen(false);
+    form.resetFields();
+  };
+
+  const handleCreateThread = (values: { title: string; content: string; topic: string }) => {
+    const newThread: Thread = {
+      id: threads.length + 1,
+      title: values.title,
+      author: 'Current User',
+      createdAt: dayjs().format('MMMM D, YYYY'),
+      content: values.content,
+      topic: values.topic,
+    };
+    setThreads([newThread, ...threads]);
+    setIsModalOpen(false);
+    form.resetFields();
+  };
+
+  const toggleCollapsed = () => {
+    setCollapsed(!collapsed);
+  };
+
+  const filteredThreads = threads.filter(
+    (thread) =>
+      thread.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
+      (!selectedTopic || thread.topic === selectedTopic)
+  );
 
   return (
-    <Layout className="discussion-forum">
-      <Sider className="sidebar" collapsible collapsed={collapsed} onCollapse={setCollapsed} theme="light">
-        <div className="logo">Balasteps</div>
-        <Menu defaultSelectedKeys={['2']} mode="vertical" className="menu" onClick={(e) => handleMenuClick(e.key)}>
-          <Menu.Item key="1" icon={<HomeOutlined />}>Symptom Tracker</Menu.Item>
-          <Menu.Item key="2" icon={<CommentOutlined />}>Discussion Forum</Menu.Item>
-          <Menu.Item key="3" icon={<InfoCircleOutlined />}>Information Hub</Menu.Item>
-          <Menu.Item key="4" icon={<ShoppingOutlined />}>Marketplace</Menu.Item>
-          <Menu.Item key="5" icon={<RobotOutlined />}>iKomek AI Assistant</Menu.Item>
-          <Menu.Item key="6" icon={<UserOutlined />}>Profile</Menu.Item>
-        </Menu>
-      </Sider>
-      <Layout className="main-layout">
-        <Header className="header">
-          <Title level={3} className="header-title">Discussion Forum</Title>
-          <div className="header-actions">
-            <Input placeholder="Search for topics, keywords" prefix={<SearchOutlined />} className="search-bar" />
-            <Button type="primary" icon={<PlusOutlined />} className="create-button">Create</Button>
-            <Button icon={<BellOutlined />} type="text" />
-            <Button icon={<UserOutlined />} type="text" />
-            <Button icon={<LogoutOutlined />} type="text" className="logout-button">Log out</Button>
-          </div>
+    <Layout className="forum-layout">
+      <MenuPanel collapsed={collapsed} toggleCollapsed={toggleCollapsed}  selectedPage={'/discussion-forum'}/>
+      <Layout style={{ marginLeft: collapsed ? 100 : 250, transition: 'margin-left 0.3s ease' }}>
+        <Header className="forum-header">
+          <Main_header />
         </Header>
-        <Content className="content">
-          <Table columns={columns} dataSource={data} pagination={false} className="discussion-table" />
+        <Content className="forum-content">
+          <div className="forum-controls">
+            <Title level={2} className="section-title">Discussion Forum</Title>
+            <Input
+              placeholder="Search discussions..."
+              prefix={<SearchOutlined />}
+              className="search-bar"
+              value={searchTerm}
+              onChange={handleSearch}
+            />
+            <Select
+              placeholder="Filter by topic"
+              className="filter-dropdown"
+              allowClear
+              onChange={handleTopicFilter}
+            >
+              {topics.map((topic) => (
+                <Option key={topic} value={topic}>
+                  {topic}
+                </Option>
+              ))}
+            </Select>
+            <Button type="primary" icon={<PlusOutlined />} onClick={showModal}>
+              Create New Thread
+            </Button>
+          </div>
+          <List
+            itemLayout="vertical"
+            dataSource={filteredThreads}
+            renderItem={(thread) => (
+              <Card
+                key={thread.id}
+                className="thread-card"
+                hoverable
+                onClick={() => navigate(`/discussion-forum/${thread.id}`, { state: { thread } })} // ✅ Navigate on click
+              >
+                <div className="thread-topic">{thread.topic}</div>
+                <Title level={4}>{thread.title}</Title>
+                <p className="thread-meta">By {thread.author} - {thread.createdAt}</p>
+                <p className="thread-content">{thread.content}</p>
+              </Card>
+            )}
+          />
         </Content>
       </Layout>
+
+      {/* Modal for Creating New Discussion */}
+      <Modal
+        title="Create New Thread"
+        open={isModalOpen}
+        onCancel={handleCancel}
+        footer={null}
+      >
+        <Form form={form} layout="vertical" onFinish={handleCreateThread}>
+          <Form.Item
+            label="Thread Title"
+            name="title"
+            rules={[{ required: true, message: 'Please enter a thread title' }]}
+          >
+            <Input placeholder="Enter title..." />
+          </Form.Item>
+          <Form.Item
+            label="Topic"
+            name="topic"
+            rules={[{ required: true, message: 'Please select a topic' }]}
+          >
+            <Select placeholder="Select a topic">
+              {topics.map((topic) => (
+                <Option key={topic} value={topic}>
+                  {topic}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+          <Form.Item
+            label="Content"
+            name="content"
+            rules={[{ required: true, message: 'Please enter the discussion content' }]}
+          >
+            <Input.TextArea rows={4} placeholder="Enter your discussion..." />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit">
+              Create
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
     </Layout>
   );
 };

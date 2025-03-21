@@ -1,5 +1,6 @@
 import Title from 'antd/es/typography/Title';
 import React from 'react';
+import { motion } from 'framer-motion';
 import ikomekImage from '../../images/main_content/features/image 1.png';
 import communityImage from '../../images/main_content/features/image 5.png';
 import marketImage from '../../images/main_content/features/image 8.png';
@@ -32,19 +33,42 @@ const HeaderButtons = () => {
   return (
     <div className="button-cont">
       {sections.map((section, index) => (
-        <div className="buttons-container" key={index}>
+        <motion.div
+          className={`buttons-container ${index % 2 === 0 ? 'left' : 'right'}`}
+          key={index}
+          initial={{ opacity: 0, x: index % 2 === 0 ? -100 : 100 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8, delay: index * 0.2 }}
+          viewport={{ once: false }}
+        >
           <div className="buttons-content">
-            <img
-              src={section.image}
-              alt={section.title}
-              className="buttons-image"
-            />
-            <div className="buttons-text">
-              <Title className="buttons-title">{section.title}</Title>
-              <p>{section.text}</p>
-            </div>
+            {index % 2 === 0 ? (
+              <>
+                <div className="buttons-text">
+                  <Title className="buttons-title">{section.title}</Title>
+                  <p>{section.text}</p>
+                </div>
+                <img
+                  src={section.image}
+                  alt={section.title}
+                  className="buttons-image"
+                />
+              </>
+            ) : (
+              <>
+                <div className="buttons-text">
+                  <Title className="buttons-title">{section.title}</Title>
+                  <p>{section.text}</p>
+                </div>
+                <img
+                  src={section.image}
+                  alt={section.title}
+                  className="buttons-image"
+                />
+              </>
+            )}
           </div>
-        </div>
+        </motion.div>
       ))}
     </div>
   );

@@ -1,11 +1,11 @@
 .register-container {
   display: flex;
-  margin-top: 15px;
+  margin-top: 10px;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   width: 600pxpx;
-  padding: 40px 0;
+  padding: 50px 0;
 }
 
 .register-form-container {
@@ -14,7 +14,7 @@
   border-radius: 10px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   width: 40%;
-  height: 670px;
+  height: 660px;
   border: 1px solid #426B1F;
   text-align: center;
 }
@@ -61,14 +61,14 @@
 .register-button {
   background-color: #426B1F !important;
   color: white !important;
-  width: 157px;
-  padding: 6px 33px;
+  width: auto;
+  padding: 6px 20px;
   font-size: 20px;
   border-radius: 10px;
   font-weight: lighter;
-  margin-left: 60px;
   font-family: "Almendra", serif;
   text-align: center;
+  margin-left: 60px;
 }
 
 .register-button:hover {
@@ -81,9 +81,9 @@
   color: #426B1F;
   margin-top: 13px;
   white-space: nowrap;
-  margin-right: 20px;
+  margin-right: 50px;
+}
 
-  :hover {
-    color: #7ec040
-  }
+.login-link-inline .login-link:hover {
+  color: #7ec040
 }
