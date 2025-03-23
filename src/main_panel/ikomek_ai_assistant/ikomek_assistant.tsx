@@ -40,7 +40,19 @@ const IkomekAssistant = () => {
     <Layout className="ikomek-layout">
       <MenuPanel collapsed={collapsed} toggleCollapsed={() => setCollapsed(!collapsed)}  selectedPage={'/ikomek_assistant'}/>
       <Layout style={{ marginLeft: collapsed ? 100 : 250, transition: 'margin-left 0.3s' }}>
-        <Main_header />
+        <Header
+          style={{
+            padding: 0,
+            marginLeft: '5px',
+            background: '#E2E3E0',
+            height: '48px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Main_header />
+        </Header>
         <Content className="ikomek-content">
           <Title className="ikomek-title">iKomek AI Assistant</Title>
           <Text className="ikomek-subtitle">Hi! How can I assist you today?</Text>

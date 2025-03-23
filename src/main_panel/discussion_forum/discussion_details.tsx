@@ -50,7 +50,17 @@ const DiscussionDetails: React.FC = () => {
     <Layout className="discussion-layout">
       <MenuPanel collapsed={collapsed} toggleCollapsed={toggleCollapsed} selectedPage={'/discussion-forum'}/>
       <Layout style={{ marginLeft: 250 }}>
-        <Header className="discussion-header">
+        <Header
+          style={{
+            padding: 0,
+            marginLeft: '5px',
+            background: '#E2E3E0',
+            height: '48px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
           <Main_header />
         </Header>
         <Content className="discussion-content">

@@ -8,7 +8,6 @@
   justify-content: space-between;
   align-items: center;
   background: #E2E3E0;
-  padding: 10px 20px;
 }
 
 .forum-controls {
@@ -18,12 +17,13 @@
 }
 
 .search-bar {
-  width: 250px;
+  width: 200px !important;
+  margin-left: 310px;
   border-radius: 8px;
 }
 
 .filter-dropdown {
-  width: 250px;
+  width: 200px;
 }
 
 .forum-content {
@@ -34,8 +34,9 @@
 
 .section-title {
   font-family: 'Jacques Francois', serif;
-  font-weight: bold;
-  color: #426B1F;
+  font-weight: lighter;
+  font-size: 36px;
+  color: #591C00;
   margin-bottom: 20px;
 }
 

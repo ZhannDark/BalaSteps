@@ -83,6 +83,8 @@ const MenuPanel: React.FC<MenuPanelProps> = ({
           type="primary"
           onClick={toggleCollapsed}
           className="toggle-button"
+          style={{ marginLeft: collapsed ? '15px' : '40px' ,
+                   marginTop: '10px'}}
         >
           {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
         </Button>

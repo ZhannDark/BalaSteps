@@ -1,20 +1,65 @@
 import React, { useState } from 'react';
-import { Layout, Button, Input, Form, Modal, Upload, message } from 'antd';
-import { EditOutlined, UploadOutlined } from '@ant-design/icons';
-import './profile.scss';
+import {
+  Layout,
+  Button,
+  Input,
+  Form,
+  Modal,
+  Upload,
+  message,
+  Spin,
+} from 'antd';
+import {
+  EditOutlined,
+  UploadOutlined,
+} from '@ant-design/icons';
+import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
 import MenuPanel from '../../menu/menu-panel';
 import Main_header from '../main_header/Main_header';
+import './profile.scss';
 import img from '../../images/fav.jpg';
 
 const { Content, Header } = Layout;
 
+interface ProfileData {
+  full_name: string;
+  email: string;
+  profile_photo?: string;
+  additional_info?: string;
+  city?: string;
+}
+
 const ProfilePage = () => {
+  const [collapsed, setCollapsed] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [collapsed, setCollapsed] = useState(true);
   const [form] = Form.useForm();
+
+  const fetchProfile = async (): Promise<ProfileData> => {
+    const response = await axios.get('https://project-back-81mh.onrender.com/auth/profile/', {
+      // headers: {
+      //   Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+      // },
+    });
+    return response.data;
+  };
+
+  const {
+    data: profile,
+    isLoading,
+    isError,
+  } = useQuery<ProfileData, Error>({
+    queryKey: ['profile'],
+    queryFn: fetchProfile,
+  });
 
   const handleEditClick = () => {
     setIsModalVisible(true);
+    form.setFieldsValue({
+      full_name: profile?.full_name,
+      additional_info: profile?.additional_info,
+      city: profile?.city,
+    });
   };
 
   const handleCancel = () => {
@@ -30,30 +75,62 @@ const ProfilePage = () => {
     });
   };
 
+  if (isLoading) {
+    return <Spin tip="Loading profile..." style={{ margin: 40 }} />;
+  }
+
+  if (isError || !profile) {
+    return <p style={{ padding: 20, color: 'red' }}>Failed to load profile data.</p>;
+  }
+
   return (
     <Layout className="profile-layout">
+      <MenuPanel
+        collapsed={collapsed}
+        toggleCollapsed={() => setCollapsed(!collapsed)}
+        selectedPage={null}
+      />
+
       <Layout
         style={{
-          marginLeft: collapsed ? 70 : 250,
+          marginLeft: collapsed ? 100 : 250,
           transition: 'margin-left 0.3s ease',
         }}
       >
-        <Main_header />
+        <Header
+          style={{
+            padding: 0,
+            marginLeft: '5px',
+            background: '#E2E3E0',
+            height: '48px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Main_header />
+        </Header>
+
         <Content className="profile-page">
           <h1 className="profile-title">Profile</h1>
           <div className="profile-container">
             <div className="profile-picture-section">
               <div className="profile-picture">
-                <img src={img} alt="Profile" className="profile-image" />
+                <img
+                  src={profile.profile_photo || img}
+                  alt="Profile"
+                  className="profile-image"
+                />
               </div>
               <div className="profile-options">
                 <p className="profile-option">Change phone number</p>
                 <p className="profile-option">Change password</p>
               </div>
             </div>
+
             <div className="profile-details">
               <div className="profile-header">
-                <h2 className="profile-name">Palensheeva Palenshe</h2>
+                <h2 className="profile-name">{profile.full_name}</h2>
                 <Button
                   icon={<EditOutlined />}
                   type="text"
@@ -63,25 +140,21 @@ const ProfilePage = () => {
                   Edit
                 </Button>
               </div>
+
               <Form layout="vertical" className="profile-form">
-                <Form.Item label="Age of child (optional)">
-                  <Input
+                <Form.Item label="Additional Info">
+                  <Input.TextArea
                     className="profile-input"
-                    placeholder="Enter age"
-                    disabled
-                  />
-                </Form.Item>
-                <Form.Item label="Diagnose (optional)">
-                  <Input
-                    className="profile-input"
-                    placeholder="Enter diagnose"
+                    placeholder="Empty additional information..."
+                    value={profile.additional_info || ''}
                     disabled
                   />
                 </Form.Item>
                 <Form.Item label="City (optional)">
                   <Input
                     className="profile-input"
-                    placeholder="Enter city"
+                    placeholder="Empty"
+                    value={profile.city || ''}
                     disabled
                   />
                 </Form.Item>
@@ -105,31 +178,22 @@ const ProfilePage = () => {
             <Form layout="vertical" form={form}>
               <Form.Item
                 label="Full Name"
-                name="fullName"
+                name="full_name"
                 rules={[
                   { required: true, message: 'Please enter your full name' },
                 ]}
               >
                 <Input placeholder="Enter full name" />
               </Form.Item>
-              <Form.Item label="Profile Image" name="profileImage">
+              <Form.Item label="Profile Image" name="profile_photo">
                 <Upload listType="picture" maxCount={1}>
                   <Button icon={<UploadOutlined />}>Upload</Button>
                 </Upload>
               </Form.Item>
-              <Form.Item
-                label="Age of child (optional)"
-                name="age"
-                rules={[
-                  { pattern: /^[0-9]*$/, message: 'Please enter a valid age' },
-                ]}
-              >
-                <Input placeholder="Enter age" />
+              <Form.Item label="Additional Info" name="additional_info">
+                <Input.TextArea placeholder="Enter additional info..." />
               </Form.Item>
-              <Form.Item label="Diagnose (optional)" name="diagnose">
-                <Input placeholder="Enter diagnose" />
-              </Form.Item>
-              <Form.Item label="City (optional)" name="city">
+              <Form.Item label="City" name="city">
                 <Input placeholder="Enter city" />
               </Form.Item>
             </Form>

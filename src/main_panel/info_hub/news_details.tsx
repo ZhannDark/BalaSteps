@@ -53,7 +53,19 @@ const NewsDetails = () => {
     <Layout>
       <MenuPanel collapsed={collapsed} toggleCollapsed={toggleCollapsed}  selectedPage={'/info_hub'}/>
       <Layout style={{ marginLeft: collapsed ? 100 : 250, transition: 'margin-left 0.3s ease' }}>
+        <Header
+          style={{
+            padding: 0,
+            marginLeft: '5px',
+            background: '#E2E3E0',
+            height: '48px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
           <Main_header />
+        </Header>
         <Content className="details-container">
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/info_hub')} className="back-button">
             Back

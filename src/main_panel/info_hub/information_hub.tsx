@@ -59,9 +59,18 @@ const InformationHub = () => {
   return (
     <Layout className="info-hub-layout">
       <MenuPanel collapsed={collapsed} toggleCollapsed={() => setCollapsed(!collapsed)}  selectedPage={'/info_hub'}/>
-
       <Layout style={{ marginLeft: collapsed ? 70 : 250, transition: 'margin-left 0.3s ease' }}>
-        <Header className="info-header">
+        <Header
+          style={{
+            padding: 0,
+            marginLeft: '5px',
+            background: '#E2E3E0',
+            height: '48px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
           <Main_header />
         </Header>
 

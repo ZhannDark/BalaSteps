@@ -63,7 +63,7 @@ const SymptomTracker = () => {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <MenuPanel collapsed={collapsed} toggleCollapsed={handleToggleMenu}  selectedPage={'/symptom_tracker'}/>{' '}
+      <MenuPanel collapsed={collapsed} toggleCollapsed={handleToggleMenu}  selectedPage={'/symptom-tracker'}/>{' '}
       <Layout
         style={{
           marginLeft: collapsed ? 100 : 250,

@@ -55,10 +55,10 @@ const Login = () => {
           'You have successfully logged in.'
         );
 
-        localStorage.setItem('token', data.token);
+        // localStorage.setItem('token', data.token);
         setTimeout(() => {
-          navigate('/main_header');
-        }, 5000);
+          navigate('/symptom-tracker');
+        }, 3000);
       } else {
         openNotification(
           'error',
@@ -110,7 +110,6 @@ const Login = () => {
                 htmlType="submit"
                 className="login-button"
                 loading={loading}
-                onClick={() => navigate('/symptom-tracker')}
               >
                 {loading ? 'Logging in...' : 'Login'}
               </Button>

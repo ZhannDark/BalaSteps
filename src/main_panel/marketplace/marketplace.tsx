@@ -67,7 +67,19 @@ const Marketplace = () => {
     <Layout className="marketplace-layout">
       <MenuPanel collapsed={collapsed} toggleCollapsed={() => setCollapsed(!collapsed)}  selectedPage={'/marketplace'}/>
       <Layout style={{ marginLeft: collapsed ? 100 : 250, transition: 'margin-left 0.3s' }}>
+        <Header
+          style={{
+            padding: 0,
+            marginLeft: '5px',
+            background: '#E2E3E0',
+            height: '48px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
           <Main_header />
+        </Header>
         <Content className="marketplace-content">
           <div className="search-add-container">
             <Title className="marketplace-title">Marketplace</Title>

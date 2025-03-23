@@ -32,19 +32,18 @@ const App = () => {
           path="/"
           element={
             <>
-              {/*<Main_Header />*/}
-              {/*<MainContent />*/}
-              {/*<News />*/}
-              {/*<Header_buttons />*/}
-              <SymptomTracker />
+              <Main_Header />
+              <MainContent />
+              <News />
+              <Header_buttons />
             </>
           }
         />
-        {/*<Route path="/register" element={<Register />} />*/}
-        {/*<Route path="/login" element={<Login />} />*/}
-        {/*<Route path="/forgot-password" element={<ForgotPassword />} />*/}
+        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/profile" element={<UserProfile />} />
-        {/*<Route path="/send-otp" element={<VerifyOTP />} />*/}
+        <Route path="/send-otp" element={<VerifyOTP />} />
         <Route path="/symptom-tracker" element={<SymptomTracker />} />
         <Route path="/discussion-forum" element={<DiscussionForum />} />
         <Route path="/discussion-forum/:id" element={<Discussion_details />} />

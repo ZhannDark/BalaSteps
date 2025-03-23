@@ -113,12 +113,22 @@ const DiscussionForum: React.FC = () => {
     <Layout className="forum-layout">
       <MenuPanel collapsed={collapsed} toggleCollapsed={toggleCollapsed}  selectedPage={'/discussion-forum'}/>
       <Layout style={{ marginLeft: collapsed ? 100 : 250, transition: 'margin-left 0.3s ease' }}>
-        <Header className="forum-header">
+        <Header
+          style={{
+            padding: 0,
+            marginLeft: '5px',
+            background: '#E2E3E0',
+            height: '48px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
           <Main_header />
         </Header>
         <Content className="forum-content">
           <div className="forum-controls">
-            <Title level={2} className="section-title">Discussion Forum</Title>
+            <h1 className="section-title">Discussion Forum</h1>
             <Input
               placeholder="Search discussions..."
               prefix={<SearchOutlined />}
@@ -138,8 +148,8 @@ const DiscussionForum: React.FC = () => {
                 </Option>
               ))}
             </Select>
-            <Button type="primary" icon={<PlusOutlined />} onClick={showModal}>
-              Create New Thread
+            <Button type="default" icon={<PlusOutlined />} onClick={showModal}>
+              New Thread
             </Button>
           </div>
           <List
