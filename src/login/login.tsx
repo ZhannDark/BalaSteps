@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Form, Input, Button, notification } from 'antd';
 import 'antd/dist/reset.css';
 import { Link, useNavigate } from 'react-router-dom';
@@ -8,10 +8,11 @@ import {
   CloseCircleOutlined,
   ExclamationCircleOutlined,
 } from '@ant-design/icons';
+import { useMutation } from '@tanstack/react-query';
+import axios from 'axios';
 import AppHeader from '../main/header/header';
 
 const Login = () => {
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [api, contextHolder] = notification.useNotification();
 
@@ -34,48 +35,30 @@ const Login = () => {
     });
   };
 
-  const handleLogin = async (values: { email: string; password: string }) => {
-    setLoading(true);
-    try {
-      const response = await fetch(
-        'https://project-back-81mh.onrender.com/auth/login/',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(values),
-        }
-      );
-
-      const data = await response.json();
-
-      if (response.ok) {
-        openNotification(
-          'success',
-          'Login successful',
-          'You have successfully logged in.'
-        );
-
-        // localStorage.setItem('token', data.token);
-        setTimeout(() => {
-          navigate('/symptom-tracker');
-        }, 3000);
-      } else {
-        openNotification(
-          'error',
-          'Login failed',
-          data.message || 'Incorrect email or password.'
-        );
-      }
-    } catch (error) {
+  const loginMutation = useMutation({
+    mutationFn: (values: { email: string; password: string }) =>
+      axios.post('https://project-back-81mh.onrender.com/auth/login/', values),
+    onSuccess: (response) => {
+      localStorage.setItem('accessToken', response.data.access);
+      localStorage.setItem('refreshToken', response.data.refresh);
       openNotification(
-        'warning',
-        'Something went wrong',
-        'Network error. Please try again.'
+        'success',
+        'Login successful',
+        'You have successfully logged in.'
       );
-    } finally {
-      setLoading(false);
-    }
-  };
+      setTimeout(() => {
+        navigate('/symptom-tracker');
+      }, 3000);
+    },
+    onError: (error: any) => {
+      openNotification(
+        'error',
+        'Login failed',
+        error.response?.data?.message || 'Incorrect email or password.'
+      );
+    },
+  });
+
 
   return (
     <>
@@ -84,7 +67,11 @@ const Login = () => {
       <div className="login-container">
         <div className="login-form-container">
           <h2 className="login-title">Login</h2>
-          <Form layout="vertical" className="login-form" onFinish={handleLogin}>
+          <Form
+            layout="vertical"
+            className="login-form"
+            onFinish={(values) => loginMutation.mutate(values)}
+          >
             <Form.Item
               label="Email:"
               name="email"
@@ -95,9 +82,7 @@ const Login = () => {
             <Form.Item
               label="Password:"
               name="password"
-              rules={[
-                { required: true, message: 'Please enter your password' },
-              ]}
+              rules={[{ required: true, message: 'Please enter your password' }]}
             >
               <Input.Password
                 className="login-input"
@@ -109,9 +94,9 @@ const Login = () => {
                 type="primary"
                 htmlType="submit"
                 className="login-button"
-                loading={loading}
+                loading={loginMutation.isPending}
               >
-                {loading ? 'Logging in...' : 'Login'}
+                {loginMutation.isPending ? 'Logging in...' : 'Login'}
               </Button>
             </Form.Item>
           </Form>

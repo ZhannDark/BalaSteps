@@ -8,18 +8,16 @@ const { Footer } = Layout;
 const Foot = () => {
   return (
     <Footer className="footer">
-      <Link className="footer-link" to="/home">
+      <Link className="footer-link" to="/privacy-policy">
         Privacy Policy
       </Link>
-      <Link className="footer-link" to="">
+      <Link className="footer-link" to="/support">
         Support
       </Link>
-      <Link className="footer-link" to="">
+      <Link className="footer-link" to="/contact">
         Contact us
       </Link>
-      <Link className="footer-link" to="">
-        © 2025 BalaSteps
-      </Link>
+      <span className="footer-link">© 2025 BalaSteps</span>
     </Footer>
   );
 };

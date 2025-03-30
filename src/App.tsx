@@ -12,7 +12,6 @@ import ForgotPassword from './forget_password/forget_password';
 import SymptomTracker from './main_panel/symptom_tracker/symptom_tracker';
 import Menu from './menu/menu';
 import UserProfile from './main_panel/profile/profile';
-import Panel_header from './main/header/panel_header';
 import VerifyOTP from './register/sendOTP';
 import InformationHub from './main_panel/info_hub/information_hub';
 import DiscussionForum from './main_panel/discussion_forum/discussion_forum';
@@ -23,6 +22,9 @@ import TherapyCenterDetails from './main_panel/info_hub/therapy_centers_details'
 import Marketplace from './main_panel/marketplace/marketplace';
 import MarketplaceDetails from './main_panel/marketplace/marketplace_details';
 import IkomekAssistant from './main_panel/ikomek_ai_assistant/ikomek_assistant';
+import PrivacyPolicy from './main/main_content/footer_links/privacy_policy';
+import Support from './main/main_content/footer_links/support';
+import ContactUs from './main/main_content/footer_links/contact_us';
 
 const App = () => {
   return (
@@ -36,9 +38,13 @@ const App = () => {
               <MainContent />
               <News />
               <Header_buttons />
+              <Footer_Content />
             </>
           }
         />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/support" element={<Support />} />
+        <Route path="/contact" element={<ContactUs />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -61,9 +67,7 @@ const App = () => {
           element={<TherapyCenterDetails />}
         />
         <Route path="/menu" element={<Menu />} />
-        <Route path="/panel-header" element={<Panel_header />} />
       </Routes>
-      <Footer_Content />
     </Router>
   );
 };

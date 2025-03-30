@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { Dropdown, Button, Layout, Avatar } from 'antd';
+import { Dropdown, Button, Layout, Avatar, message } from 'antd';
 import {
   UserOutlined,
   LogoutOutlined,
   ProfileOutlined,
 } from '@ant-design/icons';
-import ProfilePage from '../profile/profile';
-import './main_header.scss';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import './main_header.scss';
 
 const { Header } = Layout;
 
@@ -15,13 +15,45 @@ const Main_header = () => {
   const [isProfileVisible, setIsProfileVisible] = useState(false);
   const navigate = useNavigate();
 
+  const handleLogout = async () => {
+    const refreshToken = localStorage.getItem('refreshToken');
+    const accessToken = localStorage.getItem('accessToken');
+
+    if (!refreshToken || !accessToken) {
+      message.warning('You are already logged out.');
+      return;
+    }
+
+    try {
+      await axios.post(
+        'https://project-back-81mh.onrender.com/auth/logout/',
+        { refresh: refreshToken },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      message.success('Logged out successfully!');
+      navigate('/login');
+    } catch (error: any) {
+      console.error(error);
+      message.error(
+        error.response?.data?.detail || 'Failed to log out. Try again.'
+      );
+    }
+  };
+
   const handleMenuClick = ({ key }: any) => {
     if (key === 'profile') {
       setIsProfileVisible(true);
-      navigate('/profile')
+      navigate('/profile');
     } else if (key === 'logout') {
-      setIsProfileVisible(false);
-      navigate('/');
+      handleLogout();
     }
   };
 
@@ -62,7 +94,6 @@ const Main_header = () => {
           </Dropdown>
         </div>
       </Header>
-      {isProfileVisible && <ProfilePage />}
     </Layout>
   );
 };

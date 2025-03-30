@@ -1,9 +1,19 @@
-import React, { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { Layout, Typography, Card, Button, Input } from 'antd';
-import { ArrowLeftOutlined } from '@ant-design/icons';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import {
+  Layout,
+  Typography,
+  Card,
+  Button,
+  Input,
+  message,
+  Divider,
+} from 'antd';
+import { ArrowLeftOutlined, MessageOutlined } from '@ant-design/icons';
 import MenuPanel from '../../menu/menu-panel';
 import Main_header from '../main_header/Main_header';
+import axios from 'axios';
+import dayjs from 'dayjs';
 import './discussion_details.scss';
 
 const { Title } = Typography;
@@ -11,56 +21,89 @@ const { Header, Content } = Layout;
 const { TextArea } = Input;
 
 interface Comment {
-  id: number;
-  author: string;
+  id: string;
+  user: string;
   content: string;
+  created_at: string;
+}
+
+interface PostDetails {
+  id: string;
+  title: string;
+  content: string;
+  user: string;
+  created_at: string;
+  categories: { name: string }[];
+  comments: Comment[];
 }
 
 const DiscussionDetails: React.FC = () => {
-  const location = useLocation();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { thread } = location.state as { thread: any };
   const [collapsed, setCollapsed] = useState(false);
-
-  const [comments, setComments] = useState<Comment[]>([
-    { id: 1, author: 'Tugensheeva_tugenshe', content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla facilisi. Vestibulum vel felis id ligula ultrices pharetra.' },
-    { id: 2, author: 'Tugensheeva_tugenshe', content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla facilisi. Vestibulum vel felis id ligula ultrices pharetra.' },
-  ]);
-
+  const [post, setPost] = useState<PostDetails | null>(null);
   const [newComment, setNewComment] = useState('');
+  const [loading, setLoading] = useState(false);
+  const token = localStorage.getItem('accessToken');
 
-  const toggleCollapsed = () => {
-    setCollapsed(!collapsed);
-  };
+  const toggleCollapsed = () => setCollapsed(!collapsed);
 
-  const handleAddComment = () => {
-    if (newComment.trim() === '') return;
-
-    const newCommentObj = {
-      id: comments.length + 1,
-      author: 'Current User',
-      content: newComment,
+  useEffect(() => {
+    const fetchPostDetails = async () => {
+      try {
+        const response = await axios.get(
+          `https://project-back-81mh.onrender.com/forum/posts/${id}/`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setPost(response.data);
+      } catch (error) {
+        message.error('Failed to load discussion details');
+        console.error(error);
+      }
     };
 
-    setComments([newCommentObj, ...comments]);
-    setNewComment('');
+    fetchPostDetails();
+  }, [id]);
+
+  const handleAddComment = async () => {
+    if (newComment.trim() === '') return;
+    try {
+      const response = await axios.post(
+        `https://project-back-81mh.onrender.com/forum/posts/${id}/comment/`,
+        { content: newComment },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setPost((prev) =>
+        prev
+          ? { ...prev, comments: [response.data, ...prev.comments] }
+          : prev
+      );
+      setNewComment('');
+      message.success('Comment added');
+    } catch (error) {
+      console.error(error);
+      message.error('Failed to add comment');
+    }
   };
 
   return (
     <Layout className="discussion-layout">
-      <MenuPanel collapsed={collapsed} toggleCollapsed={toggleCollapsed} selectedPage={'/discussion-forum'}/>
-      <Layout style={{ marginLeft: 250 }}>
-        <Header
-          style={{
-            padding: 0,
-            marginLeft: '5px',
-            background: '#E2E3E0',
-            height: '48px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
+      <MenuPanel
+        collapsed={collapsed}
+        toggleCollapsed={toggleCollapsed}
+        selectedPage="/discussion-forum"
+      />
+      <Layout style={{ marginLeft: collapsed ? 100 : 250 }}>
+        <Header className="main-header">
           <Main_header />
         </Header>
         <Content className="discussion-content">
@@ -68,46 +111,57 @@ const DiscussionDetails: React.FC = () => {
             type="link"
             icon={<ArrowLeftOutlined />}
             onClick={() => navigate(-1)}
-            style={{ marginBottom: '20px', fontSize: '16px', color: '#591C00' }}
+            style={{ marginBottom: '20px', fontSize: '16px', color: '#426B1F' }}
           >
             Back
           </Button>
 
-          <Card className="discussion-card" style={{ border: '1px solid #426B1F' }}>
-            <Title level={4} style={{ marginBottom: '10px' }}>{thread.author}</Title>
-            <div style={{ fontWeight: 'bold', color: '#000' }}>{thread.topic}</div>
-            <Card className="thread-description" style={{ marginTop: '10px', background: '#F8F8F8' }}>
-              <p>{thread.content}</p>
-            </Card>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '15px' }}>
-              <span style={{ fontSize: '14px', color: '#666' }}>🗨️ {comments.length}</span>
-            </div>
-          </Card>
+          {post && (
+            <>
+              <Title level={2} style={{ color: '#333' }}>{post.title}</Title>
+              <Card className="discussion-card">
+                <div className="discussion-meta">
+                  <Title level={5} className="author-name">{post.user}</Title>
+                  <div className="category-label">{post.categories[0]?.name}</div>
+                </div>
+                <Divider />
+                <p className="discussion-content-text">{post.content}</p>
+                <div className="comment-count">
+                  <MessageOutlined style={{ marginRight: 6, color: '#426B1F' }} />
+                  {post.comments.length} comments
+                </div>
+              </Card>
 
-          {/* Comment Input */}
-          <div style={{ marginTop: '20px' }}>
-            <TextArea
-              rows={3}
-              placeholder="Write your comment here..."
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-            />
-            <Button
-              type="primary"
-              style={{ marginTop: '10px', backgroundColor: '#426B1F' }}
-              onClick={handleAddComment}
-            >
-              Add Comment
-            </Button>
-          </div>
+              <div className="add-comment-section">
+                <TextArea
+                  rows={3}
+                  placeholder="Write your comment here..."
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                />
+                <Button
+                  type="primary"
+                  className="add-comment-btn"
+                  onClick={handleAddComment}
+                  loading={loading}
+                >
+                  Add Comment
+                </Button>
+              </div>
 
-          {/* Render Comments */}
-          {comments.map((comment) => (
-            <Card key={comment.id} className="comment-card" style={{ marginTop: '10px', borderRadius: '8px' }}>
-              <Title level={5} style={{ marginBottom: '5px', fontWeight: 'bold' }}>{comment.author}</Title>
-              <p>{comment.content}</p>
-            </Card>
-          ))}
+              {post.comments.map((comment) => (
+                <Card key={comment.id} className="comment-card">
+                  <div className="comment-header">
+                    <Title level={5} className="comment-author">{comment.user}</Title>
+                    <span className="comment-date">
+                      {dayjs(comment.created_at).format('MMM D, YYYY HH:mm')}
+                    </span>
+                  </div>
+                  <p className="comment-text">{comment.content}</p>
+                </Card>
+              ))}
+            </>
+          )}
         </Content>
       </Layout>
     </Layout>

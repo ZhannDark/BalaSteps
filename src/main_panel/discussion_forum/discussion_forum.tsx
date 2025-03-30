@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Layout,
   Typography,
@@ -9,20 +9,23 @@ import {
   Modal,
   Form,
   Select,
+  message,
 } from 'antd';
 import { SearchOutlined, PlusOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom'; // ✅ Import navigation
+import { useNavigate } from 'react-router-dom';
 import './discussion_forum.scss';
 import MenuPanel from '../../menu/menu-panel';
 import Main_header from '../main_header/Main_header';
 import dayjs from 'dayjs';
+import axios from 'axios';
+import { Skeleton } from 'antd';
 
 const { Title } = Typography;
 const { Header, Content } = Layout;
 const { Option } = Select;
 
 interface Thread {
-  id: number;
+  id: string;
   title: string;
   author: string;
   createdAt: string;
@@ -40,33 +43,89 @@ const topics = [
   'Technology & Accessibility',
 ];
 
-const initialThreads: Thread[] = [
-  {
-    id: 1,
-    title: 'How to find the best therapy centers?',
-    author: 'John Doe',
-    createdAt: 'March 18, 2025',
-    content: 'Looking for recommendations on therapy centers for my child in Almaty. Any suggestions?',
-    topic: 'Therapy & Treatment',
-  },
-  {
-    id: 2,
-    title: 'Best speech therapy exercises at home',
-    author: 'Jane Smith',
-    createdAt: 'March 17, 2025',
-    content: 'Has anyone tried speech therapy exercises at home? Looking for effective techniques!',
-    topic: 'Education & Learning Support',
-  },
-];
-
 const DiscussionForum: React.FC = () => {
-  const [threads, setThreads] = useState<Thread[]>(initialThreads);
+  const [threads, setThreads] = useState<Thread[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [form] = Form.useForm();
-  const navigate = useNavigate(); // ✅ Use navigation
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+
+  const token = localStorage.getItem('accessToken');
+
+  useEffect(() => {
+    const fetchThreads = async () => {
+      try {
+        const response = await axios.get(
+          'https://project-back-81mh.onrender.com/forum/posts/',
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const formatted = response.data.map((post: any) => ({
+          id: post.id,
+          title: post.title,
+          author: post.user || 'Unknown',
+          createdAt: dayjs(post.created_at).format('MMMM D, YYYY'),
+          content: post.content,
+          topic: post.categories[0]?.name || 'General',
+        }));
+
+        setThreads(formatted);
+      } catch (error) {
+        console.error('Failed to fetch threads:', error);
+        message.error('Failed to load discussion posts.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchThreads();
+  }, []);
+
+  // POST new thread
+  const handleCreateThread = async (values: { title: string; content: string; topic: string }) => {
+    try {
+      const payload = {
+        title: values.title,
+        content: values.content,
+        categories: [{ name: values.topic }],
+      };
+
+      const response = await axios.post(
+        'https://project-back-81mh.onrender.com/forum/posts/',
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      const newThread = {
+        id: response.data.id,
+        title: response.data.title,
+        author: response.data.user || 'You',
+        createdAt: dayjs(response.data.created_at).format('MMMM D, YYYY'),
+        content: response.data.content,
+        topic: response.data.categories[0]?.name || 'General',
+      };
+
+      setThreads((prev) => [newThread, ...prev]);
+      setIsModalOpen(false);
+      form.resetFields();
+      message.success('Thread created successfully!');
+    } catch (error) {
+      console.error('Failed to create thread:', error);
+      message.error('Failed to create thread.');
+    }
+  };
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -85,20 +144,6 @@ const DiscussionForum: React.FC = () => {
     form.resetFields();
   };
 
-  const handleCreateThread = (values: { title: string; content: string; topic: string }) => {
-    const newThread: Thread = {
-      id: threads.length + 1,
-      title: values.title,
-      author: 'Current User',
-      createdAt: dayjs().format('MMMM D, YYYY'),
-      content: values.content,
-      topic: values.topic,
-    };
-    setThreads([newThread, ...threads]);
-    setIsModalOpen(false);
-    form.resetFields();
-  };
-
   const toggleCollapsed = () => {
     setCollapsed(!collapsed);
   };
@@ -111,8 +156,8 @@ const DiscussionForum: React.FC = () => {
 
   return (
     <Layout className="forum-layout">
-      <MenuPanel collapsed={collapsed} toggleCollapsed={toggleCollapsed}  selectedPage={'/discussion-forum'}/>
-      <Layout style={{ marginLeft: collapsed ? 100 : 250, transition: 'margin-left 0.3s ease' }}>
+      <MenuPanel collapsed={collapsed} toggleCollapsed={toggleCollapsed} selectedPage="/discussion-forum" />
+      <Layout style={{ marginLeft: collapsed ? 100 : 250 }}>
         <Header
           style={{
             padding: 0,
@@ -148,31 +193,41 @@ const DiscussionForum: React.FC = () => {
                 </Option>
               ))}
             </Select>
-            <Button type="default" icon={<PlusOutlined />} onClick={showModal}>
+            <Button className="new-thread" type="default" icon={<PlusOutlined />} onClick={showModal}>
               New Thread
             </Button>
           </div>
-          <List
-            itemLayout="vertical"
-            dataSource={filteredThreads}
-            renderItem={(thread) => (
-              <Card
-                key={thread.id}
-                className="thread-card"
-                hoverable
-                onClick={() => navigate(`/discussion-forum/${thread.id}`, { state: { thread } })} // ✅ Navigate on click
-              >
-                <div className="thread-topic">{thread.topic}</div>
-                <Title level={4}>{thread.title}</Title>
-                <p className="thread-meta">By {thread.author} - {thread.createdAt}</p>
-                <p className="thread-content">{thread.content}</p>
-              </Card>
-            )}
-          />
+          {loading ? (
+            <div style={{ padding: '20px' }}>
+              {[1, 2, 3].map((n) => (
+                <Card key={n} style={{ marginBottom: 16 }}>
+                  <Skeleton active title paragraph={{ rows: 3 }} />
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <List
+              itemLayout="vertical"
+              dataSource={filteredThreads}
+              renderItem={(thread) => (
+                <Card
+                  key={thread.id}
+                  className="thread-card"
+                  hoverable
+                  onClick={() => navigate(`/discussion-forum/${thread.id}`, { state: { thread } })}
+                >
+                  <div className="thread-topic">{thread.topic}</div>
+                  <Title level={4}>{thread.title}</Title>
+                  <p className="thread-meta">By {thread.author} - {thread.createdAt}</p>
+                  <p className="thread-content">{thread.content}</p>
+                </Card>
+              )}
+            />
+          )}
+
         </Content>
       </Layout>
 
-      {/* Modal for Creating New Discussion */}
       <Modal
         title="Create New Thread"
         open={isModalOpen}
@@ -208,7 +263,7 @@ const DiscussionForum: React.FC = () => {
             <Input.TextArea rows={4} placeholder="Enter your discussion..." />
           </Form.Item>
           <Form.Item>
-            <Button type="primary" htmlType="submit">
+            <Button className="new-thread" htmlType="submit">
               Create
             </Button>
           </Form.Item>

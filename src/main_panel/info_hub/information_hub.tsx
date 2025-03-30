@@ -1,32 +1,27 @@
 import React, { useRef, useState } from 'react';
-import { Typography, Card, Input, Button, Layout } from 'antd';
+import { Typography, Card, Input, Button, Layout, message } from 'antd';
 import { RightOutlined, LeftOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import './information_hub.scss';
 import MenuPanel from '../../menu/menu-panel';
 import Main_header from '../main_header/Main_header';
+import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
 
 const { Title } = Typography;
 const { Meta } = Card;
 const { Search } = Input;
 const { Header, Content } = Layout;
 
-const newsData = [
-  { title: 'Kazakhstan Allocates $2.7M in Recovered Assets', source: 'Astana Times', image: '/images/news1.jpg' },
-  { title: 'Kazakhstan to Build Kindergarten for Special Needs Kids', source: 'Inform', image: '/images/news2.jpg' },
-  { title: 'University of Arizona Expands Education Inclusivity', source: 'International Arizona', image: '/images/news3.jpg' },
-];
-
-const specialistsData = Array(6).fill({
-  name: 'Абдиев Габит Серикович',
-  specialization: 'Urolog',
-  image: '/images/specialist.jpg',
-});
-
-const centersData = Array(4).fill({
-  address: 'г. Алматы, ул. Розыбакиева, 37В',
-  image: '/images/therapy-center.jpg',
-});
+interface InfoItem {
+  id: string;
+  type: 'news' | 'specialist' | 'center';
+  title: string;
+  content: string;
+  image?: string;
+  tags: { name: string }[];
+  average_rating: string;
+}
 
 const InformationHub = () => {
   const newsRef = useRef<HTMLDivElement | null>(null);
@@ -44,21 +39,33 @@ const InformationHub = () => {
     if (ref.current) ref.current.scrollBy({ left: 300, behavior: 'smooth' });
   };
 
-  const filteredNews = newsData.filter((news) =>
-    news.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const fetchItems = async (): Promise<InfoItem[]> => {
+    const response = await axios.get('https://project-back-81mh.onrender.com/hub/items/', {
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+    return response.data;
+  };
 
-  const filteredSpecialists = specialistsData.filter((specialist) =>
-    specialist.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const { data: items, isError } = useQuery<InfoItem[], Error>({
+    queryKey: ['hubItems'],
+    queryFn: fetchItems,
+  });
 
-  const filteredCenters = centersData.filter((center) =>
-    center.address.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  if (isError) {
+    message.error('Failed to load information hub items');
+    return null;
+  }
+
+  const filtered = (type: 'news' | 'specialist' | 'center') =>
+    items?.filter((item) =>
+      item.type === type && item.title.toLowerCase().includes(searchTerm.toLowerCase())
+    ) || [];
 
   return (
     <Layout className="info-hub-layout">
-      <MenuPanel collapsed={collapsed} toggleCollapsed={() => setCollapsed(!collapsed)}  selectedPage={'/info_hub'}/>
+      <MenuPanel collapsed={collapsed} toggleCollapsed={() => setCollapsed(!collapsed)} selectedPage={'/info_hub'} />
       <Layout style={{ marginLeft: collapsed ? 70 : 250, transition: 'margin-left 0.3s ease' }}>
         <Header
           style={{
@@ -88,14 +95,14 @@ const InformationHub = () => {
 
           {/* News Section */}
           <section className="section">
-            <Title level={3} className="section-title">New news :</Title>
+            <Title level={3} className="section-title">Latest News :</Title>
             <div className="scroll-container">
               <Button className="scroll-btn" icon={<LeftOutlined />} onClick={() => scrollLeft(newsRef)} />
               <div className="scroll-content" ref={newsRef}>
-                {filteredNews.map((news, index) => (
-                  <Card key={index} className="info-card" hoverable onClick={() => navigate(`/info_hub/news/${index}`)}>
-                    <img src={news.image} alt={news.title} className="card-image" />
-                    <Meta title={news.title} description={news.source} />
+                {filtered('news').map((item) => (
+                  <Card key={item.id} className="info-card" hoverable onClick={() => navigate(`/info_hub/news/${item.id}`)}>
+                    <img src={item.image} alt={item.title} className="card-image" />
+                    <Meta title={item.title} description={item.content.substring(0, 60) + '...'} />
                   </Card>
                 ))}
               </div>
@@ -109,10 +116,10 @@ const InformationHub = () => {
             <div className="scroll-container">
               <Button className="scroll-btn" icon={<LeftOutlined />} onClick={() => scrollLeft(specialistsRef)} />
               <div className="scroll-content" ref={specialistsRef}>
-                {filteredSpecialists.map((specialist, index) => (
-                  <Card key={index} className="info-card" hoverable onClick={() => navigate(`/info_hub/specialist/${index}`)}>
-                    <img src={specialist.image} alt={specialist.name} className="card-image" />
-                    <Meta title={specialist.name} description={specialist.specialization} />
+                {filtered('specialist').map((item) => (
+                  <Card key={item.id} className="info-card" hoverable onClick={() => navigate(`/info_hub/specialist/${item.id}`)}>
+                    <img src={item.image} alt={item.title} className="card-image" />
+                    <Meta title={item.title} description={`Rating: ${item.average_rating}`} />
                   </Card>
                 ))}
               </div>
@@ -126,10 +133,10 @@ const InformationHub = () => {
             <div className="scroll-container">
               <Button className="scroll-btn" icon={<LeftOutlined />} onClick={() => scrollLeft(centersRef)} />
               <div className="scroll-content" ref={centersRef}>
-                {filteredCenters.map((center, index) => (
-                  <Card key={index} className="info-card" hoverable onClick={() => navigate(`/info_hub/therapy-center/${index}`)}>
-                    <img src={center.image} alt={center.address} className="card-image" />
-                    <Meta title={center.address} />
+                {filtered('center').map((item) => (
+                  <Card key={item.id} className="info-card" hoverable onClick={() => navigate(`/info_hub/therapy-center/${item.id}`)}>
+                    <img src={item.image} alt={item.title} className="card-image" />
+                    <Meta title={item.title} description={`Tags: ${item.tags.map(tag => tag.name).join(', ')}`} />
                   </Card>
                 ))}
               </div>

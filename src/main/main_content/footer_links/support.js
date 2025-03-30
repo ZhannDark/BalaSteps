@@ -1,0 +1,4 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+const Support = () => (_jsxs("div", Object.assign({ style: { padding: '40px', marginBottom: '410px' } }, { children: [_jsx("h1", { children: "Support" }), _jsx("p", { children: "We are here to help! If you need assistance with using BalaSteps, registering, adding a child, or managing your profile \u2014 contact us using the info below:" }), _jsx("h3", { children: "Contact Support" }), _jsxs("ul", { children: [_jsxs("li", { children: ["Email: ", _jsx("strong", { children: "support@balasteps.com" })] }), _jsxs("li", { children: ["Phone: ", _jsx("strong", { children: "+7 (777) 777-7777" })] })] }), _jsx("h3", { children: "Working Hours" }), _jsx("p", { children: "Monday \u2013 Friday, 9:00 \u2013 18:00 (GMT+6)" }), _jsx("p", { children: "We will respond to your message as soon as possible." })] })));
+export default Support;
+//# sourceMappingURL=support.js.map

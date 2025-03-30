@@ -18,12 +18,27 @@
 
 .search-bar {
   width: 200px !important;
-  margin-left: 310px;
+  margin-left: 210px;
   border-radius: 8px;
+  border: 1px solid #6d3c2c;
 }
 
 .filter-dropdown {
-  width: 200px;
+  width: 300px;
+  border-radius: 8px;
+  border: 1px solid #6d3c2c;
+}
+
+.new-thread {
+  background-color: #6d3c2c;
+  color: white;
+  border: none;
+}
+
+.new-thread:hover {
+  background-color: #8a5133 !important;
+  color: white !important;
+  border: none;
 }
 
 .forum-content {
@@ -42,7 +57,7 @@
 
 .thread-card {
   background: white;
-  padding: 15px;
+  padding: 10px;
   border-radius: 8px;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
   margin-bottom: 15px;

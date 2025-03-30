@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { Steps, Form, Input, Button, Card, notification } from 'antd';
+import {
+  Steps,
+  Form,
+  Input,
+  Button,
+  Card,
+  notification,
+} from 'antd';
 import './forget-password.scss';
 import AppHeader from '../main/header/header';
 import { useNavigate } from 'react-router-dom';
@@ -11,6 +18,7 @@ import {
   CloseCircleOutlined,
   ExclamationCircleOutlined,
 } from '@ant-design/icons';
+import axios from 'axios';
 
 const { Step } = Steps;
 
@@ -45,25 +53,18 @@ const ResetPasswordFlow = () => {
     setLoading(true);
     try {
       const values = await form.validateFields(['email']);
-      const res = await fetch(
-        'https://project-back-81mh.onrender.com/auth/request-password-reset/',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: values.email }),
-        }
+      await axios.post('https://project-back-81mh.onrender.com/auth/request-password-reset/', {
+        email: values.email,
+      });
+      openNotification('success', 'OTP Sent', 'Check your email for the code.');
+      setEmail(values.email);
+      setCurrentStep(1);
+    } catch (err: any) {
+      openNotification(
+        'error',
+        'Failed to Send OTP',
+        err?.response?.data?.message || 'Something went wrong.'
       );
-
-      if (res.ok) {
-        openNotification('success', 'OTP Sent', 'Check your email for the code.');
-        setEmail(values.email);
-        setCurrentStep(1);
-      } else {
-        const data = await res.json();
-        openNotification('error', 'Failed to Send OTP', data.message || 'Something went wrong.');
-      }
-    } catch (err) {
-      openNotification('warning', 'Error', 'Please enter a valid email address.');
     } finally {
       setLoading(false);
     }
@@ -73,24 +74,18 @@ const ResetPasswordFlow = () => {
     setLoading(true);
     try {
       const values = await form.validateFields(['otp']);
-      const res = await fetch(
-        'https://project-back-81mh.onrender.com/auth/verify-password-reset-otp/',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, otp: values.otp }),
-        }
+      await axios.post('https://project-back-81mh.onrender.com/auth/verify-password-reset-otp/', {
+        email,
+        otp: values.otp,
+      });
+      openNotification('success', 'OTP Verified', 'You can now set a new password.');
+      setCurrentStep(2);
+    } catch (err: any) {
+      openNotification(
+        'error',
+        'Invalid OTP',
+        err?.response?.data?.message || 'The code is incorrect.'
       );
-
-      if (res.ok) {
-        openNotification('success', 'OTP Verified', 'You can now set a new password.');
-        setCurrentStep(2);
-      } else {
-        const data = await res.json();
-        openNotification('error', 'Invalid OTP', data.message || 'The code is incorrect.');
-      }
-    } catch (err) {
-      openNotification('warning', 'Error', 'Please enter the OTP.');
     } finally {
       setLoading(false);
     }
@@ -100,25 +95,19 @@ const ResetPasswordFlow = () => {
     setLoading(true);
     try {
       const values = await form.validateFields(['password']);
-      const res = await fetch(
-        'https://project-back-81mh.onrender.com/auth/reset-password/',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, new_password: values.password }),
-        }
+      await axios.post('https://project-back-81mh.onrender.com/auth/reset-password/', {
+        email,
+        new_password: values.password,
+      });
+      openNotification('success', 'Password Reset', 'You can now log in with your new password.');
+      form.resetFields();
+      setTimeout(() => navigate('/login'), 2000);
+    } catch (err: any) {
+      openNotification(
+        'error',
+        'Reset Failed',
+        err?.response?.data?.message || 'Failed to reset password.'
       );
-
-      if (res.ok) {
-        openNotification('success', 'Password Reset', 'You can now log in with your new password.');
-        navigate('/login');
-        form.resetFields();
-      } else {
-        const data = await res.json();
-        openNotification('error', 'Reset Failed', data.message || 'Failed to reset password.');
-      }
-    } catch (err) {
-      openNotification('warning', 'Error', 'Please try again.');
     } finally {
       setLoading(false);
     }
