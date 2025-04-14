@@ -83,13 +83,10 @@ const Main_header = () => {
                 size="default"
                 icon={<UserOutlined />}
                 style={{
-                  marginRight: 8,
                   color: '#591C00',
                   backgroundColor: '#E2E3E0',
                 }}
-              >
-                ZZ
-              </Avatar>
+              />
             </Button>
           </Dropdown>
         </div>

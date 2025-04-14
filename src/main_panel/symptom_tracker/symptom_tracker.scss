@@ -1,60 +1,100 @@
-.logo {
-  font-size: 24px;
-  font-weight: bold;
-  color: #5c3d2e;
-  text-align: center;
-  padding: 20px 0;
+.symptom-layout {
+  min-height: 100vh;
+  background-color: #f5f5f5;
 }
 
-.profile {
-  margin-right: 24px;
-  font-size: 16px;
-  color: #5c3d2e;
+.header-bar {
+  background: #E2E3E0;
+  padding: 0;
+  height: 48px;
+  display: flex;
+  align-items: center;
 }
 
-.title {
-  font-family: 'Jacques Francois', serif;
-  font-weight: lighter;
-  font-size: 36px;
-  color: #591C00;
-  margin-bottom: 20px;
-  margin-top: -20px;
-}
-
-.add-button {
-  background-color: #426B1F;
-  color: white;
-  width: 110px;
-  font-family: 'Acme', sans-serif;
-  font-size: 14px;
-  border: none;
-  padding: 8px 20px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-}
-
-.add-button:hover {
-  background-color: #6B8E23 !important;
-}
-
-.symptom-card {
-  background: #f9f9f9;
-  padding: 15px;
-  border-radius: 5px;
-  border: 1px solid #d3c4a6;
-  margin-bottom: 10px;
+.symptom-content {
+  margin: 20px;
+  padding: 24px;
+  background-color: #fff;
+  border-radius: 10px;
 }
 
 .symptom-header {
   display: flex;
+  align-items: center;
+  margin-bottom: 20px;
   justify-content: space-between;
+}
+
+.symptom-header h2 {
+  margin: 0;
+  font-family: 'Jacques Francois', serif;
+  font-weight: lighter;
+  font-size: 32px;
+  color: #591C00;
+}
+
+.symptom-header .anticon-info-circle {
+  color: #9c9c9c;
+  cursor: pointer;
+}
+
+.events {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.events li {
+  margin-bottom: 4px;
+}
+
+.symptom-item {
+  margin-bottom: 15px;
+  background-color: #fdfdfd;
+  padding: 10px;
+  border: 1px solid #eaeaea;
+  border-radius: 8px;
+}
+
+.symptom-item h5 {
   margin-bottom: 5px;
+  color: #4b163b;
 }
 
-.symptom-card h4 {
-  color: #5c3d2e;
+.symptom-item p {
+  margin: 6px 0;
+  color: #444;
 }
 
-.symptom-card p {
-  color: #6b5b4e;
+.symptom-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+/* Обновлённый стиль для popover содержимого */
+.ant-popover-inner {
+  border-radius: 10px;
+  padding: 12px 16px;
+  max-width: 320px;
+}
+
+.calendar-cell {
+  width: 100%;
+  height: 100%;
+  margin-top: 7px;
+  padding: 4px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+}
+
+.calendar-cell:hover {
+  background-color: #f0f0f0;
+}
+
+.ant-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

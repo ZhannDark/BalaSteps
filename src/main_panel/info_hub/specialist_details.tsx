@@ -1,90 +1,65 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Layout, Button, Typography, Card, Rate, Input, List } from 'antd';
+import { Layout, Button, Typography, Card, Input, List, Rate, message } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import MenuPanel from '../../menu/menu-panel';
 import Main_header from '../main_header/Main_header';
-import './information_hub.scss';
+import axios from 'axios';
 
 const { Title, Text } = Typography;
 const { Header, Content } = Layout;
 const { TextArea } = Input;
 
-const specialistsData = [
-  {
-    name: 'Абдиев Габит Серикович',
-    specialization: 'Urologist',
-    experience: '15 years',
-    location: 'Almaty, Kazakhstan',
-    rating: 4.5,
-    image: '/images/specialist.jpg',
-  },
-];
-
 const SpecialistDetails = () => {
   const { id } = useParams<{ id: string }>();
-  const specialist = specialistsData[Number(id)];
   const navigate = useNavigate();
-  const [rating, setRating] = useState(specialist.rating);
-  const [comments, setComments] = useState<string[]>([]);
-  const [newComment, setNewComment] = useState('');
   const [collapsed, setCollapsed] = useState(false);
+  const [data, setData] = useState<any>(null);
+  const [comments, setComments] = useState<any[]>([]);
+  const [newComment, setNewComment] = useState('');
 
+  useEffect(() => {
+    axios.get(`https://project-back-81mh.onrender.com/info-hub/infohub/${id}/`)
+      .then(res => {
+        setData(res.data);
+        setComments(res.data.comments);
+      })
+      .catch(() => message.error('Failed to load specialist'));
+  }, [id]);
 
-  const handleAddComment = () => {
-    if (newComment.trim()) {
-      setComments([newComment, ...comments]);
+  const handleAddComment = async () => {
+    if (!newComment.trim()) return;
+    try {
+      const response = await axios.post(
+        `https://project-back-81mh.onrender.com/info-hub/infohub/${id}/comment/`,
+        { content: newComment }
+      );
+      setComments([response.data, ...comments]);
       setNewComment('');
+    } catch {
+      message.error('Failed to post comment');
     }
-  };
-
-  const toggleCollapsed = () => {
-    setCollapsed(!collapsed);
   };
 
   return (
     <Layout>
-      <MenuPanel collapsed={collapsed} toggleCollapsed={toggleCollapsed} selectedPage={'/info_hub'} />
-      <Layout style={{ marginLeft: collapsed ? 100 : 250, transition: 'margin-left 0.3s ease' }}>
-        <Header
-          style={{
-            padding: 0,
-            marginLeft: '5px',
-            background: '#E2E3E0',
-            height: '48px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <Main_header />
-        </Header>
+      <MenuPanel collapsed={collapsed} toggleCollapsed={() => setCollapsed(!collapsed)} selectedPage="/info_hub" />
+      <Layout style={{ marginLeft: collapsed ? 100 : 250 }}>
+        <Header style={{ background: '#E2E3E0', height: 48 }}><Main_header /></Header>
         <Content className="details-container">
-          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/info_hub')} className="back-button">
-            Back
-          </Button>
-          <Card className="details-card">
-            <img src={specialist.image} alt={specialist.name} className="details-image" />
-            <Title>{specialist.name}</Title>
-            <Text strong>{specialist.specialization}</Text>
-            <Text>Experience: {specialist.experience}</Text>
-            <Text>Location: {specialist.location}</Text>
-            <Rate allowHalf defaultValue={rating} onChange={(value) => setRating(value)} />
-          </Card>
-
+          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/info_hub')}>Back</Button>
+          {data && (
+            <Card className="details-card">
+              <img src={data.photo} alt={data.title} className="details-image" />
+              <Title>{data.title}</Title>
+              <Text>{data.content}</Text>
+              <Rate disabled value={Number(data.average_rating || 4)} />
+            </Card>
+          )}
           <Title level={3}>Comments</Title>
-          <TextArea
-            placeholder="Write a comment..."
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-          />
-          <Button type="primary" onClick={handleAddComment} className="comment-button">
-            Add Comment
-          </Button>
-          <List
-            dataSource={comments}
-            renderItem={(comment, index) => <List.Item key={index}>{comment}</List.Item>}
-          />
+          <TextArea value={newComment} onChange={(e) => setNewComment(e.target.value)} />
+          <Button type="primary" onClick={handleAddComment}>Add Comment</Button>
+          <List dataSource={comments} renderItem={(c) => <List.Item key={c.id}>{c.content}</List.Item>} />
         </Content>
       </Layout>
     </Layout>

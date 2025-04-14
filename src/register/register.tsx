@@ -54,7 +54,7 @@ const Register = () => {
       );
       setTimeout(() => {
         navigate('/send-otp', { state: { email: variables.email } });
-      }, 6000);
+      }, 4000);
     },
     onError: (error: any) => {
       const emailError = error?.response?.data?.email?.[0];
@@ -147,7 +147,7 @@ const Register = () => {
                 loading={registerMutation.isPending}
                 className="register-button"
               >
-                Register
+                Continue
               </Button>
               <span className="login-link-inline">
                 Already have an account?{' '}

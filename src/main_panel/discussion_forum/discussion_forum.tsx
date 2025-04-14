@@ -33,16 +33,6 @@ interface Thread {
   topic: string;
 }
 
-const topics = [
-  "Child's Condition & Diagnosis",
-  'Therapy & Treatment',
-  'Education & Learning Support',
-  'Parenting & Daily Life',
-  'Community & Socialization',
-  'Legal & Financial Assistance',
-  'Technology & Accessibility',
-];
-
 const DiscussionForum: React.FC = () => {
   const [threads, setThreads] = useState<Thread[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -52,6 +42,22 @@ const DiscussionForum: React.FC = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await axios.get('https://project-back-81mh.onrender.com/forum/categories/');
+        console.log(res.data);
+        setCategories(res.data);
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
 
   const token = localStorage.getItem('accessToken');
 
@@ -70,10 +76,10 @@ const DiscussionForum: React.FC = () => {
         const formatted = response.data.map((post: any) => ({
           id: post.id,
           title: post.title,
-          author: post.user || 'Unknown',
+          author: post.user,
           createdAt: dayjs(post.created_at).format('MMMM D, YYYY'),
           content: post.content,
-          topic: post.categories[0]?.name || 'General',
+          topic: post.category,
         }));
 
         setThreads(formatted);
@@ -94,7 +100,7 @@ const DiscussionForum: React.FC = () => {
       const payload = {
         title: values.title,
         content: values.content,
-        categories: [{ name: values.topic }],
+        category: values.topic,
       };
 
       const response = await axios.post(
@@ -114,7 +120,7 @@ const DiscussionForum: React.FC = () => {
         author: response.data.user || 'You',
         createdAt: dayjs(response.data.created_at).format('MMMM D, YYYY'),
         content: response.data.content,
-        topic: response.data.categories[0]?.name || 'General',
+        topic: response.data.category,
       };
 
       setThreads((prev) => [newThread, ...prev]);
@@ -187,9 +193,9 @@ const DiscussionForum: React.FC = () => {
               allowClear
               onChange={handleTopicFilter}
             >
-              {topics.map((topic) => (
-                <Option key={topic} value={topic}>
-                  {topic}
+              {categories.map((cat) => (
+                <Option key={cat.id} value={cat.name}>
+                  {cat.name}
                 </Option>
               ))}
             </Select>
@@ -248,9 +254,9 @@ const DiscussionForum: React.FC = () => {
             rules={[{ required: true, message: 'Please select a topic' }]}
           >
             <Select placeholder="Select a topic">
-              {topics.map((topic) => (
-                <Option key={topic} value={topic}>
-                  {topic}
+              {categories.map((cat) => (
+                <Option key={cat.id} value={cat.name}>
+                  {cat.name}
                 </Option>
               ))}
             </Select>

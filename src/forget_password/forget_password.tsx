@@ -129,7 +129,7 @@ const ResetPasswordFlow = () => {
             <Input placeholder="Enter your email" />
           </Form.Item>
           <Button className="step-button" loading={loading} onClick={handleSendOTP}>
-            Send OTP
+            Continue
           </Button>
         </>
       ),
@@ -163,15 +163,38 @@ const ResetPasswordFlow = () => {
             name="password"
             label="New Password"
             rules={[{ required: true, message: 'Enter your new password' }]}
+            hasFeedback
           >
             <Input.Password placeholder="Enter new password" />
           </Form.Item>
+
+          <Form.Item
+            label="Confirm Password"
+            name="confirmPassword"
+            dependencies={['password']}
+            hasFeedback
+            rules={[
+              { required: true, message: 'Please confirm your password!' },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue('password') === value) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error('Passwords do not match!'));
+                },
+              }),
+            ]}
+          >
+            <Input.Password placeholder="Confirm your password" />
+          </Form.Item>
+
           <Button className="step-button" loading={loading} onClick={handleResetPassword}>
             Reset Password
           </Button>
         </>
       ),
-    },
+    }
+
   ];
 
   return (

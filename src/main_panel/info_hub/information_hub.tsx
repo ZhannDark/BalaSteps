@@ -1,5 +1,12 @@
 import React, { useRef, useState } from 'react';
-import { Typography, Card, Input, Button, Layout, message } from 'antd';
+import {
+  Typography,
+  Card,
+  Input,
+  Button,
+  Layout,
+  message,
+} from 'antd';
 import { RightOutlined, LeftOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import './information_hub.scss';
@@ -15,12 +22,11 @@ const { Header, Content } = Layout;
 
 interface InfoItem {
   id: string;
-  type: 'news' | 'specialist' | 'center';
   title: string;
   content: string;
-  image?: string;
+  photo?: string;
+  category: { id: string; name: string };
   tags: { name: string }[];
-  average_rating: string;
 }
 
 const InformationHub = () => {
@@ -40,15 +46,11 @@ const InformationHub = () => {
   };
 
   const fetchItems = async (): Promise<InfoItem[]> => {
-    const response = await axios.get('https://project-back-81mh.onrender.com/hub/items/', {
-      headers: {
-        'Accept': 'application/json',
-      },
-    });
+    const response = await axios.get('https://project-back-81mh.onrender.com/info-hub/infohub/');
     return response.data;
   };
 
-  const { data: items, isError } = useQuery<InfoItem[], Error>({
+  const { data: items = [], isError } = useQuery<InfoItem[]>({
     queryKey: ['hubItems'],
     queryFn: fetchItems,
   });
@@ -58,15 +60,17 @@ const InformationHub = () => {
     return null;
   }
 
-  const filtered = (type: 'news' | 'specialist' | 'center') =>
-    items?.filter((item) =>
-      item.type === type && item.title.toLowerCase().includes(searchTerm.toLowerCase())
-    ) || [];
+  const filterByCategory = (categoryName: string) =>
+    items.filter(
+      (item) =>
+        item.category?.name.toLowerCase() === categoryName.toLowerCase() &&
+        item.title.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
   return (
     <Layout className="info-hub-layout">
       <MenuPanel collapsed={collapsed} toggleCollapsed={() => setCollapsed(!collapsed)} selectedPage={'/info_hub'} />
-      <Layout style={{ marginLeft: collapsed ? 70 : 250, transition: 'margin-left 0.3s ease' }}>
+      <Layout style={{ marginLeft: collapsed ? 70 : 250 }}>
         <Header
           style={{
             padding: 0,
@@ -80,7 +84,6 @@ const InformationHub = () => {
         >
           <Main_header />
         </Header>
-
         <Content className="content-container">
           <div className="name-search">
             <h1 className="title">Information Hub</h1>
@@ -93,16 +96,16 @@ const InformationHub = () => {
             />
           </div>
 
-          {/* News Section */}
+          {/* News */}
           <section className="section">
             <Title level={3} className="section-title">Latest News :</Title>
             <div className="scroll-container">
               <Button className="scroll-btn" icon={<LeftOutlined />} onClick={() => scrollLeft(newsRef)} />
               <div className="scroll-content" ref={newsRef}>
-                {filtered('news').map((item) => (
+                {filterByCategory('News').map((item) => (
                   <Card key={item.id} className="info-card" hoverable onClick={() => navigate(`/info_hub/news/${item.id}`)}>
-                    <img src={item.image} alt={item.title} className="card-image" />
-                    <Meta title={item.title} description={item.content.substring(0, 60) + '...'} />
+                    <img src={item.photo} alt={item.title} className="card-image" />
+                    <Meta title={item.title} description={item.content.slice(0, 60) + '...'} />
                   </Card>
                 ))}
               </div>
@@ -110,16 +113,16 @@ const InformationHub = () => {
             </div>
           </section>
 
-          {/* Specialists Section */}
+          {/* Specialists */}
           <section className="section">
             <Title level={3} className="section-title">Specialists :</Title>
             <div className="scroll-container">
               <Button className="scroll-btn" icon={<LeftOutlined />} onClick={() => scrollLeft(specialistsRef)} />
               <div className="scroll-content" ref={specialistsRef}>
-                {filtered('specialist').map((item) => (
+                {filterByCategory('Specialists').map((item) => (
                   <Card key={item.id} className="info-card" hoverable onClick={() => navigate(`/info_hub/specialist/${item.id}`)}>
-                    <img src={item.image} alt={item.title} className="card-image" />
-                    <Meta title={item.title} description={`Rating: ${item.average_rating}`} />
+                    <img src={item.photo} alt={item.title} className="card-image" />
+                    <Meta title={item.title} description={`Tags: ${item.tags.map(tag => tag.name).join(', ')}`} />
                   </Card>
                 ))}
               </div>
@@ -127,15 +130,15 @@ const InformationHub = () => {
             </div>
           </section>
 
-          {/* Therapy Centers Section */}
+          {/* Therapy Centers */}
           <section className="section">
             <Title level={3} className="section-title">Therapy Centers :</Title>
             <div className="scroll-container">
               <Button className="scroll-btn" icon={<LeftOutlined />} onClick={() => scrollLeft(centersRef)} />
               <div className="scroll-content" ref={centersRef}>
-                {filtered('center').map((item) => (
+                {filterByCategory('Therapy Centers').map((item) => (
                   <Card key={item.id} className="info-card" hoverable onClick={() => navigate(`/info_hub/therapy-center/${item.id}`)}>
-                    <img src={item.image} alt={item.title} className="card-image" />
+                    <img src={item.photo} alt={item.title} className="card-image" />
                     <Meta title={item.title} description={`Tags: ${item.tags.map(tag => tag.name).join(', ')}`} />
                   </Card>
                 ))}

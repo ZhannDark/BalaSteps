@@ -25,6 +25,8 @@ interface Comment {
   user: string;
   content: string;
   created_at: string;
+  likes_count: string;
+  replies: string;
 }
 
 interface PostDetails {
@@ -33,7 +35,7 @@ interface PostDetails {
   content: string;
   user: string;
   created_at: string;
-  categories: { name: string }[];
+  category: string;
   comments: Comment[];
 }
 
@@ -122,7 +124,7 @@ const DiscussionDetails: React.FC = () => {
               <Card className="discussion-card">
                 <div className="discussion-meta">
                   <Title level={5} className="author-name">{post.user}</Title>
-                  <div className="category-label">{post.categories[0]?.name}</div>
+                  <div className="category-label">{post.category}</div>
                 </div>
                 <Divider />
                 <p className="discussion-content-text">{post.content}</p>

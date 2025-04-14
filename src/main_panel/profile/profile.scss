@@ -21,31 +21,73 @@
   display: flex;
   gap: 40px;
   align-items: flex-start;
-  justify-content: space-between;
   padding: 20px;
+  flex-wrap: wrap;
 }
 
 .profile-left {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 40%;
+  flex: 0 0 150px;
+
+  .profile-image {
+    width: 180px;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+  }
 }
 
-.profile-info-basic {
-  margin-top: 20px;
-  text-align: center;
+.profile-info-right {
+  flex: 1;
+  min-width: 250px;
+
+  .profile-fullname {
+    margin-bottom: 8px;
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .profile-links {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 10px;
+
+    a {
+      color: #000;
+      font-size: 14px;
+      text-decoration: none;
+      cursor: pointer;
+
+      &:hover {
+        color: #365517;
+        text-decoration: underline;
+      }
+    }
+  }
+
+  .profile-action-buttons {
+    display: flex;
+    gap: 10px;
+
+    .ant-btn {
+      border-color: #591C00;
+      color: #591C00;
+    }
+
+    .ant-btn:hover {
+      color: #fff;
+      background-color: #591C00;
+      border-color: #591C00;
+    }
+  }
 }
 
-.profile-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.profile-right {
-  width: 60%;
+.profile-form-readonly {
+  flex: 1;
+  min-width: 250px;
+  margin-left: auto;
 }
 
 .profile-form {
@@ -53,55 +95,7 @@
   border: 1px solid #eee;
   padding: 20px;
   border-radius: 10px;
-}
 
-.profile-picture-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  max-width: 200px;
-}
-
-.profile-image {
-  width: 150px;
-  height: 150px;
-  object-fit: cover;
-  border-radius: 10px;
-}
-
-.profile-options {
-  a {
-    color: #315016;
-    font-weight: 500;
-  }
-
-  a:hover {
-    color: #6B8E23;
-  }
-}
-
-.profile-details {
-  flex: 1;
-}
-
-.profile-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 24px;
-
-  h1 {
-    font-size: 24px;
-    font-weight: bold;
-    color: #4B163B;
-  }
-
-  button {
-    margin-left: 8px;
-  }
-}
-
-.profile-form {
   .ant-form-item-label {
     font-weight: 500;
     color: #333;
@@ -113,6 +107,7 @@
   padding: 24px;
   border-radius: 12px;
   border: 1px solid #ddd;
+  margin-top: 30px;
 }
 
 .children-section h3 {

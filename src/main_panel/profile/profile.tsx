@@ -56,6 +56,8 @@ const ProfilePage = () => {
   const [timer, setTimer] = useState(600);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const [changeEmailModalVisible, setChangeEmailModalVisible] = useState(false);
+  const [newEmailInput, setNewEmailInput] = useState('');
 
   const accessToken = localStorage.getItem('accessToken');
 
@@ -98,7 +100,7 @@ const ProfilePage = () => {
     return res.data;
   };
 
-  const handleVerifyOtp = async (values: any) => {
+  const handleVerifyOtp = async (values) => {
     try {
       setLoading(true);
       await axios.post(
@@ -178,7 +180,7 @@ const ProfilePage = () => {
       queryClient.invalidateQueries({ queryKey: ['children'] });
     } catch (err: any) {
       console.error(
-        '❌ Failed to update child:',
+        'Failed to update child:',
         err?.response?.data || err.message
       );
       message.error('Failed to update child');
@@ -217,7 +219,6 @@ const ProfilePage = () => {
     setIsModalVisible(true);
     form.setFieldsValue({
       full_name: profile?.full_name,
-      email: profile?.email,
       additional_info: profile?.additional_info,
       city: profile?.city,
     });
@@ -229,7 +230,6 @@ const ProfilePage = () => {
       const formData = new FormData();
 
       formData.append('full_name', values.full_name);
-      formData.append('email', values.email);
       formData.append('additional_info', values.additional_info || '');
       formData.append('city', values.city || '');
 
@@ -305,63 +305,78 @@ const ProfilePage = () => {
         toggleCollapsed={() => setCollapsed(!collapsed)}
         selectedPage={null}
       />
-
       <Layout style={{ marginLeft: collapsed ? 100 : 250 }}>
-        <Header className="main-header">
+        <Header
+          style={{
+            padding: 0,
+            marginLeft: '5px',
+            background: '#E2E3E0',
+            height: '48px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
           <Main_header />
         </Header>
-
         <Content className="profile-page">
           <h1 className="profile-title">Profile</h1>
           {!profile ? (
             <Skeleton active avatar paragraph={{ rows: 4 }} />
           ) : (
             <div className="profile-container">
-              {/* Левая часть: аватар и имя */}
               <div className="profile-left">
-                <div className="profile-picture-section">
-                  <img
-                    key={profile.profile_photo}
-                    src={`${profile.profile_photo || img}?${Date.now()}`}
-                    alt="Profile"
-                    className="profile-image"
-                  />
-                  <div className="profile-options">
-                    <a onClick={() => navigate('/forgot-password')}>
-                      Change password
-                    </a>
-                  </div>
+                <img
+                  key={profile.profile_photo}
+                  src={`${profile.profile_photo || img}?${Date.now()}`}
+                  alt="Profile"
+                  className="profile-image"
+                />
+              </div>
+
+              <div className="profile-info-right">
+                <h2 className="profile-fullname">{profile.full_name}</h2>
+
+                <div className="profile-links">
+                  <a onClick={() => navigate('/change-phone')}>Change email</a>
+                  <a onClick={() => navigate('/forgot-password')}>
+                    Change password
+                  </a>
                 </div>
 
-                <div className="profile-info-basic">
-                  <h1 className="profile-name">{profile.full_name}</h1>
-                  <div className="profile-buttons">
-                    <Button icon={<EditOutlined />} onClick={handleEditClick}>
-                      Edit
-                    </Button>
-                    <Button icon={<PlusOutlined />} onClick={() => setAddChildModalVisible(true)}>
-                      + Add child
-                    </Button>
-                  </div>
+                <div className="profile-action-buttons">
+                  <Button
+                    icon={<PlusOutlined />}
+                    onClick={() => setAddChildModalVisible(true)}
+                  >
+                    Add child
+                  </Button>
+                  <Button icon={<EditOutlined />} onClick={handleEditClick}>
+                    Edit
+                  </Button>
+                  <Button onClick={() => setChangeEmailModalVisible(true)}>
+                    Change Email
+                  </Button>
                 </div>
               </div>
 
-              {/* Правая часть: формы */}
-              <div className="profile-right">
-                <Form layout="vertical" className="profile-form">
-                  <Form.Item label="Additional Info">
+              <div className="profile-form-readonly">
+                <Form layout="vertical">
+                  <Form.Item label="Additional Info (optional):">
                     <Input.TextArea
-                      value={profile.additional_info || ''}
+                      value={
+                        profile.additional_info ||
+                        'Empty additional information...'
+                      }
                       disabled
                     />
                   </Form.Item>
-                  <Form.Item label="City">
-                    <Input value={profile.city || ''} disabled />
+                  <Form.Item label="City (optional):">
+                    <Input value={profile.city || 'Empty'} disabled />
                   </Form.Item>
                 </Form>
               </div>
             </div>
-
           )}
 
           {!children ? (
@@ -372,10 +387,19 @@ const ProfilePage = () => {
               {children.map((child) => (
                 <div key={child.id} className="child-card">
                   <h3>{child.full_name}</h3>
-                  <Divider style={{ marginTop: '-10px', marginBottom: '10px' }} />
-                  <p><strong>Birthday:</strong> {child.birthday}</p>
-                  <p><strong>Diagnose:</strong> {child.diagnoses.map((d) => d.name).join(', ')}</p>
-                  <p><strong>Gender:</strong> {child.gender}</p>
+                  <Divider
+                    style={{ marginTop: '-10px', marginBottom: '10px' }}
+                  />
+                  <p>
+                    <strong>Birthday:</strong> {child.birthday}
+                  </p>
+                  <p>
+                    <strong>Diagnose:</strong>{' '}
+                    {child.diagnoses.map((d) => d.name).join(', ')}
+                  </p>
+                  <p>
+                    <strong>Gender:</strong> {child.gender}
+                  </p>
                   <Button
                     type="link"
                     icon={<EditOutlined />}
@@ -411,13 +435,6 @@ const ProfilePage = () => {
                 <Input />
               </Form.Item>
               <Form.Item
-                name="email"
-                label="Email"
-                rules={[{ required: true }]}
-              >
-                <Input />
-              </Form.Item>
-              <Form.Item
                 name="profile_photo"
                 label="Profile Image"
                 valuePropName="fileList"
@@ -437,6 +454,62 @@ const ProfilePage = () => {
               <Form.Item name="city" label="City">
                 <Input />
               </Form.Item>
+            </Form>
+          </Modal>
+
+          {/* Edit Email */}
+          <Modal
+            title="Change Email"
+            open={changeEmailModalVisible}
+            onCancel={() => setChangeEmailModalVisible(false)}
+            footer={null}
+          >
+            <Form
+              onFinish={async () => {
+                try {
+                  const formData = new FormData();
+                  formData.append('email', newEmailInput);
+
+                  await axios.patch(
+                    'https://project-back-81mh.onrender.com/auth/profile/',
+                    formData,
+                    {
+                      headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        'Content-Type': 'multipart/form-data',
+                      },
+                    }
+                  );
+
+                  setNewEmail(newEmailInput); // for otp
+                  setChangeEmailModalVisible(false);
+                  setIsOtpModalVisible(true);
+                  setTimer(600);
+                } catch (err) {
+                  console.error(err);
+                  message.error('Failed to send email update');
+                }
+              }}
+            >
+              <Form.Item
+                label="New Email"
+                name="newEmail"
+                rules={[{ required: true, type: 'email' }]}
+              >
+                <Input
+                  value={newEmailInput}
+                  onChange={(e) => setNewEmailInput(e.target.value)}
+                  placeholder="Enter new email"
+                />
+              </Form.Item>
+
+              <Button
+                htmlType="submit"
+                type="primary"
+                style={{ width: '100%' }}
+              >
+                Send OTP
+              </Button>
             </Form>
           </Modal>
 

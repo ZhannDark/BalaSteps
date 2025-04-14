@@ -56,7 +56,6 @@ const VerifyOTP = () => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            email: email,
             otp: otp,
           }),
         }
@@ -70,7 +69,7 @@ const VerifyOTP = () => {
         );
         setTimeout(() => {
           navigate('/login');
-        }, 5000);
+        }, 4000);
       } else {
         openNotification(
           'error',
@@ -97,7 +96,7 @@ const VerifyOTP = () => {
         <div className="verify-otp-box">
           <Title level={2} className="verify-otp-title">Validate email</Title>
           <Text className="verify-otp-text">
-            For security reasons, we have sent a text message containing a code to verify your email.
+            For security reasons, we have sent a text message containing a code to verify your email address.
           </Text>
           <Form layout="vertical" className="verify-otp-form">
             <Form.Item label="Verification code :" className="otp-input-item">
@@ -114,7 +113,7 @@ const VerifyOTP = () => {
               loading={loading}
               className="verify-otp-button"
             >
-              Verify code
+              Verify email
             </Button>
           </Form>
         </div>

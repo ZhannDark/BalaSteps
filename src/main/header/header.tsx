@@ -12,10 +12,11 @@ const AppHeader = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [showNav, setShowNav] = useState(true);
-  const [buttonText, setButtonText] = useState('Register');
+  const [showLoginButton, setShowLoginButton] = useState(true);
+  const [showRegisterButton, setShowRegisterButton] = useState(true);
 
-  const handleButtonClick = () => {
-    if (location.pathname === '/register') {
+  const handleButtonClick = (auth: string): void => {
+    if (location.pathname === '/register' || auth === 'login') {
       navigate('/login');
     } else {
       navigate('/register');
@@ -25,19 +26,21 @@ const AppHeader = () => {
   useEffect(() => {
     if (location.pathname === '/register') {
       setShowNav(false);
-      setButtonText('Login');
+      setShowLoginButton(true);
+      setShowRegisterButton(false);
     } else if (location.pathname === '/login') {
       setShowNav(false);
-      setButtonText('Register');
+      setShowLoginButton(false);
+      setShowRegisterButton(true);
     } else if (location.pathname === '/forgot-password') {
       setShowNav(false);
-      setButtonText('Register');
     } else if (location.pathname === '/send-otp') {
+      console.log('send otp');
       setShowNav(false);
-      setButtonText('Login');
+      setShowLoginButton(true);
+      setShowRegisterButton(false);
     } else {
       setShowNav(true);
-      setButtonText('Register');
     }
   }, [location.pathname]);
 
@@ -69,8 +72,19 @@ const AppHeader = () => {
           </nav>
         </div>
       )}
-      <Button className="register-btn" onClick={handleButtonClick}>
-        {buttonText}
+      <Button
+        style={{ display: showRegisterButton ? 'flex' : 'none' }}
+        className="register-btn"
+        onClick={() => handleButtonClick('register')}
+      >
+        Register
+      </Button>
+      <Button
+        style={{ display: showLoginButton ? 'flex' : 'none' }}
+        className="register-btn"
+        onClick={() => handleButtonClick('login')}
+      >
+        Login
       </Button>
     </Header>
   );
