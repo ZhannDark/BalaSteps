@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useMutation } from '@tanstack/react-query';
 import './register.scss';
-import AppHeader from '../main/header/header';
+import AppHeader from '../../main_page/header/header';
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,

@@ -8,10 +8,18 @@ import {
   Upload,
   message,
   DatePicker,
+  Steps,
+  notification,
   Radio,
   Divider,
 } from 'antd';
-import { EditOutlined, UploadOutlined, PlusOutlined } from '@ant-design/icons';
+import {
+  EditOutlined,
+  UploadOutlined,
+  PlusOutlined,
+  CheckOutlined,
+  MailOutlined,
+} from '@ant-design/icons';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import dayjs from 'dayjs';
@@ -23,6 +31,7 @@ import { useNavigate } from 'react-router-dom';
 import { Skeleton } from 'antd';
 
 const { Content, Header } = Layout;
+const { Step } = Steps;
 
 interface ProfileData {
   full_name: string;
@@ -46,18 +55,18 @@ const ProfilePage = () => {
   const [isAddChildModalVisible, setAddChildModalVisible] = useState(false);
   const [isEditChildModalVisible, setEditChildModalVisible] = useState(false);
   const [editChildId, setEditChildId] = useState<string | null>(null);
-  const [isOtpModalVisible, setIsOtpModalVisible] = useState(false);
+  const [emailStepModalVisible, setEmailStepModalVisible] = useState(false);
   const [editChildForm] = Form.useForm();
   const [form] = Form.useForm();
   const [childForm] = Form.useForm();
   const [otpForm] = Form.useForm();
+  const [emailForm] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState(0);
   const [newEmail, setNewEmail] = useState('');
   const [timer, setTimer] = useState(600);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [changeEmailModalVisible, setChangeEmailModalVisible] = useState(false);
-  const [newEmailInput, setNewEmailInput] = useState('');
 
   const accessToken = localStorage.getItem('accessToken');
 
@@ -100,15 +109,37 @@ const ProfilePage = () => {
     return res.data;
   };
 
-  const handleVerifyOtp = async (values) => {
+  const handleSendOtp = async (values: { newEmail: string }) => {
+    try {
+      const formData = new FormData();
+      formData.append('email', values.newEmail);
+      await axios.patch(
+        'https://project-back-81mh.onrender.com/auth/profile/',
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      setNewEmail(values.newEmail);
+      notification.success({ message: 'OTP sent to your new email' });
+      setStep(1);
+      setTimer(600);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        notification.error({ message: 'Failed to send OTP' });
+      }
+    }
+  };
+
+  const handleVerifyOtp = async (values: { otp: string }) => {
     try {
       setLoading(true);
       await axios.post(
         'https://project-back-81mh.onrender.com/auth/verify-new-email/',
-        {
-          new_email: newEmail,
-          otp: values.otp,
-        },
+        { new_email: newEmail, otp: values.otp },
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -116,17 +147,73 @@ const ProfilePage = () => {
           },
         }
       );
-      message.success('Email updated successfully!');
-      setIsOtpModalVisible(false);
-      setIsModalVisible(false);
+      notification.success({ message: 'Email successfully updated' });
+      setEmailStepModalVisible(false);
       queryClient.invalidateQueries({ queryKey: ['profile'] });
-    } catch (err) {
-      console.error(err);
-      message.error('OTP verification failed');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        notification.error({ message: 'Invalid OTP code' });
+      }
     } finally {
       setLoading(false);
     }
   };
+
+  const EmailChangeModal = (
+    <Modal
+      title="Change Email"
+      open={emailStepModalVisible}
+      onCancel={() => {
+        setStep(0);
+        setEmailStepModalVisible(false);
+      }}
+      footer={null}
+    >
+      <Steps current={step} style={{ marginBottom: 24 }}>
+        <Step title="Enter Email" icon={<MailOutlined />} />
+        <Step title="Verify OTP" icon={<CheckOutlined />} />
+      </Steps>
+
+      {step === 0 ? (
+        <Form form={emailForm} onFinish={handleSendOtp}>
+          <Form.Item
+            name="newEmail"
+            label="New Email"
+            rules={[{ required: true, type: 'email' }]}
+          >
+            <Input placeholder="example@mail.com" />
+          </Form.Item>
+          <Button type="primary" htmlType="submit" block>
+            Send OTP
+          </Button>
+        </Form>
+      ) : (
+        <Form form={otpForm} onFinish={handleVerifyOtp}>
+          <Form.Item
+            name="otp"
+            label="OTP"
+            rules={[{ required: true, message: 'Please enter the OTP' }]}
+          >
+            <Input placeholder="Enter the OTP" />
+          </Form.Item>
+          <Button
+            type="primary"
+            htmlType="submit"
+            loading={loading}
+            disabled={timer === 0 ? false : loading}
+            block
+          >
+            Verify
+          </Button>
+          <p style={{ marginTop: 12 }}>
+            {timer > 0
+              ? `Resend available in ${formatTimer(timer)}`
+              : 'You can resend now.'}
+          </p>
+        </Form>
+      )}
+    </Modal>
+  );
 
   const handleEditChildClick = async (id: string) => {
     try {
@@ -141,12 +228,12 @@ const ProfilePage = () => {
       });
       setEditChildId(id);
       setEditChildModalVisible(true);
-    } catch (err: any) {
-      console.error(
-        'Error while fetching child:',
-        err?.response?.data || err.message
-      );
-      message.error('Failed to fetch child data');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error(err.message);
+      } else {
+        console.error('Unknown error:', err);
+      }
     }
   };
 
@@ -178,12 +265,12 @@ const ProfilePage = () => {
       message.success('Child updated!');
       setEditChildModalVisible(false);
       queryClient.invalidateQueries({ queryKey: ['children'] });
-    } catch (err: any) {
-      console.error(
-        'Failed to update child:',
-        err?.response?.data || err.message
-      );
-      message.error('Failed to update child');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error(err.message);
+      } else {
+        console.error('Unknown error:', err);
+      }
     }
   };
 
@@ -199,21 +286,21 @@ const ProfilePage = () => {
     return response.data;
   };
 
-  const { data: profile, isError: profileError } = useQuery<ProfileData, Error>(
+  const { data: profile, isLoading } = useQuery<ProfileData, Error>({
+    queryKey: ['profile'],
+    queryFn: fetchProfile,
+  });
+
+  const { data: children, refetch: refetchChildren } = useQuery<Child[], Error>(
     {
-      queryKey: ['profile'],
-      queryFn: fetchProfile,
+      queryKey: ['children'],
+      queryFn: fetchChildren,
     }
   );
 
-  const {
-    data: children,
-    isError: childrenError,
-    refetch: refetchChildren,
-  } = useQuery<Child[], Error>({
-    queryKey: ['children'],
-    queryFn: fetchChildren,
-  });
+  if (isLoading) {
+    return <Skeleton active paragraph={{ rows: 6 }} />;
+  }
 
   const handleEditClick = () => {
     setIsModalVisible(true);
@@ -250,7 +337,7 @@ const ProfilePage = () => {
 
       if (values.email !== profile?.email) {
         setNewEmail(values.email);
-        setIsOtpModalVisible(true);
+        setEmailStepModalVisible(true);
         setTimer(600);
       } else {
         message.success('Profile updated!');
@@ -293,10 +380,6 @@ const ProfilePage = () => {
       message.error('Failed to add child.');
     }
   };
-
-  if (profileError || !profile) {
-    return <p style={{ padding: 20, color: 'red' }}>Failed to load profile.</p>;
-  }
 
   return (
     <Layout className="profile-layout">
@@ -354,7 +437,7 @@ const ProfilePage = () => {
                   <Button icon={<EditOutlined />} onClick={handleEditClick}>
                     Edit
                   </Button>
-                  <Button onClick={() => setChangeEmailModalVisible(true)}>
+                  <Button onClick={() => setEmailStepModalVisible(true)}>
                     Change Email
                   </Button>
                 </div>
@@ -456,62 +539,7 @@ const ProfilePage = () => {
               </Form.Item>
             </Form>
           </Modal>
-
-          {/* Edit Email */}
-          <Modal
-            title="Change Email"
-            open={changeEmailModalVisible}
-            onCancel={() => setChangeEmailModalVisible(false)}
-            footer={null}
-          >
-            <Form
-              onFinish={async () => {
-                try {
-                  const formData = new FormData();
-                  formData.append('email', newEmailInput);
-
-                  await axios.patch(
-                    'https://project-back-81mh.onrender.com/auth/profile/',
-                    formData,
-                    {
-                      headers: {
-                        Authorization: `Bearer ${accessToken}`,
-                        'Content-Type': 'multipart/form-data',
-                      },
-                    }
-                  );
-
-                  setNewEmail(newEmailInput); // for otp
-                  setChangeEmailModalVisible(false);
-                  setIsOtpModalVisible(true);
-                  setTimer(600);
-                } catch (err) {
-                  console.error(err);
-                  message.error('Failed to send email update');
-                }
-              }}
-            >
-              <Form.Item
-                label="New Email"
-                name="newEmail"
-                rules={[{ required: true, type: 'email' }]}
-              >
-                <Input
-                  value={newEmailInput}
-                  onChange={(e) => setNewEmailInput(e.target.value)}
-                  placeholder="Enter new email"
-                />
-              </Form.Item>
-
-              <Button
-                htmlType="submit"
-                type="primary"
-                style={{ width: '100%' }}
-              >
-                Send OTP
-              </Button>
-            </Form>
-          </Modal>
+          {EmailChangeModal}
 
           {/* Add Child Modal */}
           <Modal
@@ -614,36 +642,6 @@ const ProfilePage = () => {
                   <Radio value="Female">Female</Radio>
                 </Radio.Group>
               </Form.Item>
-            </Form>
-          </Modal>
-
-          {/* Verify OTP Modal */}
-          <Modal
-            title="Verify your new email"
-            open={isOtpModalVisible}
-            onCancel={() => setIsOtpModalVisible(false)}
-            footer={null}
-          >
-            <Form form={otpForm} onFinish={handleVerifyOtp}>
-              <Form.Item
-                name="otp"
-                rules={[
-                  {
-                    required: true,
-                    message: 'Enter the OTP sent to your new email',
-                  },
-                ]}
-              >
-                <Input placeholder="Enter OTP" />
-              </Form.Item>
-
-              <Button type="primary" htmlType="submit" loading={loading}>
-                Verify
-              </Button>
-
-              <p style={{ marginTop: 16 }}>
-                {timer > 0 && ` in ${formatTimer(timer)}`}
-              </p>
             </Form>
           </Modal>
         </Content>

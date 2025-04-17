@@ -6,7 +6,7 @@ import './login.scss';
 import { CheckCircleOutlined, CloseCircleOutlined, ExclamationCircleOutlined, } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
 import axios from 'axios';
-import AppHeader from '../main/header/header';
+import AppHeader from '../../main_page/header/header';
 const Login = () => {
     const navigate = useNavigate();
     const [api, contextHolder] = notification.useNotification();

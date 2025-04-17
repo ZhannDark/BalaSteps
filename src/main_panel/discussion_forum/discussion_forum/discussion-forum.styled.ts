@@ -1,70 +1,75 @@
-.forum-layout {
+import styled from 'styled-components';
+import { Layout, Input, Select, Button, Card } from 'antd';
+
+const { Content } = Layout;
+
+export const ForumLayout = styled(Layout)`
   min-height: 100vh;
   background: #f5f5f5;
-}
+`;
 
-.forum-header {
+export const ForumHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #E2E3E0;
-}
+  background: #e2e3e0;
+`;
 
-.forum-controls {
+export const ForumControls = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
-}
+`;
 
-.search-bar {
-  width: 200px !important;
+export const SearchBar = styled(Input)`
+  width: 200px;
   margin-left: 210px;
   border-radius: 8px;
   border: 1px solid #6d3c2c;
-}
+`;
 
-.filter-dropdown {
+export const FilterDropdown = styled(Select)`
   width: 300px;
   border-radius: 8px;
   border: 1px solid #6d3c2c;
-}
+`;
 
-.new-thread {
+export const NewThreadButton = styled(Button)`
   background-color: #6d3c2c;
   color: white;
   border: none;
-}
 
-.new-thread:hover {
-  background-color: #8a5133 !important;
-  color: white !important;
-  border: none;
-}
+  &:hover {
+    background-color: #8a5133 !important;
+    color: white !important;
+    border: none;
+  }
+`;
 
-.forum-content {
+export const ForumContent = styled(Content)`
   padding: 24px;
   background: #fff;
   border-radius: 8px;
-}
+`;
 
-.section-title {
+export const SectionTitle = styled.h1`
   font-family: 'Jacques Francois', serif;
   font-weight: lighter;
   font-size: 36px;
-  color: #591C00;
+  color: #591c00;
   margin-bottom: 20px;
-}
+`;
 
-.thread-card {
+export const ThreadCard = styled(Card)`
   background: white;
   padding: 10px;
   border-radius: 8px;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
   margin-bottom: 15px;
   position: relative;
-}
+`;
 
-.thread-topic {
+export const ThreadTopic = styled.div`
   background: #556b2f;
   color: white;
   font-size: 12px;
@@ -72,14 +77,14 @@
   border-radius: 4px;
   display: inline-block;
   margin-bottom: 10px;
-}
+`;
 
-.thread-meta {
+export const ThreadMeta = styled.p`
   font-size: 12px;
   color: #666;
-}
+`;
 
-.thread-content {
+export const ThreadContent = styled.p`
   font-size: 14px;
   color: #333;
-}
+`;

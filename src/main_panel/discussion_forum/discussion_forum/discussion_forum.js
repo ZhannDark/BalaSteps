@@ -4,8 +4,8 @@ import { Layout, Typography, Input, Button, Card, List, Modal, Form, Select, } f
 import { SearchOutlined, PlusOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom'; // ✅ Import navigation
 import './discussion_forum.scss';
-import MenuPanel from '../../menu/menu-panel';
-import Main_header from '../main_header/Main_header';
+import MenuPanel from '../../../menu/menu-panel';
+import Main_header from '../../main_header/Main_header';
 import dayjs from 'dayjs';
 const { Title } = Typography;
 const { Header, Content } = Layout;

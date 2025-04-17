@@ -1,28 +1,40 @@
 import React, { useEffect, useState } from 'react';
 import {
   Layout,
-  Typography,
-  Input,
-  Button,
-  Card,
-  List,
   Modal,
   Form,
-  Select,
   message,
+  List,
+  Skeleton,
+  Typography,
+  Select,
+  Input,
 } from 'antd';
 import { SearchOutlined, PlusOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import './discussion_forum.scss';
-import MenuPanel from '../../menu/menu-panel';
-import Main_header from '../main_header/Main_header';
 import dayjs from 'dayjs';
 import axios from 'axios';
-import { Skeleton } from 'antd';
 
+import {
+  ForumLayout,
+  ForumControls,
+  ForumContent,
+  SectionTitle,
+  SearchBar,
+  FilterDropdown,
+  NewThreadButton,
+  ThreadCard,
+  ThreadTopic,
+  ThreadMeta,
+  ThreadContent as ThreadText,
+} from './discussion-forum.styled';
+import MenuPanel from '../../../menu/menu-panel';
+import Main_header from '../../main_header/Main_header';
+import TextArea from 'antd/lib/input/TextArea';
+
+const { Header } = Layout;
 const { Title } = Typography;
-const { Header, Content } = Layout;
-const { Option } = Select;
+const { Option } = FilterDropdown;
 
 interface Thread {
   id: string;
@@ -42,13 +54,18 @@ const DiscussionForum: React.FC = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>(
+    []
+  );
+
+  const token = localStorage.getItem('accessToken');
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await axios.get('https://project-back-81mh.onrender.com/forum/categories/');
-        console.log(res.data);
+        const res = await axios.get(
+          'https://project-back-81mh.onrender.com/forum/categories/'
+        );
         setCategories(res.data);
       } catch (error) {
         console.error('Failed to fetch categories:', error);
@@ -58,28 +75,23 @@ const DiscussionForum: React.FC = () => {
     fetchCategories();
   }, []);
 
-
-  const token = localStorage.getItem('accessToken');
-
   useEffect(() => {
     const fetchThreads = async () => {
       try {
         const response = await axios.get(
           'https://project-back-81mh.onrender.com/forum/posts/',
           {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            headers: { Authorization: `Bearer ${token}` },
           }
         );
 
-        const formatted = response.data.map((post: any) => ({
+        const formatted = response.data.map((post: Thread) => ({
           id: post.id,
           title: post.title,
-          author: post.user,
-          createdAt: dayjs(post.created_at).format('MMMM D, YYYY'),
+          author: post.author,
+          createdAt: dayjs(post.createdAt).format('MMMM D, YYYY'),
           content: post.content,
-          topic: post.category,
+          topic: post.topic,
         }));
 
         setThreads(formatted);
@@ -94,8 +106,11 @@ const DiscussionForum: React.FC = () => {
     fetchThreads();
   }, []);
 
-  // POST new thread
-  const handleCreateThread = async (values: { title: string; content: string; topic: string }) => {
+  const handleCreateThread = async (values: {
+    title: string;
+    content: string;
+    topic: string;
+  }) => {
     try {
       const payload = {
         title: values.title,
@@ -137,21 +152,10 @@ const DiscussionForum: React.FC = () => {
     setSearchTerm(e.target.value);
   };
 
-  const handleTopicFilter = (value: string | null) => {
-    setSelectedTopic(value);
-  };
-
-  const showModal = () => {
-    setIsModalOpen(true);
-  };
-
-  const handleCancel = () => {
-    setIsModalOpen(false);
-    form.resetFields();
-  };
-
-  const toggleCollapsed = () => {
-    setCollapsed(!collapsed);
+  const handleTopicFilter = (value: unknown) => {
+    if (typeof value === 'string' || value === null) {
+      setSelectedTopic(value);
+    }
   };
 
   const filteredThreads = threads.filter(
@@ -161,8 +165,12 @@ const DiscussionForum: React.FC = () => {
   );
 
   return (
-    <Layout className="forum-layout">
-      <MenuPanel collapsed={collapsed} toggleCollapsed={toggleCollapsed} selectedPage="/discussion-forum" />
+    <ForumLayout>
+      <MenuPanel
+        collapsed={collapsed}
+        toggleCollapsed={() => setCollapsed(!collapsed)}
+        selectedPage="/discussion-forum"
+      />
       <Layout style={{ marginLeft: collapsed ? 100 : 250 }}>
         <Header
           style={{
@@ -177,17 +185,16 @@ const DiscussionForum: React.FC = () => {
         >
           <Main_header />
         </Header>
-        <Content className="forum-content">
-          <div className="forum-controls">
-            <h1 className="section-title">Discussion Forum</h1>
-            <Input
+        <ForumContent>
+          <ForumControls>
+            <SectionTitle>Discussion Forum</SectionTitle>
+            <SearchBar
               placeholder="Search discussions..."
               prefix={<SearchOutlined />}
-              className="search-bar"
               value={searchTerm}
               onChange={handleSearch}
             />
-            <Select
+            <FilterDropdown
               placeholder="Filter by topic"
               className="filter-dropdown"
               allowClear
@@ -198,17 +205,19 @@ const DiscussionForum: React.FC = () => {
                   {cat.name}
                 </Option>
               ))}
-            </Select>
-            <Button className="new-thread" type="default" icon={<PlusOutlined />} onClick={showModal}>
+            </FilterDropdown>
+            <NewThreadButton
+              icon={<PlusOutlined />}
+              onClick={() => setIsModalOpen(true)}
+            >
               New Thread
-            </Button>
-          </div>
+            </NewThreadButton>
+          </ForumControls>
+
           {loading ? (
             <div style={{ padding: '20px' }}>
               {[1, 2, 3].map((n) => (
-                <Card key={n} style={{ marginBottom: 16 }}>
-                  <Skeleton active title paragraph={{ rows: 3 }} />
-                </Card>
+                <Skeleton key={n} active title paragraph={{ rows: 3 }} />
               ))}
             </div>
           ) : (
@@ -216,28 +225,35 @@ const DiscussionForum: React.FC = () => {
               itemLayout="vertical"
               dataSource={filteredThreads}
               renderItem={(thread) => (
-                <Card
+                <ThreadCard
                   key={thread.id}
-                  className="thread-card"
                   hoverable
-                  onClick={() => navigate(`/discussion-forum/${thread.id}`, { state: { thread } })}
+                  onClick={() =>
+                    navigate(`/discussion-forum/${thread.id}`, {
+                      state: { thread },
+                    })
+                  }
                 >
-                  <div className="thread-topic">{thread.topic}</div>
+                  <ThreadTopic>{thread.topic}</ThreadTopic>
                   <Title level={4}>{thread.title}</Title>
-                  <p className="thread-meta">By {thread.author} - {thread.createdAt}</p>
-                  <p className="thread-content">{thread.content}</p>
-                </Card>
+                  <ThreadMeta>
+                    By {thread.author} - {thread.createdAt}
+                  </ThreadMeta>
+                  <ThreadText>{thread.content}</ThreadText>
+                </ThreadCard>
               )}
             />
           )}
-
-        </Content>
+        </ForumContent>
       </Layout>
 
       <Modal
         title="Create New Thread"
         open={isModalOpen}
-        onCancel={handleCancel}
+        onCancel={() => {
+          setIsModalOpen(false);
+          form.resetFields();
+        }}
         footer={null}
       >
         <Form form={form} layout="vertical" onFinish={handleCreateThread}>
@@ -264,18 +280,21 @@ const DiscussionForum: React.FC = () => {
           <Form.Item
             label="Content"
             name="content"
-            rules={[{ required: true, message: 'Please enter the discussion content' }]}
+            rules={[
+              {
+                required: true,
+                message: 'Please enter the discussion content',
+              },
+            ]}
           >
-            <Input.TextArea rows={4} placeholder="Enter your discussion..." />
+            <TextArea rows={4} placeholder="Enter your discussion..." />
           </Form.Item>
           <Form.Item>
-            <Button className="new-thread" htmlType="submit">
-              Create
-            </Button>
+            <NewThreadButton htmlType="submit">Create</NewThreadButton>
           </Form.Item>
         </Form>
       </Modal>
-    </Layout>
+    </ForumLayout>
   );
 };
 

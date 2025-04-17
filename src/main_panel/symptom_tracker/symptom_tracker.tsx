@@ -1,7 +1,5 @@
-// SymptomTracker.tsx
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import {
-  Layout,
   Calendar,
   Button,
   Typography,
@@ -14,7 +12,7 @@ import {
   Tooltip,
   Popover,
   Divider,
-  Space,
+  Layout,
 } from 'antd';
 import {
   PlusOutlined,
@@ -27,10 +25,22 @@ import axios from 'axios';
 import dayjs, { Dayjs } from 'dayjs';
 import MenuPanel from '../../menu/menu-panel';
 import Main_header from '../main_header/Main_header';
-import './symptom_tracker.scss';
+import {
+  SymptomLayout,
+  SymptomHeaderBar,
+  SymptomContent,
+  SymptomHeader,
+  CalendarCell,
+  DisabledDate,
+  SymptomName,
+  ChildSymptom,
+  SymptomAction,
+  AddSymptomButton,
+  AddSymptomLink,
+} from './symptom-tracker.styled';
+import Foot from '../../main_page/main_content/footer/footer';
 
-const { Header, Content } = Layout;
-const { Title, Text } = Typography;
+const { Title } = Typography;
 const { Option } = Select;
 
 const accessToken = localStorage.getItem('accessToken');
@@ -66,11 +76,9 @@ const SymptomTracker = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [popoverVisible, setPopoverVisible] = useState<string | null>(null);
-  const [selectedMonth, setSelectedMonth] = useState<number | undefined>();
-  const [selectedYear, setSelectedYear] = useState<number | undefined>();
-  const [selectedChildId, setSelectedChildId] = useState<string>('');
 
   const queryClient = useQueryClient();
+
   const childColors = [
     '#1890ff',
     '#52c41a',
@@ -181,11 +189,11 @@ const SymptomTracker = () => {
   };
 
   const handleFormSubmit = (values: SymptomPayload) => {
-    if (!selectedDate) return; // чтобы убрать ошибку undefined
+    if (!selectedDate) return;
 
     const payload: SymptomPayload = {
       child: values.child,
-      date: selectedDate.format('YYYY-MM-DD'), // теперь точно string
+      date: selectedDate.format('YYYY-MM-DD'),
       symptom_name: values.symptom_name,
       action_taken: values.action_taken || '',
     };
@@ -200,20 +208,14 @@ const SymptomTracker = () => {
     setEditingId(null);
   };
 
-  const filteredSymptoms = useMemo(() => {
-    return symptoms.filter((s) => {
-      const date = dayjs(s.date);
-      const matchMonth =
-        selectedMonth !== undefined ? date.month() === selectedMonth : true;
-      const matchYear =
-        selectedYear !== undefined ? date.year() === selectedYear : true;
-      const matchChild = selectedChildId ? s.child === selectedChildId : true;
-      return matchMonth && matchYear && matchChild;
-    });
-  }, [symptoms, selectedMonth, selectedYear, selectedChildId]);
-
   const dateCellRender = (date: Dayjs) => {
-    const currentDaySymptoms = filteredSymptoms.filter(
+    const isFuture = date.isAfter(dayjs(), 'day');
+
+    if (isFuture) {
+      return <DisabledDate />;
+    }
+
+    const currentDaySymptoms = symptoms.filter(
       (s) => dayjs(s.date).format('YYYY-MM-DD') === date.format('YYYY-MM-DD')
     );
 
@@ -225,36 +227,30 @@ const SymptomTracker = () => {
               <div>
                 {currentDaySymptoms.map((symptom) => (
                   <div key={symptom.id} style={{ marginBottom: 12 }}>
-                    <Text
-                      strong
+                    <SymptomName
                       style={{ color: childColorMap.get(symptom.child) }}
                     >
                       {symptom.symptom_name}
-                    </Text>
-                    <br />
-                    <Text>
+                    </SymptomName>
+                    <p>
                       <strong>Child:</strong> {symptom.child_name}
-                    </Text>
-                    <br />
-                    <Text>
+                    </p>
+                    <ChildSymptom>
                       <strong>Actions:</strong> {symptom.action_taken || '—'}
-                    </Text>
-                    <br />
-                    <Text type="secondary">
+                    </ChildSymptom>
+                    <p>
                       Created:{' '}
                       {dayjs(symptom.created_at).format('YYYY-MM-DD HH:mm')}
-                    </Text>
-                    <br />
-                    <Text type="secondary">
+                    </p>
+                    <p>
                       Updated:{' '}
                       {dayjs(symptom.updated_at).format('YYYY-MM-DD HH:mm')}
-                    </Text>
-                    <div style={{ marginTop: 8 }}>
+                    </p>
+                    <SymptomAction>
                       <Button
                         icon={<EditOutlined />}
                         size="small"
                         onClick={() => openFormModal(symptom)}
-                        style={{ marginRight: 8 }}
                       >
                         Edit
                       </Button>
@@ -268,36 +264,36 @@ const SymptomTracker = () => {
                           Delete
                         </Button>
                       </Popconfirm>
-                    </div>
+                    </SymptomAction>
                     <Divider />
                   </div>
                 ))}
-                <Button
+                <AddSymptomButton
                   type="primary"
                   icon={<PlusOutlined />}
                   onClick={() => openFormModal(undefined, date)}
                   block
                 >
                   Add Symptom
-                </Button>
+                </AddSymptomButton>
               </div>
             ) : (
-              <Button
+              <AddSymptomLink
                 type="link"
                 onClick={() => openFormModal(undefined, date)}
               >
-                Add Symptom
-              </Button>
+                + Add Symptom
+              </AddSymptomLink>
             )}
           </div>
         }
         trigger="click"
         open={popoverVisible === date.format('YYYY-MM-DD')}
-        onOpenChange={(open: boolean) =>
+        onOpenChange={(open) =>
           setPopoverVisible(open ? date.format('YYYY-MM-DD') : null)
         }
       >
-        <div className="calendar-cell">
+        <CalendarCell>
           {currentDaySymptoms.map((s, i) => (
             <div
               key={i}
@@ -306,83 +302,36 @@ const SymptomTracker = () => {
               {s.symptom_name}
             </div>
           ))}
-        </div>
+        </CalendarCell>
       </Popover>
     );
   };
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <SymptomLayout>
       <MenuPanel
         collapsed={collapsed}
         toggleCollapsed={() => setCollapsed(!collapsed)}
         selectedPage="/symptom-tracker"
       />
-      <Layout style={{ marginLeft: collapsed ? 100 : 250 }}>
-        <Header
-          style={{
-            padding: 0,
-            marginLeft: '5px',
-            background: '#E2E3E0',
-            height: '48px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
+      <Layout
+        style={{
+          marginLeft: collapsed ? 100 : 250,
+          transition: 'margin-left 0.2s ease',
+        }}
+      >
+        <SymptomHeaderBar>
           <Main_header />
-        </Header>
-        <Content
-          style={{ padding: '20px', background: '#fff', minHeight: '100%' }}
-        >
-          <div className="symptom-header">
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <Title level={3} style={{ color: '#591C00', marginBottom: 0 }}>
-                Symptom Tracker
-              </Title>
-              <Tooltip title="Click a day to view or add symptoms">
-                <InfoCircleOutlined style={{ marginLeft: 10, color: '#999' }} />
-              </Tooltip>
-            </div>
-            <Space>
-              <Select
-                placeholder="Month"
-                style={{ width: 120 }}
-                onChange={(v) => setSelectedMonth(v)}
-                allowClear
-              >
-                {Array.from({ length: 12 }, (_, i) => (
-                  <Option key={i} value={i}>
-                    {dayjs().month(i).format('MMMM')}
-                  </Option>
-                ))}
-              </Select>
-              <Select
-                placeholder="Year"
-                style={{ width: 100 }}
-                onChange={(v) => setSelectedYear(v)}
-                allowClear
-              >
-                {[2023, 2024, 2025].map((y) => (
-                  <Option key={y} value={y}>
-                    {y}
-                  </Option>
-                ))}
-              </Select>
-              <Select
-                placeholder="Child"
-                style={{ width: 180 }}
-                onChange={(v) => setSelectedChildId(v)}
-                allowClear
-              >
-                {children.map((c) => (
-                  <Option key={c.id} value={c.id}>
-                    {c.full_name}
-                  </Option>
-                ))}
-              </Select>
-            </Space>
-          </div>
+        </SymptomHeaderBar>
+        <SymptomContent>
+          <SymptomHeader>
+            <Title level={3} style={{ color: '#591C00', marginBottom: 0 }}>
+              Symptom Tracker
+            </Title>
+            <Tooltip title="Click a day to view or add symptoms">
+              <InfoCircleOutlined style={{ marginLeft: 10, color: '#999' }} />
+            </Tooltip>
+          </SymptomHeader>
 
           <Calendar
             cellRender={dateCellRender}
@@ -436,9 +385,10 @@ const SymptomTracker = () => {
               </Form.Item>
             </Form>
           </Modal>
-        </Content>
+        </SymptomContent>
+        <Foot collapsed={collapsed} />
       </Layout>
-    </Layout>
+    </SymptomLayout>
   );
 };
 

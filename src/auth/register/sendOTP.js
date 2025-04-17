@@ -13,7 +13,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Form, Input, Button, Typography, notification } from 'antd';
 import 'antd/dist/reset.css';
 import './verify-otp.scss';
-import AppHeader from '../main/header/header';
+import AppHeader from '../../main_page/header/header';
 import { CheckCircleOutlined, CloseCircleOutlined, ExclamationCircleOutlined, } from '@ant-design/icons';
 const { Title, Text } = Typography;
 const VerifyOTP = () => {

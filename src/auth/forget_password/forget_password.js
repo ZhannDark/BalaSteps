@@ -11,7 +11,7 @@ import { jsx as _jsx, Fragment as _Fragment, jsxs as _jsxs } from "react/jsx-run
 import { useState } from 'react';
 import { Steps, Form, Input, Button, Card, notification, } from 'antd';
 import './forget-password.scss';
-import AppHeader from '../main/header/header';
+import AppHeader from '../../main_page/header/header';
 import { useNavigate } from 'react-router-dom';
 import { MailTwoTone, SafetyCertificateTwoTone, LockTwoTone, CheckCircleOutlined, CloseCircleOutlined, ExclamationCircleOutlined, } from '@ant-design/icons';
 import axios from 'axios';
