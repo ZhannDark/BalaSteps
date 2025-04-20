@@ -5,7 +5,6 @@ import Register from './auth/register/register';
 import Login from './auth/login/login';
 import ForgotPassword from './auth/forget_password/forget_password';
 import SymptomTracker from './main_panel/symptom_tracker/symptom_tracker';
-import Menu from './menu/menu';
 import UserProfile from './main_panel/profile/profile';
 import VerifyOTP from './auth/register/sendOTP';
 import InformationHub from './main_panel/info_hub/information_hub';
@@ -40,7 +39,8 @@ const App = () => {
         <Route path="/discussion-forum/:id" element={<Discussion_details />} />
         <Route path="/info_hub" element={<InformationHub />} />
         <Route path="/marketplace" element={<Marketplace />} />
-        <Route path="/marketplace/:id" element={<MarketplaceDetails />} />
+        <Route path="/marketplace/public-items/:id" element={<MarketplaceDetails />} />
+        <Route path="/marketplace/my-items/:id" element={<MarketplaceDetails />} />
         <Route path="/info_hub/news/:id" element={<NewsDetails />} />
         <Route path="/ikomek_assistant" element={<IkomekAssistant />} />
         <Route
@@ -51,7 +51,6 @@ const App = () => {
           path="/info_hub/therapy-center/:id"
           element={<TherapyCenterDetails />}
         />
-        <Route path="/menu" element={<Menu />} />
       </Routes>
     </Router>
   );

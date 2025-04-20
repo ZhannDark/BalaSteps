@@ -1,18 +1,15 @@
 import React, { useState } from 'react';
 import {
   Layout,
-  Typography,
   Input,
-  Button,
-  Card,
   Modal,
   Form,
   Upload,
   Select,
   Tabs,
   message,
-  Drawer,
-  Descriptions,
+  Skeleton,
+  Button,
   Popconfirm,
 } from 'antd';
 import {
@@ -21,15 +18,25 @@ import {
   EditOutlined,
   DeleteOutlined,
 } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 import axios from 'axios';
-import './marketplace.scss';
 import MenuPanel from '../../menu/menu-panel';
 import Main_header from '../main_header/Main_header';
+import {
+  MarketplaceLayout,
+  MarketplaceContent,
+  TopBar,
+  MarketplaceTitle,
+  AddItemButton,
+  ItemsGrid,
+  ItemCard,
+  ItemImage,
+} from './marketplace.styled';
+import img from '../../images/img.png';
 
-const { Title } = Typography;
-const { Header, Content } = Layout;
-const { Meta } = Card;
+const { Header } = Layout;
 const { Option } = Select;
 const { TabPane } = Tabs;
 
@@ -38,19 +45,23 @@ const accessToken = localStorage.getItem('accessToken');
 interface Item {
   id: string;
   name: string;
-  image: string;
-  description: string;
   price: string;
-  location: string;
-  availability: { id: string; name: string };
-  contact_method: string;
-  category_id: string;
-  condition: string;
+  photos: { id: string; image_url: string }[];
   category: { id: string; name: string };
   owner: string;
 }
 
 interface Category {
+  id: string;
+  name: string;
+}
+
+interface Availability {
+  id: string;
+  name: string;
+}
+
+interface Condition {
   id: string;
   name: string;
 }
@@ -61,13 +72,13 @@ const Marketplace = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('all');
-  const [selectedItem, setSelectedItem] = useState<Item | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedImages, setSelectedImages] = useState<any[]>([]);
+  const [editingItem, setEditingItem] = useState<Item | null>(null);
 
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
-  const { data: myItemsData } = useQuery({
+  const { data: myItems = [], isLoading: myItemsLoading } = useQuery({
     queryKey: ['my-items'],
     queryFn: async () =>
       (
@@ -79,23 +90,8 @@ const Marketplace = () => {
         )
       ).data,
   });
-  const myItems: Item[] = myItemsData || [];
-  console.log(myItemsData.availability.name);
 
-  const { data: categoriesData } = useQuery({
-    queryKey: ['categories'],
-    queryFn: async () =>
-      (
-        await axios.get(
-          'https://project-back-81mh.onrender.com/marketplace/categories/',
-          {}
-        )
-      ).data,
-  });
-
-  const categories: Category[] = categoriesData || [];
-
-  const { data: publicItems = [] } = useQuery<Item[]>({
+  const { data: publicItems = [], isLoading: publicItemsLoading } = useQuery({
     queryKey: ['public-items'],
     queryFn: async () =>
       (
@@ -105,7 +101,37 @@ const Marketplace = () => {
       ).data,
   });
 
-  const addItem = useMutation({
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () =>
+      (
+        await axios.get(
+          'https://project-back-81mh.onrender.com/marketplace/categories/'
+        )
+      ).data,
+  });
+
+  const { data: availabilities = [] } = useQuery({
+    queryKey: ['availabilities'],
+    queryFn: async () =>
+      (
+        await axios.get(
+          'https://project-back-81mh.onrender.com/marketplace/availability-types/'
+        )
+      ).data,
+  });
+
+  const { data: conditions = [] } = useQuery({
+    queryKey: ['conditions'],
+    queryFn: async () =>
+      (
+        await axios.get(
+          'https://project-back-81mh.onrender.com/marketplace/conditions/'
+        )
+      ).data,
+  });
+
+  const addItemMutation = useMutation({
     mutationFn: (formData: FormData) =>
       axios.post(
         'https://project-back-81mh.onrender.com/marketplace/my-items/',
@@ -117,33 +143,38 @@ const Marketplace = () => {
           },
         }
       ),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['items'] });
+    onSuccess: async (response) => {
+      const newItem = response.data;
+      if (selectedImages.length > 0) {
+        const imageForm = new FormData();
+        selectedImages.forEach((file: any) => {
+          imageForm.append('images', file.originFileObj);
+        });
+        try {
+          await axios.post(
+            'https://project-back-81mh.onrender.com/marketplace/equipment-photos/',
+            imageForm,
+            {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': 'multipart/form-data',
+              },
+              params: { item_id: newItem.id },
+            }
+          );
+        } catch (err) {
+          console.error('Image upload error:', err);
+        }
+      }
+      queryClient.invalidateQueries({ queryKey: ['my-items'] });
+      queryClient.invalidateQueries({ queryKey: ['public-items'] });
       message.success('Item added!');
+      resetForm();
     },
     onError: () => message.error('Failed to add item'),
   });
 
-  const updateItem = useMutation({
-    mutationFn: ({ id, formData }: { id: string; formData: FormData }) =>
-      axios.patch(
-        `https://project-back-81mh.onrender.com/marketplace/my-items/${id}/`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      ),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['items'] });
-      message.success('Item updated!');
-    },
-    onError: () => message.error('Failed to update item'),
-  });
-
-  const deleteItem = useMutation({
+  const deleteItemMutation = useMutation({
     mutationFn: (id: string) =>
       axios.delete(
         `https://project-back-81mh.onrender.com/marketplace/my-items/${id}/`,
@@ -152,99 +183,71 @@ const Marketplace = () => {
         }
       ),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['items'] });
+      queryClient.invalidateQueries({ queryKey: ['my-items'] });
       message.success('Item deleted!');
     },
     onError: () => message.error('Failed to delete item'),
   });
 
-  const showDrawer = (item: Item) => {
-    setSelectedItem(item);
-    setDrawerOpen(true);
+  const resetForm = () => {
+    setIsModalOpen(false);
+    form.resetFields();
+    setSelectedImages([]);
+    setEditingItem(null);
   };
 
-  const showModal = (item?: Item) => {
-    setIsEditMode(!!item);
-    if (item) {
-      form.setFieldsValue({
-        name: item.name,
-        description: item.description,
-        price: item.price,
-        category: item.category.id,
-        location: item.location,
-        availability: item.availability.id,
-        contact_method: item.contact_method,
-        condition: item.condition,
-      });
-      setSelectedItem(item);
-    } else {
-      form.resetFields();
-    }
-    setIsModalOpen(true);
-  };
-
-  const handleAddOrEdit = async (values: any) => {
+  const handleAddItem = (values: any) => {
     const formData = new FormData();
     formData.append('name', values.name);
     formData.append('description', values.description);
     formData.append('price', values.price);
     formData.append('location', values.location);
     formData.append('contact_method', values.contact_method);
-    formData.append('availability', values.availability.id);
-    formData.append('condition', values.condition);
     formData.append('category_id', values.category);
-    if (values.image && values.image[0]?.originFileObj) {
-      formData.append('image', values.image[0].originFileObj);
+    formData.append('condition_id', values.condition);
+    if (Array.isArray(values.availability)) {
+      values.availability.forEach((id: string) => {
+        formData.append('availability_ids', id);
+      });
     }
+    addItemMutation.mutate(formData);
+  };
 
-    if (isEditMode && selectedItem) {
-      updateItem.mutate({ id: selectedItem.id, formData });
+  const handleCardClick = (item: Item) => {
+    if (activeTab === 'my') {
+      navigate(`/marketplace/my-items/${item.id}`);
     } else {
-      addItem.mutate(formData);
+      navigate(`/marketplace/public-items/${item.id}`);
     }
-
-    setIsModalOpen(false);
-    form.resetFields();
   };
 
   const displayedItems = activeTab === 'my' ? myItems : publicItems;
-
-  const filteredItems = displayedItems.filter((item) =>
+  const filteredItems = displayedItems.filter((item: Item) =>
     selectedCategory ? item.category.id === selectedCategory : true
   );
 
+  const loading = myItemsLoading || publicItemsLoading;
+
   return (
-    <Layout className="marketplace-layout">
+    <MarketplaceLayout>
       <MenuPanel
         collapsed={collapsed}
         toggleCollapsed={() => setCollapsed(!collapsed)}
         selectedPage="/marketplace"
       />
       <Layout style={{ marginLeft: collapsed ? 100 : 250 }}>
-        <Header
-          style={{
-            padding: 0,
-            marginLeft: '5px',
-            background: '#E2E3E0',
-            height: '48px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
+        <Header style={{ background: '#E2E3E0', height: '48px', padding: 0 }}>
           <Main_header />
         </Header>
-        <Content className="marketplace-content">
-          <div className="top-bar">
-            <Title level={2}>Marketplace</Title>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => showModal()}
-            >
-              Add Item
-            </Button>
-          </div>
+
+        <MarketplaceContent>
+          <TopBar>
+            <MarketplaceTitle>Marketplace</MarketplaceTitle>
+            <AddItemButton onClick={() => setIsModalOpen(true)}>
+              <PlusOutlined /> Add Item
+            </AddItemButton>
+          </TopBar>
+
           <Tabs defaultActiveKey="all" onChange={setActiveTab}>
             <TabPane tab="All" key="all" />
             <TabPane tab="My Items" key="my" />
@@ -253,7 +256,7 @@ const Marketplace = () => {
           <Select
             placeholder="Filter by category"
             style={{ width: 250, marginBottom: 20 }}
-            onChange={setSelectedCategory}
+            onChange={(value) => setSelectedCategory(value as string)}
             allowClear
           >
             {categories.map((cat: Category) => (
@@ -263,166 +266,170 @@ const Marketplace = () => {
             ))}
           </Select>
 
-          <div className="items-grid">
-            {filteredItems.map((item) => (
-              <Card
-                key={item.id}
-                className="item-card"
-                hoverable
-                cover={
-                  <img
-                    alt={item.name}
-                    src={item.image}
-                    className="item-image"
+          <ItemsGrid>
+            {loading
+              ? Array.from({ length: 6 }).map((_, index) => (
+                  <Skeleton.Button
+                    key={index}
+                    active
+                    style={{ width: 280, height: 340 }}
                   />
-                }
-                onClick={() => showDrawer(item)}
-              >
-                <Meta title={item.name} description={`$${item.price}`} />
-              </Card>
-            ))}
-          </div>
+                ))
+              : filteredItems.map((item: Item) => (
+                  <ItemCard key={item.id} onClick={() => handleCardClick(item)}>
+                    <ItemImage
+                      src={
+                        item?.photos?.length ? item.photos[0].image_url : img
+                      }
+                      alt={item.name}
+                    />
+                    <div style={{ padding: '10px' }}>
+                      <h3 style={{ marginBottom: 8 }}>{item.name}</h3>
+                      <p style={{ fontWeight: 'bold' }}>{item.price} ₸</p>
+                    </div>
+                    {activeTab === 'my' && (
+                      <div
+                        style={{
+                          marginTop: 10,
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                        }}
+                      >
+                        <Popconfirm
+                          title="Delete this item?"
+                          onConfirm={() => deleteItemMutation.mutate(item.id)}
+                          okText="Yes"
+                          cancelText="No"
+                        >
+                          <Button
+                            icon={<DeleteOutlined />}
+                            danger
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </Popconfirm>
+                      </div>
+                    )}
+                  </ItemCard>
+                ))}
+          </ItemsGrid>
 
-          {/* Drawer for item detail */}
-          <Drawer
-            title={selectedItem?.name}
-            open={drawerOpen}
-            onClose={() => setDrawerOpen(false)}
-            width={420}
-          >
-            {selectedItem && (
-              <>
-                <img
-                  src={selectedItem.image}
-                  alt={selectedItem.name}
-                  style={{ width: '100%', marginBottom: 20 }}
-                />
-                <Descriptions column={1}>
-                  <Descriptions.Item label="Description">
-                    {selectedItem.description}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Price">
-                    ${selectedItem.price}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Location">
-                    {selectedItem.location}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Condition">
-                    {selectedItem.condition}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Contact">
-                    {selectedItem.contact_method}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Category">
-                    {selectedItem.category.name}
-                  </Descriptions.Item>
-                </Descriptions>
-                <div style={{ marginTop: 20 }}>
-                  <Button
-                    icon={<EditOutlined />}
-                    style={{ marginRight: 8 }}
-                    onClick={() => showModal(selectedItem)}
+          {isModalOpen && (
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+            >
+              <Modal
+                title="Add New Item"
+                open={isModalOpen}
+                onCancel={() => resetForm()}
+                footer={null}
+                destroyOnClose
+              >
+                <Form layout="vertical" form={form} onFinish={handleAddItem}>
+                  {/* Все поля */}
+                  <Form.Item
+                    name="name"
+                    label="Item Name"
+                    rules={[{ required: true }]}
                   >
-                    Edit
+                    <Input />
+                  </Form.Item>
+                  <Form.Item
+                    name="description"
+                    label="Description"
+                    rules={[{ required: true }]}
+                  >
+                    <Input.TextArea />
+                  </Form.Item>
+                  <Form.Item
+                    name="price"
+                    label="Price"
+                    rules={[{ required: true }]}
+                  >
+                    <Input type="number" />
+                  </Form.Item>
+                  <Form.Item
+                    name="location"
+                    label="Location"
+                    rules={[{ required: true }]}
+                  >
+                    <Input />
+                  </Form.Item>
+                  <Form.Item
+                    name="contact_method"
+                    label="Contact Method"
+                    rules={[{ required: true }]}
+                  >
+                    <Input />
+                  </Form.Item>
+                  <Form.Item
+                    name="availability"
+                    label="Availability"
+                    rules={[{ required: true }]}
+                  >
+                    <Select mode="multiple" placeholder="Select availability">
+                      {availabilities.map((a: Availability) => (
+                        <Option key={a.id} value={a.id}>
+                          {a.name}
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                  <Form.Item
+                    name="condition"
+                    label="Condition"
+                    rules={[{ required: true }]}
+                  >
+                    <Select placeholder="Select condition">
+                      {conditions.map((c: Condition) => (
+                        <Option key={c.id} value={c.id}>
+                          {c.name}
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                  <Form.Item
+                    name="category"
+                    label="Category"
+                    rules={[{ required: true }]}
+                  >
+                    <Select placeholder="Select category">
+                      {categories.map((cat: Category) => (
+                        <Option key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+
+                  {/* Upload images */}
+                  <Form.Item label="Upload Images">
+                    <Upload.Dragger
+                      multiple
+                      listType="picture"
+                      beforeUpload={() => false}
+                      fileList={selectedImages}
+                      onChange={({ fileList }) =>
+                        setSelectedImages(fileList.slice(0, 5))
+                      }
+                    >
+                      <p className="ant-upload-drag-icon">
+                        <UploadOutlined />
+                      </p>
+                      <p>Click or drag files here to upload (Max 5)</p>
+                    </Upload.Dragger>
+                  </Form.Item>
+
+                  <Button type="primary" htmlType="submit" block>
+                    Add Item
                   </Button>
-                  <Popconfirm
-                    title="Are you sure to delete this item?"
-                    onConfirm={() => deleteItem.mutate(selectedItem.id)}
-                    okText="Yes"
-                    cancelText="No"
-                  >
-                    <Button icon={<DeleteOutlined />} danger>
-                      Delete
-                    </Button>
-                  </Popconfirm>
-                </div>
-              </>
-            )}
-          </Drawer>
-
-          {/* Modal to add/edit item */}
-          <Modal
-            title={isEditMode ? 'Edit Item' : 'Add New Item'}
-            open={isModalOpen}
-            onCancel={() => setIsModalOpen(false)}
-            footer={null}
-          >
-            <Form layout="vertical" form={form} onFinish={handleAddOrEdit}>
-              <Form.Item
-                name="name"
-                label="Item Name"
-                rules={[{ required: true }]}
-              >
-                <Input />
-              </Form.Item>
-              <Form.Item name="image" label="Upload Image">
-                <Upload
-                  listType="picture"
-                  maxCount={1}
-                  beforeUpload={() => false}
-                >
-                  <Button icon={<UploadOutlined />}>Upload</Button>
-                </Upload>
-              </Form.Item>
-              <Form.Item
-                name="description"
-                label="Description"
-                rules={[{ required: true }]}
-              >
-                <Input.TextArea />
-              </Form.Item>
-              <Form.Item
-                name="price"
-                label="Price"
-                rules={[{ required: true }]}
-              >
-                <Input type="number" />
-              </Form.Item>
-              <Form.Item
-                name="location"
-                label="Location"
-                rules={[{ required: true }]}
-              >
-                <Input />
-              </Form.Item>
-              <Form.Item
-                name="contact_method"
-                label="Contact Method"
-                rules={[{ required: true }]}
-              >
-                <Input />
-              </Form.Item>
-              <Form.Item
-                name="condition"
-                label="Condition"
-                rules={[{ required: true }]}
-              >
-                <Select>
-                  <Option value="new">New</Option>
-                  <Option value="used">Used</Option>
-                </Select>
-              </Form.Item>
-              <Form.Item
-                name="category"
-                label="Category"
-                rules={[{ required: true }]}
-              >
-                <Select>
-                  {categories.map((cat: Category) => (
-                    <Option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-              <Button type="primary" htmlType="submit">
-                {isEditMode ? 'Update' : 'Add Item'}
-              </Button>
-            </Form>
-          </Modal>
-        </Content>
+                </Form>
+              </Modal>
+            </motion.div>
+          )}
+        </MarketplaceContent>
       </Layout>
-    </Layout>
+    </MarketplaceLayout>
   );
 };
 

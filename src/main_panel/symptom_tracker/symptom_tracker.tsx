@@ -375,13 +375,13 @@ const SymptomTracker = () => {
                 <Input.TextArea />
               </Form.Item>
               <Form.Item>
-                <Button
+                <AddSymptomButton
                   type="primary"
                   htmlType="submit"
                   style={{ backgroundColor: '#426B1F' }}
                 >
                   {isEditMode ? 'Save Changes' : 'Add Symptom'}
-                </Button>
+                </AddSymptomButton>
               </Form.Item>
             </Form>
           </Modal>

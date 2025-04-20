@@ -58,9 +58,10 @@ interface MenuPanelProps {
 }
 
 const MenuPanel: React.FC<MenuPanelProps> = ({
-                                               collapsed,
-                                               toggleCollapsed, selectedPage
-                                             }) => {
+  collapsed,
+  toggleCollapsed,
+  selectedPage,
+}) => {
   const navigate = useNavigate();
 
   const handleMenuClick = (e: { key: string }) => {
@@ -83,8 +84,7 @@ const MenuPanel: React.FC<MenuPanelProps> = ({
           type="primary"
           onClick={toggleCollapsed}
           className="toggle-button"
-          style={{ marginLeft: collapsed ? '15px' : '40px' ,
-                   marginTop: '10px'}}
+          style={{ marginLeft: collapsed ? '15px' : '40px', marginTop: '10px' }}
         >
           {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
         </Button>

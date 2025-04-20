@@ -42,7 +42,7 @@ interface Thread {
   author: string;
   createdAt: string;
   content: string;
-  topic: string;
+  category: string;
 }
 
 const DiscussionForum: React.FC = () => {
@@ -91,7 +91,7 @@ const DiscussionForum: React.FC = () => {
           author: post.author,
           createdAt: dayjs(post.createdAt).format('MMMM D, YYYY'),
           content: post.content,
-          topic: post.topic,
+          category: post.category,
         }));
 
         setThreads(formatted);
@@ -135,7 +135,7 @@ const DiscussionForum: React.FC = () => {
         author: response.data.user || 'You',
         createdAt: dayjs(response.data.created_at).format('MMMM D, YYYY'),
         content: response.data.content,
-        topic: response.data.category,
+        category: response.data.category,
       };
 
       setThreads((prev) => [newThread, ...prev]);
@@ -161,7 +161,7 @@ const DiscussionForum: React.FC = () => {
   const filteredThreads = threads.filter(
     (thread) =>
       thread.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      (!selectedTopic || thread.topic === selectedTopic)
+      (!selectedTopic || thread.category === selectedTopic)
   );
 
   return (
@@ -234,7 +234,7 @@ const DiscussionForum: React.FC = () => {
                     })
                   }
                 >
-                  <ThreadTopic>{thread.topic}</ThreadTopic>
+                  <ThreadTopic>{thread.category}</ThreadTopic>
                   <Title level={4}>{thread.title}</Title>
                   <ThreadMeta>
                     By {thread.author} - {thread.createdAt}

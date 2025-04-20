@@ -18,8 +18,8 @@ export const SymptomHeaderBar = styled(Header)`
 `;
 
 export const SymptomContent = styled(Content)`
-  margin: 20px;
-  padding: 24px;
+  margin: 10px;
+  padding: 15px;
   background-color: #fff;
   border-radius: 10px;
   min-height: calc(100vh - 96px);
@@ -94,8 +94,11 @@ export const AddSymptomLink = styled(Button)`
 `;
 
 export const AddSymptomButton = styled(Button)`
+  background-color: #426b1f;
+
   &:hover {
-    color: #365517 !important;
+    background-color: #629432 !important;
+    color: white;
   }
 `;
 

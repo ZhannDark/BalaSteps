@@ -42,7 +42,11 @@ const VerifyOTP = () => {
 
   const handleOTPSubmit = async () => {
     if (!otp) {
-      openNotification('error', 'Missing OTP', 'Please enter the verification code!');
+      openNotification(
+        'error',
+        'Missing OTP',
+        'Please enter the verification code!'
+      );
       return;
     }
 
@@ -56,6 +60,7 @@ const VerifyOTP = () => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
+            email: email,
             otp: otp,
           }),
         }
@@ -94,9 +99,12 @@ const VerifyOTP = () => {
       <AppHeader />
       <div className="verify-otp-container">
         <div className="verify-otp-box">
-          <Title level={2} className="verify-otp-title">Validate email</Title>
+          <Title level={2} className="verify-otp-title">
+            Validate email
+          </Title>
           <Text className="verify-otp-text">
-            For security reasons, we have sent a text message containing a code to verify your email address.
+            For security reasons, we have sent a text message containing a code
+            to verify your email address.
           </Text>
           <Form layout="vertical" className="verify-otp-form">
             <Form.Item label="Verification code :" className="otp-input-item">
