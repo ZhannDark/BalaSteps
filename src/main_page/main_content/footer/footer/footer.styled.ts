@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import { Layout } from 'antd';
 import { Link } from 'react-router-dom';
-import { device } from '../../../styles/media';
+import { device } from '../../../../styles/media';
 
 const { Footer } = Layout;
 
@@ -29,7 +29,7 @@ export const FooterLink = styled(Link)`
   margin: 0 120px;
   text-decoration: none;
   color: #426b1f;
-  font-family: 'Acme', sans-serif;
+  font-family: 'Acme', sans-serif !important;
   font-size: 18px;
 
   &:hover {

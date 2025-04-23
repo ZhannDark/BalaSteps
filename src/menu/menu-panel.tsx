@@ -12,7 +12,7 @@ import { Button, Menu } from 'antd';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import './menu_panel.scss';
-import img from '../images/logo/main_logo.png';
+import img from '../assets/images/logo/panel_logo.png';
 
 type MenuItem = Required<MenuProps>['items'][number] & {
   path?: string;

@@ -8,7 +8,7 @@ import {
   notification,
 } from 'antd';
 import './forget-password.scss';
-import AppHeader from '../../main_page/header/header';
+import AppHeader from '../../main_page/main_page_header/main_page_header';
 import { useNavigate } from 'react-router-dom';
 import {
   MailTwoTone,

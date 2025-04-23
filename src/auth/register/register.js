@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useMutation } from '@tanstack/react-query';
 import './register.scss';
-import AppHeader from '../../main_page/header/header';
+import AppHeader from '../../main_page/main_page_header/main_page_header';
 import { CheckCircleOutlined, CloseCircleOutlined, ExclamationCircleOutlined, } from '@ant-design/icons';
 const Register = () => {
     const [api, contextHolder] = notification.useNotification();

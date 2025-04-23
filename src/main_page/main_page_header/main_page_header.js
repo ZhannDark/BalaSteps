@@ -6,7 +6,7 @@ import 'antd/dist/reset.css';
 import './header.scss';
 import logo from '../../images/logo/main_logo.png';
 import { Layout } from 'antd';
-const { Header } = Layout;
+const { Header: Main_page_header } = Layout;
 const AppHeader = () => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -42,7 +42,7 @@ const AppHeader = () => {
             setButtonText('Register');
         }
     }, [location.pathname]);
-    return (_jsxs(Header, Object.assign({ className: "header" }, { children: [_jsx("div", Object.assign({ className: "logo-container" }, { children: _jsx(Link, Object.assign({ to: "/" }, { children: _jsx("img", { src: logo, alt: "Balasteps", className: "logo" }) })) })), showNav && (_jsx("div", Object.assign({ className: "right-section" }, { children: _jsxs("nav", Object.assign({ className: "nav-links" }, { children: [_jsx(Link, Object.assign({ className: "link", to: "/" }, { children: "News" })), _jsx(Link, Object.assign({ className: "link", to: "/ikomek" }, { children: "iKomek" })), _jsx(Link, Object.assign({ className: "link", to: "/forum" }, { children: "Forums" })), _jsx(Link, Object.assign({ className: "link", to: "/marketplace" }, { children: "Marketplace" })), _jsx(Link, Object.assign({ className: "link", to: "/about-us" }, { children: "About us" }))] })) }))), _jsx(Button, Object.assign({ className: "register-btn", onClick: handleButtonClick }, { children: buttonText }))] })));
+    return (_jsxs(Main_page_header, Object.assign({ className: "header" }, { children: [_jsx("div", Object.assign({ className: "logo-container" }, { children: _jsx(Link, Object.assign({ to: "/" }, { children: _jsx("img", { src: logo, alt: "Balasteps", className: "logo" }) })) })), showNav && (_jsx("div", Object.assign({ className: "right-section" }, { children: _jsxs("nav", Object.assign({ className: "nav-links" }, { children: [_jsx(Link, Object.assign({ className: "link", to: "/" }, { children: "News" })), _jsx(Link, Object.assign({ className: "link", to: "/ikomek" }, { children: "iKomek" })), _jsx(Link, Object.assign({ className: "link", to: "/forum" }, { children: "Forums" })), _jsx(Link, Object.assign({ className: "link", to: "/marketplace" }, { children: "Marketplace" })), _jsx(Link, Object.assign({ className: "link", to: "/about-us" }, { children: "About us" }))] })) }))), _jsx(Button, Object.assign({ className: "register-btn", onClick: handleButtonClick }, { children: buttonText }))] })));
 };
 export default AppHeader;
-//# sourceMappingURL=header.js.map
+//# sourceMappingURL=main_page_header.js.map

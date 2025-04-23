@@ -38,7 +38,7 @@ import {
   AddSymptomButton,
   AddSymptomLink,
 } from './symptom-tracker.styled';
-import Foot from '../../main_page/main_content/footer/footer';
+import Foot from '../../main_page/main_content/footer/footer/footer';
 
 const { Title } = Typography;
 const { Option } = Select;

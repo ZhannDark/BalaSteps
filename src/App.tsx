@@ -16,9 +16,9 @@ import TherapyCenterDetails from './main_panel/info_hub/therapy_centers_details'
 import Marketplace from './main_panel/marketplace/marketplace';
 import MarketplaceDetails from './main_panel/marketplace/marketplace_details';
 import IkomekAssistant from './main_panel/ikomek_ai_assistant/ikomek_assistant';
-import PrivacyPolicy from './main_page/main_content/footer_links/privacy_policy';
-import Support from './main_page/main_content/footer_links/support';
-import ContactUs from './main_page/main_content/footer_links/contact_us';
+import PrivacyPolicy from './main_page/main_content/footer/footer_links/privacy_policy';
+import Support from './main_page/main_content/footer/footer_links/support';
+import ContactUs from './main_page/main_content/footer/footer_links/contact_us';
 import Main_Page from './main_page/main_content/main_page';
 
 const App = () => {
@@ -39,8 +39,14 @@ const App = () => {
         <Route path="/discussion-forum/:id" element={<Discussion_details />} />
         <Route path="/info_hub" element={<InformationHub />} />
         <Route path="/marketplace" element={<Marketplace />} />
-        <Route path="/marketplace/public-items/:id" element={<MarketplaceDetails />} />
-        <Route path="/marketplace/my-items/:id" element={<MarketplaceDetails />} />
+        <Route
+          path="/marketplace/public-items/:id"
+          element={<MarketplaceDetails />}
+        />
+        <Route
+          path="/marketplace/my-items/:id"
+          element={<MarketplaceDetails />}
+        />
         <Route path="/info_hub/news/:id" element={<NewsDetails />} />
         <Route path="/ikomek_assistant" element={<IkomekAssistant />} />
         <Route

@@ -95,7 +95,7 @@ const InformationHub = () => {
             />
           </div>
 
-          {/* News */}
+          {/* Main_page_news */}
           <section className="section">
             <Title level={3} className="section-title">
               Latest News :

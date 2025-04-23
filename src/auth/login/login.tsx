@@ -10,7 +10,7 @@ import {
 } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
 import axios from 'axios';
-import AppHeader from '../../main_page/header/header';
+import AppHeader from '../../main_page/main_page_header/main_page_header';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -59,7 +59,6 @@ const Login = () => {
     },
   });
 
-
   return (
     <>
       {contextHolder}
@@ -82,7 +81,9 @@ const Login = () => {
             <Form.Item
               label="Password:"
               name="password"
-              rules={[{ required: true, message: 'Please enter your password' }]}
+              rules={[
+                { required: true, message: 'Please enter your password' },
+              ]}
             >
               <Input.Password
                 className="login-input"

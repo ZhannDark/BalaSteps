@@ -27,7 +27,7 @@ import {
   ButtonGroup,
   InfoSection,
 } from './marketplace-details.styled';
-import imgPlaceholder from '../../images/img.png';
+import imgPlaceholder from '../../assets/images/main_content/ default_img/no_img.png';
 
 const { Header } = Layout;
 const { Title } = Typography;

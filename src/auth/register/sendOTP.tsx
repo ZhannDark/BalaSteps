@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Form, Input, Button, Typography, notification } from 'antd';
 import 'antd/dist/reset.css';
 import './verify-otp.scss';
-import AppHeader from '../../main_page/header/header';
+import AppHeader from '../../main_page/main_page_header/main_page_header';
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,

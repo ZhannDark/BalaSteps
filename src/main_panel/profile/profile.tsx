@@ -26,7 +26,6 @@ import dayjs from 'dayjs';
 import MenuPanel from '../../menu/menu-panel';
 import Main_header from '../main_header/Main_header';
 import './profile.scss';
-import img from '../../images/fav.jpg';
 import { useNavigate } from 'react-router-dom';
 import { Skeleton } from 'antd';
 
@@ -411,7 +410,7 @@ const ProfilePage = () => {
               <div className="profile-left">
                 <img
                   key={profile.profile_photo}
-                  src={`${profile.profile_photo || img}?${Date.now()}`}
+                  src={`${profile.profile_photo}?${Date.now()}`}
                   alt="Profile"
                   className="profile-image"
                 />

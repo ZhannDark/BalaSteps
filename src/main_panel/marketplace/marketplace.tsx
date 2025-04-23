@@ -34,7 +34,7 @@ import {
   ItemCard,
   ItemImage,
 } from './marketplace.styled';
-import img from '../../images/img.png';
+import img from '../../assets/images/main_content/ default_img/no_img.png';
 
 const { Header } = Layout;
 const { Option } = Select;
