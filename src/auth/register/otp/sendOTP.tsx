@@ -1,16 +1,23 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Form, Input, Button, Typography, notification } from 'antd';
+import { Form, notification } from 'antd';
 import 'antd/dist/reset.css';
-import './verify-otp.scss';
-import AppHeader from '../../main_page/main_page_header/main_page_header';
+import AppHeader from '../../../main_page/main_page_header/main_page_header';
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   ExclamationCircleOutlined,
 } from '@ant-design/icons';
 
-const { Title, Text } = Typography;
+import {
+  Container,
+  OTPInput,
+  Box,
+  SubmitButton,
+  StyledTitle,
+  StyledText,
+  RegisterButtonContainer,
+} from './sendOTP.styled';
 
 const VerifyOTP = () => {
   const location = useLocation();
@@ -82,12 +89,21 @@ const VerifyOTP = () => {
           'Invalid OTP. Please check your code and try again.'
         );
       }
-    } catch (error) {
-      openNotification(
-        'warning',
-        'Something went wrong',
-        'An error occurred while verifying your email. Please try again.'
-      );
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        openNotification(
+          'warning',
+          'Something went wrong',
+          error.message ||
+            'An error occurred while verifying your email. Please try again.'
+        );
+      } else {
+        openNotification(
+          'warning',
+          'Something went wrong',
+          'An unexpected error occurred.'
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -97,35 +113,29 @@ const VerifyOTP = () => {
     <>
       {contextHolder}
       <AppHeader />
-      <div className="verify-otp-container">
-        <div className="verify-otp-box">
-          <Title level={2} className="verify-otp-title">
-            Validate email
-          </Title>
-          <Text className="verify-otp-text">
+      <Container>
+        <Box>
+          <StyledTitle level={2}>Validate email</StyledTitle>
+          <StyledText>
             For security reasons, we have sent a text message containing a code
             to verify your email address.
-          </Text>
-          <Form layout="vertical" className="verify-otp-form">
-            <Form.Item label="Verification code :" className="otp-input-item">
-              <Input
+          </StyledText>
+          <Form layout="vertical" onFinish={handleOTPSubmit}>
+            <Form.Item label="Verification code :">
+              <OTPInput
                 placeholder="Enter OTP"
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
-                className="otp-input"
               />
             </Form.Item>
-            <Button
-              type="primary"
-              onClick={handleOTPSubmit}
-              loading={loading}
-              className="verify-otp-button"
-            >
-              Verify email
-            </Button>
+            <RegisterButtonContainer>
+              <SubmitButton type="primary" htmlType="submit" loading={loading}>
+                Verify email
+              </SubmitButton>
+            </RegisterButtonContainer>
           </Form>
-        </div>
-      </div>
+        </Box>
+      </Container>
     </>
   );
 };

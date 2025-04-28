@@ -10,12 +10,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Form, Input, Button, Typography, notification } from 'antd';
+import { Form, notification } from 'antd';
 import 'antd/dist/reset.css';
-import './verify-otp.scss';
-import AppHeader from '../../main_page/main_page_header/main_page_header';
+import AppHeader from '../../../main_page/main_page_header/main_page_header';
 import { CheckCircleOutlined, CloseCircleOutlined, ExclamationCircleOutlined, } from '@ant-design/icons';
-const { Title, Text } = Typography;
+import { Container, OTPInput, Box, SubmitButton, StyledTitle, StyledText, RegisterButtonContainer, } from './sendOTP.styled';
 const VerifyOTP = () => {
     const location = useLocation();
     const navigate = useNavigate();
@@ -51,20 +50,25 @@ const VerifyOTP = () => {
                 openNotification('success', 'Verification successful', 'Your email has been verified successfully. You can now login.');
                 setTimeout(() => {
                     navigate('/login');
-                }, 5000);
+                }, 4000);
             }
             else {
                 openNotification('error', 'Verification failed', 'Invalid OTP. Please check your code and try again.');
             }
         }
         catch (error) {
-            openNotification('warning', 'Something went wrong', 'An error occurred while verifying your email. Please try again.');
+            if (error instanceof Error) {
+                openNotification('warning', 'Something went wrong', error.message ||
+                    'An error occurred while verifying your email. Please try again.');
+            }
+            else {
+                openNotification('warning', 'Something went wrong', 'An unexpected error occurred.');
+            }
         }
         finally {
             setLoading(false);
         }
     });
-    return (_jsxs(_Fragment, { children: [contextHolder, _jsx(AppHeader, {}), _jsx("div", Object.assign({ className: "verify-otp-container" }, { children: _jsxs("div", Object.assign({ className: "verify-otp-box" }, { children: [_jsx(Title, Object.assign({ level: 2, className: "verify-otp-title" }, { children: "Validate email" })), _jsx(Text, Object.assign({ className: "verify-otp-text" }, { children: "For security reasons, we have sent a text message containing a code to verify your email." })), _jsxs(Form, Object.assign({ layout: "vertical", className: "verify-otp-form" }, { children: [_jsx(Form.Item, Object.assign({ label: "Verification code :", className: "otp-input-item" }, { children: _jsx(Input, { placeholder: "Enter OTP", value: otp, onChange: (e) => setOtp(e.target.value), className: "otp-input" }) })), _jsx(Button, Object.assign({ type: "primary", onClick: handleOTPSubmit, loading: loading, className: "verify-otp-button" }, { children: "Verify code" }))] }))] })) }))] }));
+    return (_jsxs(_Fragment, { children: [contextHolder, _jsx(AppHeader, {}), _jsx(Container, { children: _jsxs(Box, { children: [_jsx(StyledTitle, { level: 2, children: "Validate email" }), _jsx(StyledText, { children: "For security reasons, we have sent a text message containing a code to verify your email address." }), _jsxs(Form, { layout: "vertical", onFinish: handleOTPSubmit, children: [_jsx(Form.Item, { label: "Verification code :", children: _jsx(OTPInput, { placeholder: "Enter OTP", value: otp, onChange: (e) => setOtp(e.target.value) }) }), _jsx(RegisterButtonContainer, { children: _jsx(SubmitButton, { type: "primary", htmlType: "submit", loading: loading, children: "Verify email" }) })] })] }) })] }));
 };
 export default VerifyOTP;
-//# sourceMappingURL=sendOTP.js.map

@@ -2,24 +2,34 @@ import React, { useRef, useState } from 'react';
 import { Typography, Card, Input, Button, Layout, message } from 'antd';
 import { RightOutlined, LeftOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import './information_hub.scss';
-import MenuPanel from '../../menu/menu-panel';
-import Main_header from '../main_header/Main_header';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
+import MenuPanel from '../../menu/menu-panel';
+import Main_header from '../main_header/Main_header';
+import './information_hub.scss';
+import Foot from '../../main_page/main_content/footer/footer/footer';
 
 const { Title } = Typography;
 const { Meta } = Card;
 const { Search } = Input;
 const { Header, Content } = Layout;
 
-interface InfoItem {
+// Interfaces
+interface NewsItem {
   id: string;
   title: string;
   content: string;
   photo?: string;
-  category: { id: string; name: string };
-  tags: { name: string }[];
+  tags: { id: string; name: string }[];
+  source?: string;
+}
+
+interface SpecialistOrCenterItem {
+  id: string;
+  name: string;
+  description: string;
+  photo?: string;
+  tags: { id: string; name: string }[];
 }
 
 const InformationHub = () => {
@@ -30,6 +40,47 @@ const InformationHub = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
 
+  // Fetch functions
+  const fetchNews = async (): Promise<NewsItem[]> => {
+    const res = await axios.get(
+      'https://project-back-81mh.onrender.com/info-hub/news/'
+    );
+    return res.data;
+  };
+
+  const fetchSpecialists = async (): Promise<SpecialistOrCenterItem[]> => {
+    const res = await axios.get(
+      'https://project-back-81mh.onrender.com/info-hub/specialists/'
+    );
+    return res.data;
+  };
+
+  const fetchCenters = async (): Promise<SpecialistOrCenterItem[]> => {
+    const res = await axios.get(
+      'https://project-back-81mh.onrender.com/info-hub/centers/'
+    );
+    return res.data;
+  };
+
+  // Queries
+  const { data: news = [], isError: newsError } = useQuery({
+    queryKey: ['news'],
+    queryFn: fetchNews,
+  });
+  const { data: specialists = [], isError: specialistsError } = useQuery({
+    queryKey: ['specialists'],
+    queryFn: fetchSpecialists,
+  });
+  const { data: centers = [], isError: centersError } = useQuery({
+    queryKey: ['centers'],
+    queryFn: fetchCenters,
+  });
+
+  if (newsError || specialistsError || centersError) {
+    message.error('Failed to load information hub items');
+    return null;
+  }
+
   const scrollLeft = (ref: React.RefObject<HTMLDivElement | null>) => {
     if (ref.current) ref.current.scrollBy({ left: -300, behavior: 'smooth' });
   };
@@ -38,28 +89,19 @@ const InformationHub = () => {
     if (ref.current) ref.current.scrollBy({ left: 300, behavior: 'smooth' });
   };
 
-  const fetchItems = async (): Promise<InfoItem[]> => {
-    const response = await axios.get(
-      'https://project-back-81mh.onrender.com/info-hub/infohub/'
+  const filterNews = () =>
+    news.filter((item) =>
+      item.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
-    return response.data;
-  };
 
-  const { data: items = [], isError } = useQuery<InfoItem[]>({
-    queryKey: ['hubItems'],
-    queryFn: fetchItems,
-  });
+  const filterSpecialists = () =>
+    specialists.filter((item) =>
+      item.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
-  if (isError) {
-    message.error('Failed to load information hub items');
-    return null;
-  }
-
-  const filterByCategory = (categoryName: string) =>
-    items.filter(
-      (item) =>
-        item.category?.name.toLowerCase() === categoryName.toLowerCase() &&
-        item.title.toLowerCase().includes(searchTerm.toLowerCase())
+  const filterCenters = () =>
+    centers.filter((item) =>
+      item.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
   return (
@@ -67,7 +109,6 @@ const InformationHub = () => {
       <MenuPanel
         collapsed={collapsed}
         toggleCollapsed={() => setCollapsed(!collapsed)}
-        selectedPage={'/info_hub'}
       />
       <Layout style={{ marginLeft: collapsed ? 70 : 250 }}>
         <Header
@@ -83,6 +124,7 @@ const InformationHub = () => {
         >
           <Main_header />
         </Header>
+
         <Content className="content-container">
           <div className="name-search">
             <h1 className="title">Information Hub</h1>
@@ -95,10 +137,10 @@ const InformationHub = () => {
             />
           </div>
 
-          {/* Main_page_news */}
+          {/* News */}
           <section className="section">
             <Title level={3} className="section-title">
-              Latest News :
+              Latest News:
             </Title>
             <div className="scroll-container">
               <Button
@@ -107,7 +149,7 @@ const InformationHub = () => {
                 onClick={() => scrollLeft(newsRef)}
               />
               <div className="scroll-content" ref={newsRef}>
-                {filterByCategory('News').map((item) => (
+                {filterNews().map((item) => (
                   <Card
                     key={item.id}
                     className="info-card"
@@ -121,7 +163,9 @@ const InformationHub = () => {
                     />
                     <Meta
                       title={item.title}
-                      description={item.content.slice(0, 60) + '...'}
+                      description={
+                        (item.content ? item.content.slice(0, 60) : '') + '...'
+                      }
                     />
                   </Card>
                 ))}
@@ -137,7 +181,7 @@ const InformationHub = () => {
           {/* Specialists */}
           <section className="section">
             <Title level={3} className="section-title">
-              Specialists :
+              Specialists:
             </Title>
             <div className="scroll-container">
               <Button
@@ -146,7 +190,7 @@ const InformationHub = () => {
                 onClick={() => scrollLeft(specialistsRef)}
               />
               <div className="scroll-content" ref={specialistsRef}>
-                {filterByCategory('Specialists').map((item) => (
+                {filterSpecialists().map((item) => (
                   <Card
                     key={item.id}
                     className="info-card"
@@ -155,11 +199,11 @@ const InformationHub = () => {
                   >
                     <img
                       src={item.photo}
-                      alt={item.title}
+                      alt={item.name}
                       className="card-image"
                     />
                     <Meta
-                      title={item.title}
+                      title={item.name}
                       description={`Tags: ${item.tags.map((tag) => tag.name).join(', ')}`}
                     />
                   </Card>
@@ -173,10 +217,10 @@ const InformationHub = () => {
             </div>
           </section>
 
-          {/* Therapy Centers */}
+          {/* Centers */}
           <section className="section">
             <Title level={3} className="section-title">
-              Therapy Centers :
+              Therapy Centers:
             </Title>
             <div className="scroll-container">
               <Button
@@ -185,7 +229,7 @@ const InformationHub = () => {
                 onClick={() => scrollLeft(centersRef)}
               />
               <div className="scroll-content" ref={centersRef}>
-                {filterByCategory('Therapy Centers').map((item) => (
+                {filterCenters().map((item) => (
                   <Card
                     key={item.id}
                     className="info-card"
@@ -196,11 +240,11 @@ const InformationHub = () => {
                   >
                     <img
                       src={item.photo}
-                      alt={item.title}
+                      alt={item.name}
                       className="card-image"
                     />
                     <Meta
-                      title={item.title}
+                      title={item.name}
                       description={`Tags: ${item.tags.map((tag) => tag.name).join(', ')}`}
                     />
                   </Card>
@@ -214,6 +258,7 @@ const InformationHub = () => {
             </div>
           </section>
         </Content>
+        <Foot />
       </Layout>
     </Layout>
   );

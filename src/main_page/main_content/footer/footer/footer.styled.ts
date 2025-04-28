@@ -5,49 +5,59 @@ import { device } from '../../../../styles/media';
 
 const { Footer } = Layout;
 
-export const StyledFooter = styled(Footer)<{ collapsed?: boolean }>`
+export const StyledFooter = styled(Footer)`
+  background: #ffffff;
+  padding: 30px 20px;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  background: #e2e3e0;
-  padding: 20px 40px;
-  height: 60px;
-  transition: margin 0.3s ease;
+  border-top: 1px solid #e0e0e0;
 
-  margin-left: ${({ collapsed }) =>
-    collapsed === false ? '0' : collapsed ? '100px' : '300px'};
-
-  @media ${device.tablet} {
-    flex-direction: column;
-    margin-left: 0;
-    padding: 10px;
-    height: auto;
+  @media ${device.mobileL} {
+    width: 100%;
   }
 `;
 
+export const FooterNav = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 20px;
+`;
+
 export const FooterLink = styled(Link)`
-  margin: 0 120px;
+  color: #85300c;
+  font-size: 15px;
   text-decoration: none;
-  color: #426b1f;
-  font-family: 'Acme', sans-serif !important;
-  font-size: 18px;
 
   &:hover {
-    color: #4b163b;
+    color: #c54a16;
+    text-decoration: underline;
   }
+`;
 
-  @media ${device.tablet} {
-    margin: 10px 0;
+export const FooterSocial = styled.div`
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+
+  a {
+    color: #426b1f;
+    transition: color 0.2s;
+
+    &:hover {
+      color: #629432;
+    }
   }
 `;
 
 export const CopyRight = styled.span`
-  margin: 0 120px;
-  color: #426b1f;
-  font-family: 'Acme', sans-serif;
-  font-size: 18px;
+  color: #777;
+  font-size: 14px;
+  text-align: center;
 
-  @media ${device.tablet} {
-    margin: 10px 0;
+  @media ${device.mobileL} {
+    font-size: 13px;
   }
 `;

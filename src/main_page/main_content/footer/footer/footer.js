@@ -1,10 +1,7 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-import { Layout } from 'antd';
-import { Link } from 'react-router-dom';
-import '../../main.scss';
-const { Footer } = Layout;
-const Foot = () => {
-    return (_jsxs(Footer, Object.assign({ className: "footer" }, { children: [_jsx(Link, Object.assign({ className: "footer-link", to: "/privacy-policy" }, { children: "Privacy Policy" })), _jsx(Link, Object.assign({ className: "footer-link", to: "/support" }, { children: "Support" })), _jsx(Link, Object.assign({ className: "footer-link", to: "/contact" }, { children: "Contact us" })), _jsx("span", Object.assign({ className: "footer-link" }, { children: "\u00A9 2025 BalaSteps" }))] })));
+import { StyledFooter, FooterNav, FooterLink, FooterSocial, CopyRight, } from './footer.styled';
+import { FaFacebookF, FaInstagram, FaTwitter, FaLinkedinIn, FaFacebookMessenger, } from 'react-icons/fa';
+const Footer = () => {
+    return (_jsxs(StyledFooter, { children: [_jsxs(FooterNav, { children: [_jsx(FooterLink, { to: "/", children: "Home" }), _jsx(FooterLink, { to: "/about-us", children: "About Us" }), _jsx(FooterLink, { to: "/services", children: "Services" }), _jsx(FooterLink, { to: "/support", children: "Support" }), _jsx(FooterLink, { to: "/privacy-policy", children: "Privacy Policy" }), _jsx(FooterLink, { to: "/contact-us", children: "Contact" })] }), _jsxs(FooterSocial, { children: [_jsx("a", { href: "https://facebook.com", target: "_blank", rel: "noreferrer", children: _jsx(FaFacebookF, { size: 20 }) }), _jsx("a", { href: "https://linkedin.com", target: "_blank", rel: "noreferrer", children: _jsx(FaLinkedinIn, { size: 20 }) }), _jsx("a", { href: "https://instagram.com", target: "_blank", rel: "noreferrer", children: _jsx(FaInstagram, { size: 20 }) }), _jsx("a", { href: "https://messenger.com", target: "_blank", rel: "noreferrer", children: _jsx(FaFacebookMessenger, { size: 20 }) }), _jsx("a", { href: "https://twitter.com", target: "_blank", rel: "noreferrer", children: _jsx(FaTwitter, { size: 20 }) })] }), _jsx(CopyRight, { children: "\u00A9 2025 BalaSteps. All rights reserved." })] }));
 };
-export default Foot;
-//# sourceMappingURL=footer.js.map
+export default Footer;

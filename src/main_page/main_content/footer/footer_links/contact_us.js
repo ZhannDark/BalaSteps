@@ -1,4 +1,0 @@
-import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-const ContactUs = () => (_jsxs("div", Object.assign({ style: { padding: '40px', marginBottom: '460px' } }, { children: [_jsx("h1", { children: "Contact Us" }), _jsx("p", { children: "Have a question, idea, or partnership proposal? We would love to hear from you." }), _jsx("h3", { children: "Reach Out" }), _jsxs("ul", { children: [_jsxs("li", { children: ["Email: ", _jsx("strong", { children: "hello@balasteps.com" })] }), _jsxs("li", { children: ["Instagram:", ' ', _jsx("a", Object.assign({ href: "https://instagram.com/balasteps", target: "_blank", rel: "noreferrer" }, { children: "@balasteps" }))] }), _jsx("li", { children: "Address: Almaty, Kazakhstan" })] }), _jsx("p", { children: "We appreciate your feedback and interest in BalaSteps!" })] })));
-export default ContactUs;
-//# sourceMappingURL=contact_us.js.map

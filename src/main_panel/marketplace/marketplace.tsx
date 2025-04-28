@@ -15,7 +15,6 @@ import {
 import {
   PlusOutlined,
   UploadOutlined,
-  EditOutlined,
   DeleteOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
@@ -35,6 +34,7 @@ import {
   ItemImage,
 } from './marketplace.styled';
 import img from '../../assets/images/main_content/ default_img/no_img.png';
+import Foot from '../../main_page/main_content/footer/footer/footer';
 
 const { Header } = Layout;
 const { Option } = Select;
@@ -233,7 +233,6 @@ const Marketplace = () => {
       <MenuPanel
         collapsed={collapsed}
         toggleCollapsed={() => setCollapsed(!collapsed)}
-        selectedPage="/marketplace"
       />
       <Layout style={{ marginLeft: collapsed ? 100 : 250 }}>
         <Header style={{ background: '#E2E3E0', height: '48px', padding: 0 }}>
@@ -428,6 +427,7 @@ const Marketplace = () => {
             </motion.div>
           )}
         </MarketplaceContent>
+        <Foot />
       </Layout>
     </MarketplaceLayout>
   );

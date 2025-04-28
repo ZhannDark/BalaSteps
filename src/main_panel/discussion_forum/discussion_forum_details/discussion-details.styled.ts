@@ -10,14 +10,17 @@ export const StyledLayout = styled(Layout)`
 `;
 
 export const StyledHeader = styled(Header)`
-  background: #e2e3e0;
-  padding: 0 20px;
+  padding: 0;
+  margin-left: 5px;
+  background-color: #e2e3e0;
+  height: 48px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
 `;
 
 export const StyledContent = styled(Content)`
-  padding: 24px;
+  padding: 10px;
   width: 95%;
   margin: 0 auto;
 
@@ -126,4 +129,36 @@ export const CommentActions = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
+`;
+
+export const RepliesContainer = styled.div`
+  margin-top: 12px;
+  margin-left: 30px;
+  padding: 10px 15px;
+  background: #f9f9f9;
+  border-left: 3px solid #c5d1bc;
+  border-radius: 8px;
+`;
+
+export const ReplyCard = styled(Card)`
+  background: #fcfcfc;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 10px;
+  margin-top: 10px;
+`;
+
+export const ShowRepliesButton = styled(Button)`
+  margin-top: 10px;
+  font-size: 14px;
+  color: #426b1f;
+  background: none;
+  border: none;
+  height: auto;
+  padding: 0;
+
+  &:hover {
+    text-decoration: underline;
+    background: none;
+  }
 `;

@@ -64,11 +64,9 @@ const Main_header = () => {
             label: 'Log Out',
         },
     ];
-    return (_jsx(Layout, Object.assign({ style: { backgroundColor: '#E2E3E0' } }, { children: _jsx(Header, Object.assign({ className: "main-header" }, { children: _jsx("div", Object.assign({ className: "header-right" }, { children: _jsx(Dropdown, Object.assign({ menu: { items, onClick: handleMenuClick }, trigger: ['click'] }, { children: _jsx(Button, Object.assign({ type: "text", className: "profile-dropdown" }, { children: _jsx(Avatar, Object.assign({ size: "default", icon: _jsx(UserOutlined, {}), style: {
-                                marginRight: 8,
+    return (_jsx(Layout, { style: { backgroundColor: '#E2E3E0' }, children: _jsx(Header, { className: "main-header", children: _jsx("div", { className: "header-right", children: _jsx(Dropdown, { menu: { items, onClick: handleMenuClick }, trigger: ['click'], children: _jsx(Button, { type: "text", className: "profile-dropdown", children: _jsx(Avatar, { size: "default", icon: _jsx(UserOutlined, {}), style: {
                                 color: '#591C00',
                                 backgroundColor: '#E2E3E0',
-                            } }, { children: "ZZ" })) })) })) })) })) })));
+                            } }) }) }) }) }) }));
 };
 export default Main_header;
-//# sourceMappingURL=Main_header.js.map

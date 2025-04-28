@@ -64,11 +64,11 @@ const HeaderButtons = () => {
           viewport={{ once: false }}
         >
           <ButtonBlock
-            isReversed={index % 2 !== 0}
+            $isReversed={index % 2 !== 0}
             onClick={() => handleProtectedClick(section.path)}
             style={{ cursor: 'pointer' }}
           >
-            <ButtonContent isReversed={index % 2 !== 0}>
+            <ButtonContent $isReversed={index % 2 !== 0}>
               <ButtonText>
                 <ButtonTitle>{section.title}</ButtonTitle>
                 <p>{section.text}</p>

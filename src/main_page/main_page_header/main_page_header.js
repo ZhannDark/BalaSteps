@@ -1,19 +1,18 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { useState, useEffect } from 'react';
-import { Button } from 'antd';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import 'antd/dist/reset.css';
-import './header.scss';
-import logo from '../../images/logo/main_logo.png';
-import { Layout } from 'antd';
-const { Header: Main_page_header } = Layout;
+import logo from '../../assets/images/logo/main_logo.png';
+import { StyledHeader, LogoContainer, Logo, RightSection, NavLinks, NavLink, StyledButton, ButtonGroup, Burger, } from './main_page_header.styled';
 const AppHeader = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [showNav, setShowNav] = useState(true);
-    const [buttonText, setButtonText] = useState('Register');
-    const handleButtonClick = () => {
-        if (location.pathname === '/register') {
+    const [showLoginButton, setShowLoginButton] = useState(true);
+    const [showRegisterButton, setShowRegisterButton] = useState(true);
+    const [menuOpen, setMenuOpen] = useState(false);
+    const isAuthenticated = Boolean(localStorage.getItem('accessToken'));
+    const handleButtonClick = (auth) => {
+        if (location.pathname === '/register' || auth === 'login') {
             navigate('/login');
         }
         else {
@@ -23,26 +22,46 @@ const AppHeader = () => {
     useEffect(() => {
         if (location.pathname === '/register') {
             setShowNav(false);
-            setButtonText('Login');
+            setShowLoginButton(true);
+            setShowRegisterButton(false);
         }
         else if (location.pathname === '/login') {
             setShowNav(false);
-            setButtonText('Register');
+            setShowLoginButton(false);
+            setShowRegisterButton(true);
         }
         else if (location.pathname === '/forgot-password') {
             setShowNav(false);
-            setButtonText('Register');
         }
         else if (location.pathname === '/send-otp') {
             setShowNav(false);
-            setButtonText('Login');
+            setShowLoginButton(true);
+            setShowRegisterButton(false);
         }
         else {
             setShowNav(true);
-            setButtonText('Register');
         }
     }, [location.pathname]);
-    return (_jsxs(Main_page_header, Object.assign({ className: "header" }, { children: [_jsx("div", Object.assign({ className: "logo-container" }, { children: _jsx(Link, Object.assign({ to: "/" }, { children: _jsx("img", { src: logo, alt: "Balasteps", className: "logo" }) })) })), showNav && (_jsx("div", Object.assign({ className: "right-section" }, { children: _jsxs("nav", Object.assign({ className: "nav-links" }, { children: [_jsx(Link, Object.assign({ className: "link", to: "/" }, { children: "News" })), _jsx(Link, Object.assign({ className: "link", to: "/ikomek" }, { children: "iKomek" })), _jsx(Link, Object.assign({ className: "link", to: "/forum" }, { children: "Forums" })), _jsx(Link, Object.assign({ className: "link", to: "/marketplace" }, { children: "Marketplace" })), _jsx(Link, Object.assign({ className: "link", to: "/about-us" }, { children: "About us" }))] })) }))), _jsx(Button, Object.assign({ className: "register-btn", onClick: handleButtonClick }, { children: buttonText }))] })));
+    return (_jsxs(StyledHeader, { children: [_jsx(LogoContainer, { children: _jsx(Link, { to: "/", children: _jsx(Logo, { src: logo, alt: "Balasteps" }) }) }), _jsx(Burger, { onClick: () => setMenuOpen(!menuOpen), children: "\u2630" }), showNav && (_jsxs(RightSection, { isOpen: menuOpen, children: [_jsxs(NavLinks, { children: [_jsx(NavLink, { to: "/info-hub", onClick: (e) => {
+                                    if (!isAuthenticated) {
+                                        e.preventDefault();
+                                        navigate('/login');
+                                    }
+                                }, children: "News" }), _jsx(NavLink, { to: "/ikomek", onClick: (e) => {
+                                    if (!isAuthenticated) {
+                                        e.preventDefault();
+                                        navigate('/login');
+                                    }
+                                }, children: "iKomek" }), _jsx(NavLink, { to: "/forum", onClick: (e) => {
+                                    if (!isAuthenticated) {
+                                        e.preventDefault();
+                                        navigate('/login');
+                                    }
+                                }, children: "Forums" }), _jsx(NavLink, { to: "/marketplace", onClick: (e) => {
+                                    if (!isAuthenticated) {
+                                        e.preventDefault();
+                                        navigate('/login');
+                                    }
+                                }, children: "Marketplace" }), _jsx(NavLink, { to: "/about-us", children: "About us" })] }), _jsxs(ButtonGroup, { children: [showRegisterButton && (_jsx(StyledButton, { onClick: () => handleButtonClick('register'), children: "Register" })), showLoginButton && (_jsx(StyledButton, { onClick: () => handleButtonClick('login'), children: "Login" }))] })] }))] }));
 };
 export default AppHeader;
-//# sourceMappingURL=main_page_header.js.map

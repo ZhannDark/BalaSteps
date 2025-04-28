@@ -8,23 +8,27 @@ import {
   Input,
   Select,
   Popconfirm,
-  message,
+  notification,
   Tooltip,
-  Popover,
+  Drawer,
   Divider,
   Layout,
 } from 'antd';
 import {
-  PlusOutlined,
   EditOutlined,
+  PlusOutlined,
   DeleteOutlined,
   InfoCircleOutlined,
+  UserOutlined,
+  SettingOutlined,
+  ClockCircleOutlined,
 } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import dayjs, { Dayjs } from 'dayjs';
 import MenuPanel from '../../menu/menu-panel';
 import Main_header from '../main_header/Main_header';
+import Foot from '../../main_page/main_content/footer/footer/footer';
 import {
   SymptomLayout,
   SymptomHeaderBar,
@@ -32,13 +36,13 @@ import {
   SymptomHeader,
   CalendarCell,
   DisabledDate,
-  SymptomName,
   ChildSymptom,
   SymptomAction,
   AddSymptomButton,
-  AddSymptomLink,
+  AddSymptomDrawerButton,
+  DrawerContainer,
+  SymptomDrawerTitle,
 } from './symptom-tracker.styled';
-import Foot from '../../main_page/main_content/footer/footer/footer';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -75,7 +79,8 @@ const SymptomTracker = () => {
   const [form] = Form.useForm();
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [popoverVisible, setPopoverVisible] = useState<string | null>(null);
+  const [drawerVisible, setDrawerVisible] = useState(false);
+  const [drawerSymptoms, setDrawerSymptoms] = useState<Symptom[]>([]);
 
   const queryClient = useQueryClient();
 
@@ -89,34 +94,36 @@ const SymptomTracker = () => {
   ];
   const childColorMap = new Map<string, string>();
 
-  const fetchSymptoms = async (): Promise<Symptom[]> =>
-    (
-      await axios.get(
-        'https://project-back-81mh.onrender.com/symptoms/entries/',
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      )
-    ).data;
-
-  const fetchChildren = async (): Promise<Child[]> =>
-    (
-      await axios.get('https://project-back-81mh.onrender.com/auth/children/', {
+  const fetchSymptoms = async (): Promise<Symptom[]> => {
+    const res = await axios.get(
+      'https://project-back-81mh.onrender.com/symptoms/entries/',
+      {
         headers: { Authorization: `Bearer ${accessToken}` },
-      })
-    ).data;
+      }
+    );
+    return res.data;
+  };
+
+  const fetchChildren = async (): Promise<Child[]> => {
+    const res = await axios.get(
+      'https://project-back-81mh.onrender.com/auth/children/',
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }
+    );
+    return res.data;
+  };
 
   const { data: symptoms = [] } = useQuery<Symptom[]>({
     queryKey: ['symptoms'],
     queryFn: fetchSymptoms,
   });
-
   const { data: children = [] } = useQuery<Child[]>({
     queryKey: ['children'],
     queryFn: fetchChildren,
   });
 
-  children?.forEach((child, index) => {
+  children.forEach((child, index) => {
     if (!childColorMap.has(child.id)) {
       childColorMap.set(child.id, childColors[index % childColors.length]);
     }
@@ -132,10 +139,19 @@ const SymptomTracker = () => {
         }
       ),
     onSuccess: () => {
-      message.success('Symptom added');
+      notification.success({
+        message: 'Symptom Added',
+        description: 'Symptom was successfully added.',
+      });
       queryClient.invalidateQueries({ queryKey: ['symptoms'] });
     },
-    onError: () => message.error('Failed to add symptom'),
+    onError: () => {
+      notification.error({
+        message: 'Adding Symptom Failed',
+        description:
+          'There was a problem while adding the symptom. Please try again later.',
+      });
+    },
   });
 
   const updateSymptom = useMutation({
@@ -148,10 +164,19 @@ const SymptomTracker = () => {
         }
       ),
     onSuccess: () => {
-      message.success('Symptom updated');
+      notification.success({
+        message: 'Symptom Updated',
+        description: 'Symptom was successfully updated.',
+      });
       queryClient.invalidateQueries({ queryKey: ['symptoms'] });
     },
-    onError: () => message.error('Failed to update symptom'),
+    onError: () => {
+      notification.error({
+        message: 'Updating Symptom Failed',
+        description:
+          'There was a problem while updating the symptom. Please try again later.',
+      });
+    },
   });
 
   const deleteSymptom = useMutation({
@@ -163,10 +188,20 @@ const SymptomTracker = () => {
         }
       ),
     onSuccess: () => {
-      message.success('Symptom deleted');
+      notification.success({
+        message: 'Symptom Deleted',
+        description: 'Symptom has been successfully deleted.',
+      });
+      setDrawerVisible(false);
       queryClient.invalidateQueries({ queryKey: ['symptoms'] });
     },
-    onError: () => message.error('Failed to delete symptom'),
+    onError: () => {
+      notification.error({
+        message: 'Deleting Symptom Failed',
+        description:
+          'There was a problem while deleting the symptom. Please try again later.',
+      });
+    },
   });
 
   const openFormModal = (symptom?: Symptom, date?: Dayjs) => {
@@ -184,8 +219,13 @@ const SymptomTracker = () => {
       form.resetFields();
       if (date) setSelectedDate(date);
     }
-    setPopoverVisible(null);
     setFormModalOpen(true);
+  };
+
+  const openDrawer = (symptoms: Symptom[], date: Dayjs) => {
+    setDrawerSymptoms(symptoms);
+    setSelectedDate(date);
+    setDrawerVisible(true);
   };
 
   const handleFormSubmit = (values: SymptomPayload) => {
@@ -210,100 +250,42 @@ const SymptomTracker = () => {
 
   const dateCellRender = (date: Dayjs) => {
     const isFuture = date.isAfter(dayjs(), 'day');
-
-    if (isFuture) {
-      return <DisabledDate />;
-    }
+    if (isFuture) return <DisabledDate />;
 
     const currentDaySymptoms = symptoms.filter(
       (s) => dayjs(s.date).format('YYYY-MM-DD') === date.format('YYYY-MM-DD')
     );
 
+    const limitedSymptoms = currentDaySymptoms.slice(0, 2);
+    const overflow = currentDaySymptoms.length - 2;
+
     return (
-      <Popover
-        content={
-          <div style={{ minWidth: 250 }}>
-            {currentDaySymptoms.length ? (
-              <div>
-                {currentDaySymptoms.map((symptom) => (
-                  <div key={symptom.id} style={{ marginBottom: 12 }}>
-                    <SymptomName
-                      style={{ color: childColorMap.get(symptom.child) }}
-                    >
-                      {symptom.symptom_name}
-                    </SymptomName>
-                    <p>
-                      <strong>Child:</strong> {symptom.child_name}
-                    </p>
-                    <ChildSymptom>
-                      <strong>Actions:</strong> {symptom.action_taken || '—'}
-                    </ChildSymptom>
-                    <p>
-                      Created:{' '}
-                      {dayjs(symptom.created_at).format('YYYY-MM-DD HH:mm')}
-                    </p>
-                    <p>
-                      Updated:{' '}
-                      {dayjs(symptom.updated_at).format('YYYY-MM-DD HH:mm')}
-                    </p>
-                    <SymptomAction>
-                      <Button
-                        icon={<EditOutlined />}
-                        size="small"
-                        onClick={() => openFormModal(symptom)}
-                      >
-                        Edit
-                      </Button>
-                      <Popconfirm
-                        title="Are you sure to delete this symptom?"
-                        onConfirm={() => deleteSymptom.mutate(symptom.id)}
-                        okText="Yes"
-                        cancelText="No"
-                      >
-                        <Button icon={<DeleteOutlined />} size="small" danger>
-                          Delete
-                        </Button>
-                      </Popconfirm>
-                    </SymptomAction>
-                    <Divider />
-                  </div>
-                ))}
-                <AddSymptomButton
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  onClick={() => openFormModal(undefined, date)}
-                  block
-                >
-                  Add Symptom
-                </AddSymptomButton>
-              </div>
-            ) : (
-              <AddSymptomLink
-                type="link"
-                onClick={() => openFormModal(undefined, date)}
-              >
-                + Add Symptom
-              </AddSymptomLink>
-            )}
+      <CalendarCell onClick={() => openDrawer(currentDaySymptoms, date)}>
+        {limitedSymptoms.map((s) => (
+          <div
+            key={s.id}
+            style={{
+              color: '#000',
+              fontSize: 12,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <span
+              style={{
+                backgroundColor: childColorMap.get(s.child),
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                display: 'inline-block',
+              }}
+            ></span>
+            {s.symptom_name}
           </div>
-        }
-        trigger="click"
-        open={popoverVisible === date.format('YYYY-MM-DD')}
-        onOpenChange={(open) =>
-          setPopoverVisible(open ? date.format('YYYY-MM-DD') : null)
-        }
-      >
-        <CalendarCell>
-          {currentDaySymptoms.map((s, i) => (
-            <div
-              key={i}
-              style={{ color: childColorMap.get(s.child), fontSize: 12 }}
-            >
-              {s.symptom_name}
-            </div>
-          ))}
-        </CalendarCell>
-      </Popover>
+        ))}
+        {overflow > 0 && <div style={{ fontSize: 12 }}>+{overflow} more</div>}
+      </CalendarCell>
     );
   };
 
@@ -312,7 +294,6 @@ const SymptomTracker = () => {
       <MenuPanel
         collapsed={collapsed}
         toggleCollapsed={() => setCollapsed(!collapsed)}
-        selectedPage="/symptom-tracker"
       />
       <Layout
         style={{
@@ -349,12 +330,16 @@ const SymptomTracker = () => {
             open={formModalOpen}
             onCancel={() => setFormModalOpen(false)}
             footer={null}
+            style={{ top: 50 }}
+            styles={{ body: { maxHeight: '70vh', overflowY: 'auto' } }}
           >
             <Form layout="vertical" form={form} onFinish={handleFormSubmit}>
+              <Divider orientation="left">Main Info</Divider>
               <Form.Item
                 name="child"
                 label="Child"
                 rules={[{ required: true }]}
+                extra="Select the child this symptom is related to."
               >
                 <Select placeholder="Select a child">
                   {children.map((child) => (
@@ -369,24 +354,88 @@ const SymptomTracker = () => {
                 label="Symptom"
                 rules={[{ required: true }]}
               >
-                <Input />
+                <Input.TextArea />
               </Form.Item>
-              <Form.Item name="action_taken" label="Actions / Therapies">
+              <Divider orientation="left">Details</Divider>
+              <Form.Item
+                name="action_taken"
+                label="Actions / Therapies"
+                extra="Describe any action or therapy taken."
+              >
                 <Input.TextArea />
               </Form.Item>
               <Form.Item>
-                <AddSymptomButton
-                  type="primary"
-                  htmlType="submit"
-                  style={{ backgroundColor: '#426B1F' }}
-                >
+                <AddSymptomButton type="primary" htmlType="submit">
                   {isEditMode ? 'Save Changes' : 'Add Symptom'}
                 </AddSymptomButton>
               </Form.Item>
             </Form>
           </Modal>
+
+          <Drawer
+            title={`Symptoms - ${selectedDate?.format('MMMM D, YYYY')}`}
+            placement="right"
+            onClose={() => setDrawerVisible(false)}
+            open={drawerVisible}
+            width={360}
+          >
+            <DrawerContainer>
+              {drawerSymptoms.map((symptom) => (
+                <div key={symptom.id} style={{ marginBottom: 16 }}>
+                  <SymptomDrawerTitle>
+                    <UserOutlined /> {symptom.symptom_name}
+                  </SymptomDrawerTitle>
+                  <ChildSymptom>
+                    <SettingOutlined /> Child: {symptom.child_name}
+                  </ChildSymptom>
+                  <ChildSymptom>
+                    <ClockCircleOutlined /> Created:{' '}
+                    {dayjs(symptom.created_at).format('YYYY-MM-DD HH:mm')}
+                  </ChildSymptom>
+                  <ChildSymptom style={{ fontSize: '12px', color: '#888' }}>
+                    Updated:{' '}
+                    {dayjs(symptom.updated_at).format('YYYY-MM-DD HH:mm')}
+                  </ChildSymptom>
+                  <ChildSymptom>
+                    ⚙️ Actions: {symptom.action_taken || '—'}
+                  </ChildSymptom>
+                  <SymptomAction>
+                    <Button
+                      icon={<EditOutlined />}
+                      size="small"
+                      onClick={() => {
+                        openFormModal(symptom);
+                        setDrawerVisible(false);
+                      }}
+                    >
+                      Edit
+                    </Button>
+                    <Popconfirm
+                      title="Are you sure to delete this symptom?"
+                      onConfirm={() => deleteSymptom.mutate(symptom.id)}
+                      okText="Yes"
+                      cancelText="No"
+                    >
+                      <Button icon={<DeleteOutlined />} size="small" danger>
+                        Delete
+                      </Button>
+                    </Popconfirm>
+                  </SymptomAction>
+                </div>
+              ))}
+              <AddSymptomDrawerButton
+                icon={<PlusOutlined />}
+                onClick={() => {
+                  setDrawerVisible(false);
+                  openFormModal(undefined, selectedDate || dayjs());
+                }}
+              >
+                Add Symptom
+              </AddSymptomDrawerButton>
+            </DrawerContainer>
+          </Drawer>
         </SymptomContent>
-        <Foot collapsed={collapsed} />
+        <Foot />
       </Layout>
     </SymptomLayout>
   );

@@ -1,5 +1,6 @@
 import styled from 'styled-components';
 import { Typography, Button as AntButton } from 'antd';
+import { device } from '../../../styles/media';
 
 const { Title } = Typography;
 
@@ -10,6 +11,11 @@ export const MainWrapper = styled.div`
   align-items: center;
   text-align: center;
   margin-top: 50px;
+  padding-bottom: 100px;
+
+  @media ${device.tablet} {
+    padding-bottom: 80px;
+  }
 `;
 
 export const MainTitle = styled(Title)`
@@ -21,6 +27,17 @@ export const MainTitle = styled(Title)`
   width: 790px;
   height: 154px;
   margin-bottom: 20px;
+
+  @media ${device.tablet} {
+    font-size: 40px !important;
+    width: 90%;
+    height: auto;
+    padding: 0 10px;
+  }
+
+  @media ${device.mobileL} {
+    font-size: 28px !important;
+  }
 `;
 
 export const GetStartedButton = styled(AntButton)`
@@ -37,7 +54,17 @@ export const GetStartedButton = styled(AntButton)`
 
   &:hover {
     background-color: #629432 !important;
-    stroke: none;
+  }
+
+  @media ${device.tablet} {
+    width: 180px;
+    font-size: 16px;
+    padding: 14px 32px;
+  }
+
+  @media ${device.mobileL} {
+    width: 160px;
+    font-size: 14px;
   }
 `;
 
@@ -46,11 +73,26 @@ export const ImagesContainer = styled.div`
   justify-content: center;
   gap: 100px;
   margin-top: 20px;
+
+  @media ${device.tablet} {
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+  }
 `;
 
 export const ContentImage = styled.img`
   width: auto;
   height: 393px;
   border-radius: 5px;
-  box-shadow: 0 0 0 rgba(0, 0, 0, 0.1);
+
+  @media ${device.tablet} {
+    height: 250px;
+    width: 80%;
+  }
+
+  @media ${device.mobileL} {
+    height: 200px;
+    width: 90%;
+  }
 `;

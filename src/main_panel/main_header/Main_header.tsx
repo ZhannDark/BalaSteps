@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Dropdown, Button, Layout, Avatar, message } from 'antd';
+import React from 'react';
+import { Dropdown, Layout, Avatar, notification } from 'antd';
 import {
   UserOutlined,
   LogoutOutlined,
@@ -7,12 +7,13 @@ import {
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import './main_header.scss';
+import {
+  StyledHeader,
+  HeaderRight,
+  ProfileDropdownButton,
+} from './main-header.styled';
 
-const { Header } = Layout;
-
-const Main_header = () => {
-  const [isProfileVisible, setIsProfileVisible] = useState(false);
+const Main_header: React.FC = () => {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -20,7 +21,10 @@ const Main_header = () => {
     const accessToken = localStorage.getItem('accessToken');
 
     if (!refreshToken || !accessToken) {
-      message.warning('You are already logged out.');
+      notification.warning({
+        message: 'Already Logged Out',
+        description: 'You are already logged out.',
+      });
       return;
     }
 
@@ -38,19 +42,30 @@ const Main_header = () => {
 
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
-      message.success('Logged out successfully!');
+      notification.success({
+        message: 'Logged Out',
+        description: 'You have been logged out successfully.',
+      });
       navigate('/login');
-    } catch (error: any) {
-      console.error(error);
-      message.error(
-        error.response?.data?.detail || 'Failed to log out. Try again.'
-      );
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        notification.error({
+          message: 'Logout Failed',
+          description:
+            error.response?.data?.detail ||
+            'Failed to log out. Please try again.',
+        });
+      } else {
+        notification.error({
+          message: 'Unexpected Error',
+          description: 'Something went wrong. Please try again.',
+        });
+      }
     }
   };
 
-  const handleMenuClick = ({ key }: any) => {
+  const handleMenuClick = ({ key }: { key: string }) => {
     if (key === 'profile') {
-      setIsProfileVisible(true);
       navigate('/profile');
     } else if (key === 'logout') {
       handleLogout();
@@ -72,13 +87,13 @@ const Main_header = () => {
 
   return (
     <Layout style={{ backgroundColor: '#E2E3E0' }}>
-      <Header className="main-header">
-        <div className="header-right">
+      <StyledHeader>
+        <HeaderRight>
           <Dropdown
             menu={{ items, onClick: handleMenuClick }}
             trigger={['click']}
           >
-            <Button type="text" className="profile-dropdown">
+            <ProfileDropdownButton type="text">
               <Avatar
                 size="default"
                 icon={<UserOutlined />}
@@ -87,10 +102,10 @@ const Main_header = () => {
                   backgroundColor: '#E2E3E0',
                 }}
               />
-            </Button>
+            </ProfileDropdownButton>
           </Dropdown>
-        </div>
-      </Header>
+        </HeaderRight>
+      </StyledHeader>
     </Layout>
   );
 };

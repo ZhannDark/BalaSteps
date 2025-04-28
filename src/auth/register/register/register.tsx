@@ -1,15 +1,32 @@
-import React, { useState } from 'react';
-import { Form, Input, Button, notification } from 'antd';
-import { Link, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Form, notification } from 'antd';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useMutation } from '@tanstack/react-query';
-import './register.scss';
-import AppHeader from '../../main_page/main_page_header/main_page_header';
+import AppHeader from '../../../main_page/main_page_header/main_page_header';
+import {
+  RegisterContainer,
+  RegisterTitle,
+  RegisterFormContainer,
+  RegisterInput,
+  RegisterPassword,
+  RegisterButtonContainer,
+  RegisterButton,
+  LoginLink,
+} from './register.styled';
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   ExclamationCircleOutlined,
 } from '@ant-design/icons';
+
+interface RegisterFormValues {
+  email: string;
+  firstName: string;
+  lastName: string;
+  password: string;
+  confirmPassword: string;
+}
 
 const Register = () => {
   const [api, contextHolder] = notification.useNotification();
@@ -56,9 +73,10 @@ const Register = () => {
         navigate('/send-otp', { state: { email: variables.email } });
       }, 4000);
     },
-    onError: (error: any) => {
+    onError: (error: {
+      response?: { data?: { message?: string; email?: string[] } };
+    }) => {
       const emailError = error?.response?.data?.email?.[0];
-
       if (emailError === 'user with this email already exists.') {
         openNotification(
           'error',
@@ -69,57 +87,70 @@ const Register = () => {
         openNotification(
           'error',
           'Registration failed',
-          error?.response?.data?.message || 'An error occurred. Please try again.'
+          error?.response?.data?.message ||
+            'An error occurred. Please try again.'
         );
       }
     },
   });
 
-  const onFinishRegister = (values: any) => {
-    registerMutation.mutate({
-      email: values.email,
-      firstName: values.firstName,
-      lastName: values.lastName,
-      password: values.password,
-    });
+  const onFinishRegister = ({
+    email,
+    firstName,
+    lastName,
+    password,
+  }: RegisterFormValues) => {
+    registerMutation.mutate({ email, firstName, lastName, password });
   };
 
   return (
     <>
       {contextHolder}
       <AppHeader />
-      <div className="register-container">
-        <div className="register-form-container">
-          <h2 className="register-title">Register</h2>
-          <Form layout="vertical" className="register-form" onFinish={onFinishRegister}>
+      <RegisterContainer>
+        <RegisterFormContainer>
+          <RegisterTitle>Register</RegisterTitle>
+          <Form layout="vertical" onFinish={onFinishRegister}>
             <Form.Item
               label="First Name:"
               name="firstName"
-              rules={[{ required: true, message: 'Please enter your first name!' }]}
+              rules={[
+                { required: true, message: 'Please enter your first name!' },
+              ]}
             >
-              <Input className="register-input" placeholder="Enter first name" />
+              <RegisterInput placeholder="Enter first name" />
             </Form.Item>
             <Form.Item
               label="Last Name:"
               name="lastName"
-              rules={[{ required: true, message: 'Please enter your last name!' }]}
+              rules={[
+                { required: true, message: 'Please enter your last name!' },
+              ]}
             >
-              <Input className="register-input" placeholder="Enter last name" />
+              <RegisterInput placeholder="Enter last name" />
             </Form.Item>
             <Form.Item
               label="Email:"
               name="email"
-              rules={[{ required: true, message: 'Please enter your email address!' }]}
+              rules={[
+                { required: true, message: 'Please enter your email address!' },
+                {
+                  type: 'email',
+                  message: 'Please enter a valid email address!',
+                },
+              ]}
             >
-              <Input type="email" className="register-input" placeholder="Enter email" />
+              <RegisterInput placeholder="Enter email" type="email" />
             </Form.Item>
             <Form.Item
               label="Password:"
               name="password"
-              rules={[{ required: true, message: 'Please enter your password!' }]}
+              rules={[
+                { required: true, message: 'Please enter your password!' },
+              ]}
               hasFeedback
             >
-              <Input.Password className="register-input" placeholder="Enter password" />
+              <RegisterPassword placeholder="Enter password" />
             </Form.Item>
             <Form.Item
               label="Confirm Password:"
@@ -138,27 +169,24 @@ const Register = () => {
                 }),
               ]}
             >
-              <Input.Password className="register-input" placeholder="Confirm your password" />
+              <RegisterPassword placeholder="Confirm your password" />
             </Form.Item>
-            <div className="register-button-container">
-              <Button
+            <RegisterButtonContainer>
+              <RegisterButton
                 type="primary"
                 htmlType="submit"
                 loading={registerMutation.isPending}
-                className="register-button"
               >
                 Continue
-              </Button>
+              </RegisterButton>
               <span className="login-link-inline">
                 Already have an account?{' '}
-                <Link to="/login" className="login-link">
-                  Login
-                </Link>
+                <LoginLink to="/login">Login</LoginLink>
               </span>
-            </div>
+            </RegisterButtonContainer>
           </Form>
-        </div>
-      </div>
+        </RegisterFormContainer>
+      </RegisterContainer>
     </>
   );
 };

@@ -9,6 +9,7 @@ import {
   List,
   Popconfirm,
   message,
+  Rate,
 } from 'antd';
 import {
   ArrowLeftOutlined,
@@ -20,6 +21,7 @@ import axios from 'axios';
 import MenuPanel from '../../menu/menu-panel';
 import Main_header from '../main_header/Main_header';
 import './information_hub.scss';
+import Foot from '../../main_page/main_content/footer/footer/footer';
 
 const { Title, Text } = Typography;
 const { Header, Content } = Layout;
@@ -27,44 +29,69 @@ const { TextArea } = Input;
 
 interface Comment {
   id: string;
-  user: string;
+  user: { id: string; username: string };
   content: string;
   created_at: string;
   likes_count: number;
+  rating?: number;
+}
+
+interface NewsDetailsType {
+  id: string;
+  title: string;
+  content: string;
+  photo?: string;
+  tags: { id: string; name: string }[];
+  created_at: string;
+  comments: Comment[];
+  source?: string;
 }
 
 const NewsDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
-  const [post, setPost] = useState<any>(null);
+  const [post, setPost] = useState<NewsDetailsType | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
+  const [newRating, setNewRating] = useState(0);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');
   const token = localStorage.getItem('accessToken');
 
   useEffect(() => {
     const fetchPost = async () => {
-      const res = await axios.get(
-        `https://project-back-81mh.onrender.com/info-hub/infohub/${id}/`
-      );
-      setPost(res.data);
-      setComments(res.data.comments);
+      try {
+        const res = await axios.get(
+          `https://project-back-81mh.onrender.com/info-hub/news/${id}/`
+        );
+        setPost(res.data);
+        setComments(res.data.comments);
+      } catch {
+        message.error('Failed to load news');
+      }
     };
     fetchPost();
   }, [id]);
 
   const handleAddComment = async () => {
-    if (!newComment.trim()) return;
+    if (!newComment.trim()) {
+      message.error('Comment content cannot be empty');
+      return;
+    }
+    if (newRating === 0) {
+      message.error('Please provide a rating before submitting');
+      return;
+    }
     try {
       const res = await axios.post(
-        `https://project-back-81mh.onrender.com/info-hub/infohub/${id}/comment/`,
-        { content: newComment },
+        `https://project-back-81mh.onrender.com/info-hub/news/${id}/comment/`,
+        { content: newComment, rating: newRating },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setComments((prev) => [res.data, ...prev]);
+      setComments((prev) => [res.data, ...(prev || [])]);
       setNewComment('');
+      setNewRating(0);
     } catch {
       message.error('Failed to add comment');
     }
@@ -73,10 +100,8 @@ const NewsDetails = () => {
   const handleDelete = async (commentId: string) => {
     try {
       await axios.delete(
-        `https://project-back-81mh.onrender.com/info-hub/infohub/comment/${commentId}/`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        `https://project-back-81mh.onrender.com/info-hub/news/comment/${commentId}/`,
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       setComments((prev) => prev.filter((c) => c.id !== commentId));
     } catch {
@@ -85,9 +110,10 @@ const NewsDetails = () => {
   };
 
   const handleEdit = async () => {
+    if (!editingContent.trim()) return;
     try {
       const res = await axios.patch(
-        `https://project-back-81mh.onrender.com/info-hub/infohub/comment/${editingId}/`,
+        `https://project-back-81mh.onrender.com/info-hub/news/comment/${editingId}/`,
         { content: editingContent },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -105,7 +131,7 @@ const NewsDetails = () => {
   const handleLike = async (commentId: string) => {
     try {
       await axios.post(
-        `https://project-back-81mh.onrender.com/info-hub/infohub/comment/${commentId}/like/`,
+        `https://project-back-81mh.onrender.com/info-hub/news/comment/${commentId}/like/`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -124,7 +150,6 @@ const NewsDetails = () => {
       <MenuPanel
         collapsed={collapsed}
         toggleCollapsed={() => setCollapsed(!collapsed)}
-        selectedPage="/info_hub"
       />
       <Layout style={{ marginLeft: collapsed ? 100 : 250 }}>
         <Header
@@ -162,6 +187,7 @@ const NewsDetails = () => {
                 {new Date(post.created_at).toLocaleString()}
               </Text>
               <p>{post.content}</p>
+              {post.source && <Text italic>Source: {post.source}</Text>}
             </Card>
           )}
 
@@ -171,10 +197,15 @@ const NewsDetails = () => {
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
           />
+          <div style={{ marginTop: 8 }}>
+            <Text>Rate this news (required): </Text>
+            <Rate value={newRating} onChange={(value) => setNewRating(value)} />
+          </div>
           <Button
             type="primary"
             onClick={handleAddComment}
             className="comment-button"
+            style={{ marginTop: 10 }}
           >
             Add Comment
           </Button>
@@ -208,7 +239,7 @@ const NewsDetails = () => {
                 ]}
               >
                 <List.Item.Meta
-                  title={comment.user}
+                  title={comment.user.username}
                   description={new Date(comment.created_at).toLocaleString()}
                 />
                 {editingId === comment.id ? (
@@ -222,12 +253,22 @@ const NewsDetails = () => {
                     </Button>
                   </>
                 ) : (
-                  <p>{comment.content}</p>
+                  <>
+                    <p>{comment.content}</p>
+                    {comment.rating && (
+                      <Rate
+                        disabled
+                        value={comment.rating}
+                        style={{ fontSize: 14 }}
+                      />
+                    )}
+                  </>
                 )}
               </List.Item>
             )}
           />
         </Content>
+        <Foot />
       </Layout>
     </Layout>
   );

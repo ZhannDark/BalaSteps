@@ -29,7 +29,7 @@ export const SymptomHeader = styled.div`
   display: flex;
   align-items: center;
   margin-bottom: 20px;
-  justify-content: space-between;
+  justify-content: left;
 
   h2 {
     margin: 0;
@@ -64,41 +64,19 @@ export const DisabledDate = styled.div`
   opacity: 0.3;
 `;
 
-export const SymptomItem = styled.div`
-  margin-bottom: 15px;
-  background-color: #fdfdfd;
-  padding: 10px;
-  border: 1px solid #eaeaea;
-  border-radius: 8px;
-`;
-
-export const SymptomName = styled.p`
-  font-size: medium;
-  font-weight: 600;
-  margin: 3px 0;
-`;
-
 export const SymptomAction = styled.div`
   display: flex;
   gap: 10px;
   margin-top: 8px;
 `;
 
-export const AddSymptomLink = styled(Button)`
-  color: #591c00 !important;
-  font-weight: 500;
-
-  &:hover {
-    color: rgba(210, 77, 15, 0.93) !important;
-  }
-`;
-
 export const AddSymptomButton = styled(Button)`
   background-color: #426b1f;
+  color: white !important;
 
   &:hover {
     background-color: #629432 !important;
-    color: white;
+    color: white !important;
   }
 `;
 
@@ -107,14 +85,31 @@ export const ChildSymptom = styled.p`
   color: #444;
 `;
 
-export const StyledPopover = styled.div`
-  border-radius: 10px;
-  padding: 12px 16px;
-  max-width: 320px;
+export const DrawerContainer = styled.div`
+  padding-right: 10px;
+
+  @media (max-width: 768px) {
+    padding: 0;
+  }
 `;
 
-export const StyledBadge = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
+export const SymptomDrawerTitle = styled.h4`
+  margin-bottom: 16px;
+  font-family: 'Jacques Francois', serif;
+  font-size: 20px;
+  color: #4b244a;
+`;
+
+export const AddSymptomDrawerButton = styled(Button)`
+  margin-top: 20px;
+  background-color: #426b1f;
+  color: white !important;
+  font-family: 'Almendra', serif;
+  font-size: 15px;
+  padding: 6px 14px;
+  border-radius: 6px;
+
+  &:hover {
+    background-color: #629432 !important;
+  }
 `;

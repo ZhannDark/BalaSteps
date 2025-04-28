@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   Layout,
   Button,
@@ -6,30 +6,52 @@ import {
   Form,
   Modal,
   Upload,
-  message,
   DatePicker,
   Steps,
   notification,
   Radio,
-  Divider,
+  Skeleton,
+  Descriptions,
+  Dropdown,
+  Menu,
 } from 'antd';
+import type { InputRef } from 'antd';
 import {
   EditOutlined,
   UploadOutlined,
   PlusOutlined,
   CheckOutlined,
   MailOutlined,
+  LockOutlined,
+  MoreOutlined,
 } from '@ant-design/icons';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import MenuPanel from '../../menu/menu-panel';
 import Main_header from '../main_header/Main_header';
-import './profile.scss';
 import { useNavigate } from 'react-router-dom';
-import { Skeleton } from 'antd';
+import {
+  ProfileLayout,
+  ProfileContent,
+  ProfileTitle,
+  ProfileContainer,
+  ProfileLeft,
+  ProfileRight,
+  DescriptionBlock,
+  ChildrenSection,
+  ChildCard,
+  AddChildButton,
+  ProfileDropdownTrigger,
+  ParentInfoBlock,
+  HeaderSection,
+  ChildrenHeader,
+  ProfileImage,
+  SaveEditedProfileButton,
+} from './profile.styled';
+import Foot from '../../main_page/main_content/footer/footer/footer';
 
-const { Content, Header } = Layout;
+const { Header } = Layout;
 const { Step } = Steps;
 
 interface ProfileData {
@@ -38,6 +60,15 @@ interface ProfileData {
   profile_photo?: string;
   additional_info?: string;
   city?: string;
+}
+
+interface EditProfileValues {
+  full_name: string;
+  city?: string;
+  additional_info?: string;
+  profile_photo?: {
+    originFileObj: File;
+  }[];
 }
 
 interface Child {
@@ -50,24 +81,26 @@ interface Child {
 
 const ProfilePage = () => {
   const [collapsed, setCollapsed] = useState(false);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [isAddChildModalVisible, setAddChildModalVisible] = useState(false);
-  const [isEditChildModalVisible, setEditChildModalVisible] = useState(false);
-  const [editChildId, setEditChildId] = useState<string | null>(null);
   const [emailStepModalVisible, setEmailStepModalVisible] = useState(false);
-  const [editChildForm] = Form.useForm();
-  const [form] = Form.useForm();
-  const [childForm] = Form.useForm();
-  const [otpForm] = Form.useForm();
-  const [emailForm] = Form.useForm();
-  const [loading, setLoading] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [addChildModalVisible, setAddChildModalVisible] = useState(false);
+  const [editChildModalVisible, setEditChildModalVisible] = useState(false);
+  const [editingChildId, setEditingChildId] = useState<string | null>(null);
   const [step, setStep] = useState(0);
   const [newEmail, setNewEmail] = useState('');
   const [timer, setTimer] = useState(600);
+
+  const [form] = Form.useForm();
+  const [childForm] = Form.useForm();
+  const [editChildForm] = Form.useForm();
+  const [emailForm] = Form.useForm();
+  const [otpForm] = Form.useForm();
+
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-
   const accessToken = localStorage.getItem('accessToken');
+
+  const otpInputRef = useRef<InputRef>(null);
 
   useEffect(() => {
     if (timer > 0) {
@@ -75,6 +108,12 @@ const ProfilePage = () => {
       return () => clearInterval(interval);
     }
   }, [timer]);
+
+  useEffect(() => {
+    if (step === 1 && otpInputRef.current) {
+      otpInputRef.current.focus();
+    }
+  }, [step]);
 
   const formatTimer = (seconds: number) => {
     const minutes = Math.floor(seconds / 60)
@@ -87,26 +126,27 @@ const ProfilePage = () => {
   const fetchProfile = async (): Promise<ProfileData> => {
     const response = await axios.get(
       'https://project-back-81mh.onrender.com/auth/profile/',
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
+      { headers: { Authorization: `Bearer ${accessToken}` } }
     );
     return response.data;
   };
 
-  const fetchChildById = async (id: string) => {
-    const res = await axios.get(
-      `https://project-back-81mh.onrender.com/auth/edit-child/${id}/`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
+  const fetchChildren = async (): Promise<Child[]> => {
+    const response = await axios.get(
+      'https://project-back-81mh.onrender.com/auth/children/',
+      { headers: { Authorization: `Bearer ${accessToken}` } }
     );
-    return res.data;
+    return response.data;
   };
+
+  const { data: profile, isLoading } = useQuery<ProfileData>({
+    queryKey: ['profile'],
+    queryFn: fetchProfile,
+  });
+  const { data: children } = useQuery<Child[]>({
+    queryKey: ['children'],
+    queryFn: fetchChildren,
+  });
 
   const handleSendOtp = async (values: { newEmail: string }) => {
     try {
@@ -123,206 +163,24 @@ const ProfilePage = () => {
         }
       );
       setNewEmail(values.newEmail);
-      notification.success({ message: 'OTP sent to your new email' });
+      notification.success({
+        message: 'OTP Sent',
+        description: 'An OTP code was sent to your new email address.',
+      });
       setStep(1);
       setTimer(600);
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        notification.error({ message: 'Failed to send OTP' });
-      }
-    }
-  };
-
-  const handleVerifyOtp = async (values: { otp: string }) => {
-    try {
-      setLoading(true);
-      await axios.post(
-        'https://project-back-81mh.onrender.com/auth/verify-new-email/',
-        { new_email: newEmail, otp: values.otp },
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      notification.success({ message: 'Email successfully updated' });
-      setEmailStepModalVisible(false);
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        notification.error({ message: 'Invalid OTP code' });
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const EmailChangeModal = (
-    <Modal
-      title="Change Email"
-      open={emailStepModalVisible}
-      onCancel={() => {
-        setStep(0);
-        setEmailStepModalVisible(false);
-      }}
-      footer={null}
-    >
-      <Steps current={step} style={{ marginBottom: 24 }}>
-        <Step title="Enter Email" icon={<MailOutlined />} />
-        <Step title="Verify OTP" icon={<CheckOutlined />} />
-      </Steps>
-
-      {step === 0 ? (
-        <Form form={emailForm} onFinish={handleSendOtp}>
-          <Form.Item
-            name="newEmail"
-            label="New Email"
-            rules={[{ required: true, type: 'email' }]}
-          >
-            <Input placeholder="example@mail.com" />
-          </Form.Item>
-          <Button type="primary" htmlType="submit" block>
-            Send OTP
-          </Button>
-        </Form>
-      ) : (
-        <Form form={otpForm} onFinish={handleVerifyOtp}>
-          <Form.Item
-            name="otp"
-            label="OTP"
-            rules={[{ required: true, message: 'Please enter the OTP' }]}
-          >
-            <Input placeholder="Enter the OTP" />
-          </Form.Item>
-          <Button
-            type="primary"
-            htmlType="submit"
-            loading={loading}
-            disabled={timer === 0 ? false : loading}
-            block
-          >
-            Verify
-          </Button>
-          <p style={{ marginTop: 12 }}>
-            {timer > 0
-              ? `Resend available in ${formatTimer(timer)}`
-              : 'You can resend now.'}
-          </p>
-        </Form>
-      )}
-    </Modal>
-  );
-
-  const handleEditChildClick = async (id: string) => {
-    try {
-      console.log('Fetching child by ID:', id);
-      console.log('Access token:', localStorage.getItem('accessToken'));
-      const childData = await fetchChildById(id);
-      editChildForm.setFieldsValue({
-        full_name: childData.full_name,
-        gender: childData.gender,
-        birthday: dayjs(childData.birthday),
-        diagnose: childData.diagnoses[0]?.name || '',
+    } catch {
+      notification.error({
+        message: 'Sending OTP Failed',
+        description: 'Could not send OTP code. Please try again later.',
       });
-      setEditChildId(id);
-      setEditChildModalVisible(true);
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        console.error(err.message);
-      } else {
-        console.error('Unknown error:', err);
-      }
     }
   };
 
-  const handleSaveEditedChild = async () => {
+  const handleResendOtp = async () => {
     try {
-      const values = await editChildForm.validateFields();
-
-      const updatedChild = {
-        full_name: values.full_name,
-        gender: values.gender,
-        birthday: dayjs(values.birthday).format('YYYY-MM-DD'),
-        diagnoses: [{ name: values.diagnose }],
-      };
-
-      console.log('➡️ Updating child with:', updatedChild);
-      console.log('Diagnose: ', values.diagnose);
-
-      await axios.patch(
-        `https://project-back-81mh.onrender.com/auth/edit-child/${editChildId}/`,
-        updatedChild,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      message.success('Child updated!');
-      setEditChildModalVisible(false);
-      queryClient.invalidateQueries({ queryKey: ['children'] });
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        console.error(err.message);
-      } else {
-        console.error('Unknown error:', err);
-      }
-    }
-  };
-
-  const fetchChildren = async (): Promise<Child[]> => {
-    const response = await axios.get(
-      'https://project-back-81mh.onrender.com/auth/children/',
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
-    return response.data;
-  };
-
-  const { data: profile, isLoading } = useQuery<ProfileData, Error>({
-    queryKey: ['profile'],
-    queryFn: fetchProfile,
-  });
-
-  const { data: children, refetch: refetchChildren } = useQuery<Child[], Error>(
-    {
-      queryKey: ['children'],
-      queryFn: fetchChildren,
-    }
-  );
-
-  if (isLoading) {
-    return <Skeleton active paragraph={{ rows: 6 }} />;
-  }
-
-  const handleEditClick = () => {
-    setIsModalVisible(true);
-    form.setFieldsValue({
-      full_name: profile?.full_name,
-      additional_info: profile?.additional_info,
-      city: profile?.city,
-    });
-  };
-
-  const handleSave = async () => {
-    try {
-      const values = await form.validateFields();
       const formData = new FormData();
-
-      formData.append('full_name', values.full_name);
-      formData.append('additional_info', values.additional_info || '');
-      formData.append('city', values.city || '');
-
-      if (values.profile_photo && values.profile_photo.length > 0) {
-        formData.append('profile_photo', values.profile_photo[0].originFileObj);
-      }
-
+      formData.append('email', newEmail);
       await axios.patch(
         'https://project-back-81mh.onrender.com/auth/profile/',
         formData,
@@ -333,19 +191,45 @@ const ProfilePage = () => {
           },
         }
       );
+      notification.success({
+        message: 'OTP Resent',
+        description: 'A new OTP code has been sent to your email.',
+      });
+      setTimer(600);
+    } catch {
+      notification.error({
+        message: 'Resending Failed',
+        description: 'Could not resend OTP code. Try again later.',
+      });
+    }
+  };
 
-      if (values.email !== profile?.email) {
-        setNewEmail(values.email);
-        setEmailStepModalVisible(true);
-        setTimer(600);
-      } else {
-        message.success('Profile updated!');
-        setIsModalVisible(false);
-        queryClient.invalidateQueries({ queryKey: ['profile'] });
-      }
-    } catch (error) {
-      console.error(error);
-      message.error('Failed to update profile');
+  const handleVerifyOtp = async (values: { otp: string }) => {
+    try {
+      await axios.post(
+        'https://project-back-81mh.onrender.com/auth/verify-new-email/',
+        {
+          new_email: newEmail,
+          otp: values.otp,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      notification.success({
+        message: 'Email Verified',
+        description: 'Your email was successfully updated.',
+      });
+      setEmailStepModalVisible(false);
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    } catch {
+      notification.error({
+        message: 'Verification Failed',
+        description: 'The OTP code is incorrect. Please try again.',
+      });
     }
   };
 
@@ -358,7 +242,6 @@ const ProfilePage = () => {
         gender: values.gender,
         diagnoses: [{ name: values.diagnose }],
       };
-
       await axios.post(
         'https://project-back-81mh.onrender.com/auth/add-child/',
         payload,
@@ -369,146 +252,316 @@ const ProfilePage = () => {
           },
         }
       );
-
-      message.success('Child added!');
-      childForm.resetFields();
+      notification.success({
+        message: 'Child Added',
+        description: `${values.full_name} has been successfully added.`,
+      });
       setAddChildModalVisible(false);
-      refetchChildren();
-    } catch (error) {
-      console.error(error);
-      message.error('Failed to add child.');
+      queryClient.invalidateQueries({ queryKey: ['children'] });
+    } catch {
+      notification.error({
+        message: 'Adding Child Failed',
+        description:
+          'Something went wrong while adding the child. Please try again.',
+      });
     }
   };
 
+  const handleSaveEdit = async (values: EditProfileValues) => {
+    try {
+      const formData = new FormData();
+      formData.append('full_name', values.full_name);
+      formData.append('city', values.city || '');
+      formData.append('additional_info', values.additional_info || '');
+      if (values.profile_photo && values.profile_photo.length > 0) {
+        formData.append('profile_photo', values.profile_photo[0].originFileObj);
+      }
+      await axios.patch(
+        'https://project-back-81mh.onrender.com/auth/profile/',
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      notification.success({
+        message: 'Profile Updated',
+        description: 'Your profile has been successfully updated.',
+      });
+      setEditModalVisible(false);
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    } catch {
+      notification.error({
+        message: 'Profile Update Failed',
+        description: 'Failed to update your profile. Please try again.',
+      });
+    }
+  };
+
+  const handleEditChildClick = async (childId: string) => {
+    try {
+      const res = await axios.get(
+        `https://project-back-81mh.onrender.com/auth/edit-child/${childId}/`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+      const child = res.data;
+      editChildForm.setFieldsValue({
+        full_name: child.full_name,
+        birthday: dayjs(child.birthday),
+        gender: child.gender,
+        diagnose: child.diagnoses[0]?.name || '',
+      });
+      setEditingChildId(childId);
+      setEditChildModalVisible(true);
+    } catch {
+      notification.error({
+        message: 'Failed to Fetch Child Data',
+        description:
+          'Could not retrieve child information. Please try again later.',
+      });
+    }
+  };
+
+  const handleSaveEditedChild = async () => {
+    try {
+      const values = await editChildForm.validateFields();
+      const payload = {
+        full_name: values.full_name,
+        birthday: dayjs(values.birthday).format('YYYY-MM-DD'),
+        gender: values.gender,
+        diagnoses: [{ name: values.diagnose }],
+      };
+      await axios.patch(
+        `https://project-back-81mh.onrender.com/auth/edit-child/${editingChildId}/`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      notification.success({
+        message: 'Child Info Updated',
+        description: `${values.full_name}'s information has been successfully updated.`,
+      });
+      setEditChildModalVisible(false);
+      queryClient.invalidateQueries({ queryKey: ['children'] });
+    } catch {
+      notification.error({
+        message: 'Update Failed',
+        description: 'Could not update child information. Please try again.',
+      });
+    }
+  };
+
+  const handleEditClick = () => {
+    setEditModalVisible(true);
+    form.setFieldsValue({
+      full_name: profile?.full_name,
+      city: profile?.city,
+      additional_info: profile?.additional_info,
+    });
+  };
+
+  const menu = (
+    <Menu>
+      <Menu.Item key="edit" icon={<EditOutlined />} onClick={handleEditClick}>
+        Edit Profile
+      </Menu.Item>
+      <Menu.Item
+        key="email"
+        icon={<MailOutlined />}
+        onClick={() => setEmailStepModalVisible(true)}
+      >
+        Change Email
+      </Menu.Item>
+      <Menu.Item
+        key="password"
+        icon={<LockOutlined />}
+        onClick={() => navigate('/forgot-password')}
+      >
+        Change Password
+      </Menu.Item>
+    </Menu>
+  );
+
   return (
-    <Layout className="profile-layout">
+    <ProfileLayout>
       <MenuPanel
         collapsed={collapsed}
         toggleCollapsed={() => setCollapsed(!collapsed)}
-        selectedPage={null}
       />
       <Layout style={{ marginLeft: collapsed ? 100 : 250 }}>
         <Header
           style={{
             padding: 0,
-            marginLeft: '5px',
+            marginLeft: 5,
             background: '#E2E3E0',
-            height: '48px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
+            height: 48,
           }}
         >
           <Main_header />
         </Header>
-        <Content className="profile-page">
-          <h1 className="profile-title">Profile</h1>
-          {!profile ? (
-            <Skeleton active avatar paragraph={{ rows: 4 }} />
+        <ProfileContent>
+          <ProfileTitle>Profile</ProfileTitle>
+          {isLoading || !profile ? (
+            <Skeleton active paragraph={{ rows: 6 }} />
           ) : (
-            <div className="profile-container">
-              <div className="profile-left">
-                <img
+            <ProfileContainer>
+              <ProfileLeft>
+                <ProfileImage
                   key={profile.profile_photo}
                   src={`${profile.profile_photo}?${Date.now()}`}
-                  alt="Profile"
-                  className="profile-image"
+                  alt="Profile Image"
                 />
-              </div>
+                <ParentInfoBlock>
+                  <HeaderSection>
+                    <h1>{profile.full_name}</h1>
+                    <ProfileDropdownTrigger>
+                      <Dropdown overlay={menu} trigger={['click']}>
+                        <Button
+                          icon={<MoreOutlined style={{ fontSize: 'large' }} />}
+                        />
+                      </Dropdown>
+                    </ProfileDropdownTrigger>
+                  </HeaderSection>
 
-              <div className="profile-info-right">
-                <h2 className="profile-fullname">{profile.full_name}</h2>
+                  <DescriptionBlock bordered={false} column={1} size="small">
+                    <Descriptions.Item label="Email">
+                      {profile.email}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Additional Info">
+                      {profile.additional_info || 'Empty'}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="City">
+                      {profile.city || 'Empty'}
+                    </Descriptions.Item>
+                  </DescriptionBlock>
+                </ParentInfoBlock>
+              </ProfileLeft>
 
-                <div className="profile-links">
-                  <a onClick={() => navigate('/change-phone')}>Change email</a>
-                  <a onClick={() => navigate('/forgot-password')}>
-                    Change password
-                  </a>
-                </div>
-
-                <div className="profile-action-buttons">
-                  <Button
-                    icon={<PlusOutlined />}
-                    onClick={() => setAddChildModalVisible(true)}
-                  >
-                    Add child
-                  </Button>
-                  <Button icon={<EditOutlined />} onClick={handleEditClick}>
-                    Edit
-                  </Button>
-                  <Button onClick={() => setEmailStepModalVisible(true)}>
-                    Change Email
-                  </Button>
-                </div>
-              </div>
-
-              <div className="profile-form-readonly">
-                <Form layout="vertical">
-                  <Form.Item label="Additional Info (optional):">
-                    <Input.TextArea
-                      value={
-                        profile.additional_info ||
-                        'Empty additional information...'
-                      }
-                      disabled
-                    />
-                  </Form.Item>
-                  <Form.Item label="City (optional):">
-                    <Input value={profile.city || 'Empty'} disabled />
-                  </Form.Item>
-                </Form>
-              </div>
-            </div>
+              <ProfileRight>
+                <ChildrenSection>
+                  <ChildrenHeader>
+                    <h3>Your Children</h3>
+                    <AddChildButton
+                      icon={<PlusOutlined />}
+                      onClick={() => setAddChildModalVisible(true)}
+                      type="primary"
+                    >
+                      Add Child
+                    </AddChildButton>
+                  </ChildrenHeader>
+                  {children?.map((child) => (
+                    <ChildCard key={child.id}>
+                      <h3>{child.full_name}</h3>
+                      <p>
+                        <strong>Birthday:</strong> {child.birthday}
+                      </p>
+                      <p>
+                        <strong>Diagnose:</strong>{' '}
+                        {child.diagnoses.map((d) => d.name).join(', ')}
+                      </p>
+                      <p>
+                        <strong>Gender:</strong> {child.gender}
+                      </p>
+                      <Button
+                        type="link"
+                        icon={<EditOutlined />}
+                        onClick={() => handleEditChildClick(child.id)}
+                      >
+                        Edit
+                      </Button>
+                    </ChildCard>
+                  ))}
+                </ChildrenSection>
+              </ProfileRight>
+            </ProfileContainer>
           )}
+          <Modal
+            title="Change Email"
+            open={emailStepModalVisible}
+            onCancel={() => {
+              setStep(0);
+              setEmailStepModalVisible(false);
+            }}
+            footer={null}
+          >
+            <Steps current={step} style={{ marginBottom: 24 }}>
+              <Step title="Enter Email" icon={<MailOutlined />} />
+              <Step title="Verify OTP" icon={<CheckOutlined />} />
+            </Steps>
+            {step === 0 ? (
+              <Form form={emailForm} onFinish={handleSendOtp} layout="vertical">
+                <Form.Item
+                  name="newEmail"
+                  label="New Email"
+                  rules={[{ required: true, type: 'email' }]}
+                >
+                  <Input placeholder="example@mail.com" />
+                </Form.Item>
+                <Button type="primary" htmlType="submit" block>
+                  Send OTP
+                </Button>
+              </Form>
+            ) : (
+              <Form
+                form={otpForm}
+                onFinish={handleVerifyOtp}
+                layout="vertical"
+                style={{ marginTop: 20 }}
+              >
+                <Form.Item
+                  name="otp"
+                  label="OTP Code"
+                  rules={[
+                    { required: true, message: 'Please enter the OTP code' },
+                  ]}
+                >
+                  <Input placeholder="Enter the OTP code" size="large" />
+                </Form.Item>
 
-          {!children ? (
-            <Skeleton active paragraph={{ rows: 5 }} />
-          ) : (
-            <div className="children-section">
-              <h3>Children</h3>
-              {children.map((child) => (
-                <div key={child.id} className="child-card">
-                  <h3>{child.full_name}</h3>
-                  <Divider
-                    style={{ marginTop: '-10px', marginBottom: '10px' }}
-                  />
-                  <p>
-                    <strong>Birthday:</strong> {child.birthday}
-                  </p>
-                  <p>
-                    <strong>Diagnose:</strong>{' '}
-                    {child.diagnoses.map((d) => d.name).join(', ')}
-                  </p>
-                  <p>
-                    <strong>Gender:</strong> {child.gender}
-                  </p>
-                  <Button
-                    type="link"
-                    icon={<EditOutlined />}
-                    onClick={() => handleEditChildClick(child.id)}
-                  >
-                    Edit
-                  </Button>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  block
+                  size="large"
+                  style={{ marginBottom: 10 }}
+                >
+                  Verify
+                </Button>
+
+                <div
+                  style={{ textAlign: 'center', fontSize: 14, color: '#666' }}
+                >
+                  {timer > 0 ? (
+                    <span>Resend available in {formatTimer(timer)}</span>
+                  ) : (
+                    <Button
+                      type="link"
+                      onClick={handleResendOtp}
+                      style={{ padding: 0 }}
+                    >
+                      Resend Code
+                    </Button>
+                  )}
                 </div>
-              ))}
-            </div>
-          )}
+              </Form>
+            )}
+          </Modal>
 
-          {/* Edit Profile Modal */}
           <Modal
             title="Edit Profile"
-            open={isModalVisible}
-            onCancel={() => setIsModalVisible(false)}
-            footer={[
-              <Button key="cancel" onClick={() => setIsModalVisible(false)}>
-                Cancel
-              </Button>,
-              <Button key="save" type="primary" onClick={handleSave}>
-                Save
-              </Button>,
-            ]}
+            open={editModalVisible}
+            onCancel={() => setEditModalVisible(false)}
+            footer={null}
           >
-            <Form layout="vertical" form={form}>
+            <Form layout="vertical" form={form} onFinish={handleSaveEdit}>
               <Form.Item
                 name="full_name"
                 label="Full Name"
@@ -536,28 +589,26 @@ const ProfilePage = () => {
               <Form.Item name="city" label="City">
                 <Input />
               </Form.Item>
+              <Form.Item>
+                <SaveEditedProfileButton
+                  type="primary"
+                  htmlType="submit"
+                  block
+                  onClick={form.submit}
+                >
+                  Save
+                </SaveEditedProfileButton>
+              </Form.Item>
             </Form>
           </Modal>
-          {EmailChangeModal}
 
-          {/* Add Child Modal */}
           <Modal
             title="Add Child"
-            open={isAddChildModalVisible}
+            open={addChildModalVisible}
             onCancel={() => setAddChildModalVisible(false)}
-            footer={[
-              <Button
-                key="cancel"
-                onClick={() => setAddChildModalVisible(false)}
-              >
-                Cancel
-              </Button>,
-              <Button key="save" type="primary" onClick={handleAddChild}>
-                + Add
-              </Button>,
-            ]}
+            footer={null}
           >
-            <Form layout="vertical" form={childForm}>
+            <Form layout="vertical" form={childForm} onFinish={handleAddChild}>
               <Form.Item
                 name="full_name"
                 label="Full Name"
@@ -589,51 +640,42 @@ const ProfilePage = () => {
               >
                 <Input placeholder="e.g., Autism" />
               </Form.Item>
+              <Form.Item>
+                <SaveEditedProfileButton type="primary" htmlType="submit" block>
+                  Add
+                </SaveEditedProfileButton>
+              </Form.Item>
             </Form>
           </Modal>
 
-          {/* Edit Child Modal */}
           <Modal
             title="Edit Child"
-            open={isEditChildModalVisible}
+            open={editChildModalVisible}
             onCancel={() => setEditChildModalVisible(false)}
-            footer={[
-              <Button
-                key="cancel"
-                onClick={() => setEditChildModalVisible(false)}
-              >
-                Cancel
-              </Button>,
-              <Button key="save" type="primary" onClick={handleSaveEditedChild}>
-                Save
-              </Button>,
-            ]}
+            footer={null}
           >
-            <Form layout="vertical" form={editChildForm}>
+            <Form
+              layout="vertical"
+              form={editChildForm}
+              onFinish={handleSaveEditedChild}
+            >
               <Form.Item
-                label="Full Name"
                 name="full_name"
+                label="Full Name"
                 rules={[{ required: true }]}
               >
-                <Input placeholder="Enter name" />
+                <Input />
               </Form.Item>
               <Form.Item
-                label="Birthday"
                 name="birthday"
+                label="Birthday"
                 rules={[{ required: true }]}
               >
                 <DatePicker style={{ width: '100%' }} />
               </Form.Item>
               <Form.Item
-                label="Diagnose"
-                name="diagnose"
-                rules={[{ required: true }]}
-              >
-                <Input placeholder="Diagnose" />
-              </Form.Item>
-              <Form.Item
-                label="Gender"
                 name="gender"
+                label="Gender"
                 rules={[{ required: true }]}
               >
                 <Radio.Group>
@@ -641,11 +683,24 @@ const ProfilePage = () => {
                   <Radio value="Female">Female</Radio>
                 </Radio.Group>
               </Form.Item>
+              <Form.Item
+                name="diagnose"
+                label="Diagnose"
+                rules={[{ required: true }]}
+              >
+                <Input placeholder="e.g., Autism" />
+              </Form.Item>
+              <Form.Item>
+                <SaveEditedProfileButton type="primary" htmlType="submit" block>
+                  Save
+                </SaveEditedProfileButton>
+              </Form.Item>
             </Form>
           </Modal>
-        </Content>
+        </ProfileContent>
+        <Foot />
       </Layout>
-    </Layout>
+    </ProfileLayout>
   );
 };
 

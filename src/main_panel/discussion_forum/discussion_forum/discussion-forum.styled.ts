@@ -47,9 +47,10 @@ export const NewThreadButton = styled(Button)`
 `;
 
 export const ForumContent = styled(Content)`
-  padding: 24px;
+  margin: 10px;
+  padding: 15px;
   background: #fff;
-  border-radius: 8px;
+  border-radius: 10px;
 `;
 
 export const SectionTitle = styled.h1`

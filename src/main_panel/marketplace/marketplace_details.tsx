@@ -28,6 +28,7 @@ import {
   InfoSection,
 } from './marketplace-details.styled';
 import imgPlaceholder from '../../assets/images/main_content/ default_img/no_img.png';
+import Foot from '../../main_page/main_content/footer/footer/footer';
 
 const { Header } = Layout;
 const { Title } = Typography;
@@ -102,7 +103,6 @@ const MarketplaceDetails: React.FC = () => {
       <MenuPanel
         collapsed={collapsed}
         toggleCollapsed={() => setCollapsed(!collapsed)}
-        selectedPage="/marketplace"
       />
       <Layout style={{ marginLeft: collapsed ? 100 : 250 }}>
         <Header
@@ -197,6 +197,7 @@ const MarketplaceDetails: React.FC = () => {
             <Skeleton active />
           )}
         </DetailsContainer>
+        <Foot />
       </Layout>
     </Layout>
   );

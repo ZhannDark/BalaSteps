@@ -31,6 +31,7 @@ import {
 import MenuPanel from '../../../menu/menu-panel';
 import Main_header from '../../main_header/Main_header';
 import TextArea from 'antd/lib/input/TextArea';
+import Foot from '../../../main_page/main_content/footer/footer/footer';
 
 const { Header } = Layout;
 const { Title } = Typography;
@@ -169,7 +170,6 @@ const DiscussionForum: React.FC = () => {
       <MenuPanel
         collapsed={collapsed}
         toggleCollapsed={() => setCollapsed(!collapsed)}
-        selectedPage="/discussion-forum"
       />
       <Layout style={{ marginLeft: collapsed ? 100 : 250 }}>
         <Header
@@ -245,6 +245,7 @@ const DiscussionForum: React.FC = () => {
             />
           )}
         </ForumContent>
+        <Foot />
       </Layout>
 
       <Modal

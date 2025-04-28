@@ -1,8 +1,7 @@
 import React from 'react';
-import { Form, Input, Button, notification } from 'antd';
+import { Form, notification } from 'antd';
 import 'antd/dist/reset.css';
-import { Link, useNavigate } from 'react-router-dom';
-import './login.scss';
+import { useNavigate } from 'react-router-dom';
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
@@ -11,6 +10,21 @@ import {
 import { useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import AppHeader from '../../main_page/main_page_header/main_page_header';
+import {
+  LoginContainer,
+  LoginFormContainer,
+  LoginTitle,
+  StyledButton,
+  StyledInput,
+  StyledPasswordInput,
+  StyledLink,
+  LoginLinks,
+} from './login.styled';
+
+interface LoginFormValues {
+  email: string;
+  password: string;
+}
 
 const Login = () => {
   const navigate = useNavigate();
@@ -36,7 +50,7 @@ const Login = () => {
   };
 
   const loginMutation = useMutation({
-    mutationFn: (values: { email: string; password: string }) =>
+    mutationFn: (values: LoginFormValues) =>
       axios.post('https://project-back-81mh.onrender.com/auth/login/', values),
     onSuccess: (response) => {
       localStorage.setItem('accessToken', response.data.access);
@@ -50,7 +64,7 @@ const Login = () => {
         navigate('/symptom-tracker');
       }, 3000);
     },
-    onError: (error: any) => {
+    onError: (error: { response?: { data?: { message?: string } } }) => {
       openNotification(
         'error',
         'Login failed',
@@ -63,20 +77,25 @@ const Login = () => {
     <>
       {contextHolder}
       <AppHeader />
-      <div className="login-container">
-        <div className="login-form-container">
-          <h2 className="login-title">Login</h2>
+      <LoginContainer>
+        <LoginFormContainer>
+          <LoginTitle>Login</LoginTitle>
           <Form
             layout="vertical"
-            className="login-form"
-            onFinish={(values) => loginMutation.mutate(values)}
+            onFinish={(values: LoginFormValues) => loginMutation.mutate(values)}
           >
             <Form.Item
               label="Email:"
               name="email"
-              rules={[{ required: true, message: 'Please enter an email' }]}
+              rules={[
+                { required: true, message: 'Please enter an email' },
+                {
+                  type: 'email',
+                  message: 'Please enter a valid email address',
+                },
+              ]}
             >
-              <Input className="login-input" placeholder="Enter your email" />
+              <StyledInput placeholder="Enter your email" />
             </Form.Item>
             <Form.Item
               label="Password:"
@@ -85,32 +104,24 @@ const Login = () => {
                 { required: true, message: 'Please enter your password' },
               ]}
             >
-              <Input.Password
-                className="login-input"
-                placeholder="Enter password"
-              />
+              <StyledPasswordInput placeholder="Enter password" />
             </Form.Item>
             <Form.Item>
-              <Button
+              <StyledButton
                 type="primary"
                 htmlType="submit"
-                className="login-button"
                 loading={loginMutation.isPending}
               >
                 {loginMutation.isPending ? 'Logging in...' : 'Login'}
-              </Button>
+              </StyledButton>
             </Form.Item>
           </Form>
-          <div className="login-links">
-            <Link to="/forgot-password" className="forgot-password">
-              Forgot password?
-            </Link>
-            <Link to="/register" className="new-user">
-              New user? Register
-            </Link>
-          </div>
-        </div>
-      </div>
+          <LoginLinks>
+            <StyledLink to="/forgot-password">Forgot password?</StyledLink>
+            <StyledLink to="/register">New user? Register</StyledLink>
+          </LoginLinks>
+        </LoginFormContainer>
+      </LoginContainer>
     </>
   );
 };

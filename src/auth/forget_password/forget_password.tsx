@@ -1,15 +1,8 @@
 import React, { useState } from 'react';
-import {
-  Steps,
-  Form,
-  Input,
-  Button,
-  Card,
-  notification,
-} from 'antd';
-import './forget-password.scss';
-import AppHeader from '../../main_page/main_page_header/main_page_header';
 import { useNavigate } from 'react-router-dom';
+import { Form, Input, Steps, notification } from 'antd';
+import AppHeader from '../../main_page/main_page_header/main_page_header';
+import axios, { AxiosError } from 'axios';
 import {
   MailTwoTone,
   SafetyCertificateTwoTone,
@@ -18,7 +11,14 @@ import {
   CloseCircleOutlined,
   ExclamationCircleOutlined,
 } from '@ant-design/icons';
-import axios from 'axios';
+import {
+  ResetPasswordWrapper,
+  StepButton,
+  CustomSteps,
+  ResetCard,
+  ResetForm,
+  ResetTitle,
+} from './forget-password.styled';
 
 const { Step } = Steps;
 
@@ -53,18 +53,32 @@ const ResetPasswordFlow = () => {
     setLoading(true);
     try {
       const values = await form.validateFields(['email']);
-      await axios.post('https://project-back-81mh.onrender.com/auth/request-password-reset/', {
-        email: values.email,
-      });
+      await axios.post(
+        'https://project-back-81mh.onrender.com/auth/request-password-reset/',
+        {
+          email: values.email,
+        }
+      );
       openNotification('success', 'OTP Sent', 'Check your email for the code.');
       setEmail(values.email);
       setCurrentStep(1);
-    } catch (err: any) {
-      openNotification(
-        'error',
-        'Failed to Send OTP',
-        err?.response?.data?.message || 'Something went wrong.'
-      );
+    } catch (err: unknown) {
+      const error = err as AxiosError<{ message?: string; error?: string }>;
+
+      const backendError = error.response?.data?.error;
+      if (backendError === 'User is not verified.') {
+        openNotification(
+          'error',
+          'Email Not Verified',
+          'Please verify your email before resetting the password.'
+        );
+      } else {
+        openNotification(
+          'error',
+          'Failed to Send OTP',
+          error.response?.data?.message || 'Something went wrong.'
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -74,17 +88,25 @@ const ResetPasswordFlow = () => {
     setLoading(true);
     try {
       const values = await form.validateFields(['otp']);
-      await axios.post('https://project-back-81mh.onrender.com/auth/verify-password-reset-otp/', {
-        email,
-        otp: values.otp,
-      });
-      openNotification('success', 'OTP Verified', 'You can now set a new password.');
+      await axios.post(
+        'https://project-back-81mh.onrender.com/auth/verify-password-reset-otp/',
+        {
+          email,
+          otp: values.otp,
+        }
+      );
+      openNotification(
+        'success',
+        'OTP Verified',
+        'You can now set a new password.'
+      );
       setCurrentStep(2);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const error = err as AxiosError<{ message?: string }>;
       openNotification(
         'error',
         'Invalid OTP',
-        err?.response?.data?.message || 'The code is incorrect.'
+        error.response?.data?.message || 'The code is incorrect.'
       );
     } finally {
       setLoading(false);
@@ -95,18 +117,26 @@ const ResetPasswordFlow = () => {
     setLoading(true);
     try {
       const values = await form.validateFields(['password']);
-      await axios.post('https://project-back-81mh.onrender.com/auth/reset-password/', {
-        email,
-        new_password: values.password,
-      });
-      openNotification('success', 'Password Reset', 'You can now log in with your new password.');
+      await axios.post(
+        'https://project-back-81mh.onrender.com/auth/reset-password/',
+        {
+          email,
+          new_password: values.password,
+        }
+      );
+      openNotification(
+        'success',
+        'Password Reset',
+        'You can now log in with your new password.'
+      );
       form.resetFields();
       setTimeout(() => navigate('/login'), 2000);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const error = err as AxiosError<{ message?: string }>;
       openNotification(
         'error',
         'Reset Failed',
-        err?.response?.data?.message || 'Failed to reset password.'
+        error.response?.data?.message || 'Failed to reset password.'
       );
     } finally {
       setLoading(false);
@@ -128,9 +158,9 @@ const ResetPasswordFlow = () => {
           >
             <Input placeholder="Enter your email" />
           </Form.Item>
-          <Button className="step-button" loading={loading} onClick={handleSendOTP}>
+          <StepButton loading={loading} onClick={handleSendOTP}>
             Continue
-          </Button>
+          </StepButton>
         </>
       ),
     },
@@ -148,9 +178,9 @@ const ResetPasswordFlow = () => {
           >
             <Input placeholder="Enter OTP" />
           </Form.Item>
-          <Button className="step-button" loading={loading} onClick={handleVerifyOTP}>
+          <StepButton loading={loading} onClick={handleVerifyOTP}>
             Verify OTP
-          </Button>
+          </StepButton>
         </>
       ),
     },
@@ -167,7 +197,6 @@ const ResetPasswordFlow = () => {
           >
             <Input.Password placeholder="Enter new password" />
           </Form.Item>
-
           <Form.Item
             label="Confirm Password"
             name="confirmPassword"
@@ -187,33 +216,31 @@ const ResetPasswordFlow = () => {
           >
             <Input.Password placeholder="Confirm your password" />
           </Form.Item>
-
-          <Button className="step-button" loading={loading} onClick={handleResetPassword}>
+          <StepButton loading={loading} onClick={handleResetPassword}>
             Reset Password
-          </Button>
+          </StepButton>
         </>
       ),
-    }
-
+    },
   ];
 
   return (
     <>
       {contextHolder}
       <AppHeader />
-      <div className="reset-password-wrapper">
-        <Card className="reset-card">
-          <h2 className="reset-title">Reset your password</h2>
-          <Steps current={currentStep} className="custom-steps">
+      <ResetPasswordWrapper>
+        <ResetCard>
+          <ResetTitle>Reset your password</ResetTitle>
+          <CustomSteps current={currentStep}>
             {steps.map((step) => (
               <Step key={step.title} title={step.title} icon={step.icon} />
             ))}
-          </Steps>
-          <Form layout="vertical" form={form} className="reset-form">
+          </CustomSteps>
+          <ResetForm layout="vertical" form={form}>
             {steps[currentStep].content}
-          </Form>
-        </Card>
-      </div>
+          </ResetForm>
+        </ResetCard>
+      </ResetPasswordWrapper>
     </>
   );
 };

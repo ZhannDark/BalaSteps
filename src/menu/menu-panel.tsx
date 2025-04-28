@@ -7,99 +7,78 @@ import {
   QuestionCircleOutlined,
   ShoppingOutlined,
 } from '@ant-design/icons';
-import type { MenuProps } from 'antd';
-import { Button, Menu } from 'antd';
+import { useLocation, useNavigate } from 'react-router-dom';
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import './menu_panel.scss';
-import img from '../assets/images/logo/panel_logo.png';
+import {
+  MenuContainer,
+  StyledMenu,
+  MenuHeader,
+  ToggleButton,
+  Logo,
+} from './menu-panel.styled';
+import img from '../assets/images/logo/main_logo.png';
 
-type MenuItem = Required<MenuProps>['items'][number] & {
-  path?: string;
-};
-
-const items: MenuItem[] = [
+const items = [
   {
-    key: '1',
+    key: '/symptom-tracker',
     icon: <DashboardOutlined />,
     label: 'Symptom Tracker',
-    path: '/symptom-tracker',
   },
   {
-    key: '2',
+    key: '/discussion-forum',
     icon: <CommentOutlined />,
     label: 'Discussion Forum',
-    path: '/discussion-forum',
   },
   {
-    key: '3',
+    key: '/info_hub',
     icon: <InfoCircleOutlined />,
     label: 'Information Hub',
-    path: '/info_hub',
   },
   {
-    key: '4',
+    key: '/marketplace',
     icon: <ShoppingOutlined />,
     label: 'Marketplace',
-    path: '/marketplace',
   },
   {
-    key: '5',
+    key: '/ikomek_assistant',
     icon: <QuestionCircleOutlined />,
     label: 'iKomek AI Assistant',
-    path: '/ikomek_assistant',
   },
 ];
 
 interface MenuPanelProps {
   collapsed: boolean;
   toggleCollapsed: () => void;
-  selectedPage: string | null;
 }
 
 const MenuPanel: React.FC<MenuPanelProps> = ({
   collapsed,
   toggleCollapsed,
-  selectedPage,
 }) => {
+  const location = useLocation();
   const navigate = useNavigate();
 
   const handleMenuClick = (e: { key: string }) => {
-    const selectedItem = items.find((item) => item.key === e.key);
-    if (selectedItem?.path) {
-      navigate(selectedItem.path);
-    }
+    navigate(e.key);
   };
 
   return (
-    <div className={`menu-container ${collapsed ? 'collapsed' : ''}`}>
-      <div className="menu-header">
-        <img
-          className="img"
-          src={img}
-          alt="Logo"
-          style={{ display: collapsed ? 'none' : 'block' }}
-        />
-        <Button
-          type="primary"
-          onClick={toggleCollapsed}
-          className="toggle-button"
-          style={{ marginLeft: collapsed ? '15px' : '40px', marginTop: '10px' }}
-        >
+    <MenuContainer $collapsed={collapsed}>
+      <MenuHeader>
+        {!collapsed && <Logo src={img} alt="Logo" />}
+        <ToggleButton onClick={toggleCollapsed}>
           {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-        </Button>
-      </div>
-      <Menu
-        defaultSelectedKeys={['1']}
+        </ToggleButton>
+      </MenuHeader>
+      <StyledMenu
         mode="inline"
         theme="light"
-        selectedKeys={selectedPage ? [selectedPage] : []}
+        selectedKeys={[location.pathname]}
         inlineCollapsed={collapsed}
         items={items}
-        className="custom-menu"
         onClick={handleMenuClick}
       />
-    </div>
+    </MenuContainer>
   );
 };
 

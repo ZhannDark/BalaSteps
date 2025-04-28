@@ -1,12 +1,12 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
-import { Form, Input, Button, notification } from 'antd';
+import { Form, notification } from 'antd';
 import 'antd/dist/reset.css';
-import { Link, useNavigate } from 'react-router-dom';
-import './login.scss';
+import { useNavigate } from 'react-router-dom';
 import { CheckCircleOutlined, CloseCircleOutlined, ExclamationCircleOutlined, } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import AppHeader from '../../main_page/main_page_header/main_page_header';
+import { LoginContainer, LoginFormContainer, LoginTitle, StyledButton, StyledInput, StyledPasswordInput, StyledLink, LoginLinks, } from './login.styled';
 const Login = () => {
     const navigate = useNavigate();
     const [api, contextHolder] = notification.useNotification();
@@ -32,7 +32,14 @@ const Login = () => {
             openNotification('error', 'Login failed', ((_b = (_a = error.response) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.message) || 'Incorrect email or password.');
         },
     });
-    return (_jsxs(_Fragment, { children: [contextHolder, _jsx(AppHeader, {}), _jsx("div", Object.assign({ className: "login-container" }, { children: _jsxs("div", Object.assign({ className: "login-form-container" }, { children: [_jsx("h2", Object.assign({ className: "login-title" }, { children: "Login" })), _jsxs(Form, Object.assign({ layout: "vertical", className: "login-form", onFinish: (values) => loginMutation.mutate(values) }, { children: [_jsx(Form.Item, Object.assign({ label: "Email:", name: "email", rules: [{ required: true, message: 'Please enter an email' }] }, { children: _jsx(Input, { className: "login-input", placeholder: "Enter your email" }) })), _jsx(Form.Item, Object.assign({ label: "Password:", name: "password", rules: [{ required: true, message: 'Please enter your password' }] }, { children: _jsx(Input.Password, { className: "login-input", placeholder: "Enter password" }) })), _jsx(Form.Item, { children: _jsx(Button, Object.assign({ type: "primary", htmlType: "submit", className: "login-button", loading: loginMutation.isPending }, { children: loginMutation.isPending ? 'Logging in...' : 'Login' })) })] })), _jsxs("div", Object.assign({ className: "login-links" }, { children: [_jsx(Link, Object.assign({ to: "/forgot-password", className: "forgot-password" }, { children: "Forgot password?" })), _jsx(Link, Object.assign({ to: "/register", className: "new-user" }, { children: "New user? Register" }))] }))] })) }))] }));
+    return (_jsxs(_Fragment, { children: [contextHolder, _jsx(AppHeader, {}), _jsx(LoginContainer, { children: _jsxs(LoginFormContainer, { children: [_jsx(LoginTitle, { children: "Login" }), _jsxs(Form, { layout: "vertical", onFinish: (values) => loginMutation.mutate(values), children: [_jsx(Form.Item, { label: "Email:", name: "email", rules: [
+                                        { required: true, message: 'Please enter an email' },
+                                        {
+                                            type: 'email',
+                                            message: 'Please enter a valid email address',
+                                        },
+                                    ], children: _jsx(StyledInput, { placeholder: "Enter your email" }) }), _jsx(Form.Item, { label: "Password:", name: "password", rules: [
+                                        { required: true, message: 'Please enter your password' },
+                                    ], children: _jsx(StyledPasswordInput, { placeholder: "Enter password" }) }), _jsx(Form.Item, { children: _jsx(StyledButton, { type: "primary", htmlType: "submit", loading: loginMutation.isPending, children: loginMutation.isPending ? 'Logging in...' : 'Login' }) })] }), _jsxs(LoginLinks, { children: [_jsx(StyledLink, { to: "/forgot-password", children: "Forgot password?" }), _jsx(StyledLink, { to: "/register", children: "New user? Register" })] })] }) })] }));
 };
 export default Login;
-//# sourceMappingURL=login.js.map

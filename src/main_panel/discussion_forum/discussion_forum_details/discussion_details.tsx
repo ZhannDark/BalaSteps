@@ -5,7 +5,7 @@ import {
   Typography,
   Button,
   Input,
-  message,
+  notification,
   Divider,
   Popconfirm,
 } from 'antd';
@@ -38,7 +38,11 @@ import {
   CommentDate,
   CommentText,
   CommentActions,
+  RepliesContainer,
+  ShowRepliesButton,
+  ReplyCard,
 } from './discussion-details.styled';
+import Foot from '../../../main_page/main_content/footer/footer/footer';
 
 const { Title } = Typography;
 const { TextArea } = Input;
@@ -49,8 +53,8 @@ interface Comment {
   content: string;
   created_at: string;
   likes_count: number;
-  replies: string;
   liked_by_user: boolean;
+  replies: Comment[];
 }
 
 interface PostDetails {
@@ -69,7 +73,11 @@ const DiscussionDetails: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [post, setPost] = useState<PostDetails | null>(null);
   const [newComment, setNewComment] = useState('');
+  const [replyTexts, setReplyTexts] = useState<{ [key: string]: string }>({});
   const [addingComment, setAddingComment] = useState(false);
+  const [expandedReplies, setExpandedReplies] = useState<{
+    [key: string]: boolean;
+  }>({});
 
   const token = localStorage.getItem('accessToken');
 
@@ -84,9 +92,12 @@ const DiscussionDetails: React.FC = () => {
         }
       );
       setPost(response.data);
-    } catch (error) {
-      message.error('Failed to load discussion details');
-      console.error(error);
+    } catch {
+      notification.error({
+        message: 'Loading Failed',
+        description:
+          'Unable to load the discussion details. Please try again later.',
+      });
     }
   };
 
@@ -110,12 +121,53 @@ const DiscussionDetails: React.FC = () => {
         prev ? { ...prev, comments: [response.data, ...prev.comments] } : prev
       );
       setNewComment('');
-      message.success('Comment added');
-    } catch (error) {
-      console.error(error);
-      message.error('Failed to add comment');
+      notification.success({
+        message: 'Comment Added',
+        description: 'Your comment has been successfully posted.',
+      });
+    } catch {
+      notification.error({
+        message: 'Adding Comment Failed',
+        description:
+          'There was a problem posting your comment. Please try again.',
+      });
     } finally {
       setAddingComment(false);
+    }
+  };
+
+  const handleAddReply = async (parentId: string) => {
+    if (replyTexts[parentId]?.trim() === '') return;
+    try {
+      const response = await axios.post(
+        `https://project-back-81mh.onrender.com/forum/posts/${id}/comment/`,
+        { content: replyTexts[parentId], parent_id: parentId },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      setPost((prev) => {
+        if (!prev) return prev;
+        const updatedComments = prev.comments.map((c) => {
+          if (c.id === parentId) {
+            return { ...c, replies: [response.data, ...(c.replies || [])] };
+          }
+          return c;
+        });
+        return { ...prev, comments: updatedComments };
+      });
+      setReplyTexts((prev) => ({ ...prev, [parentId]: '' }));
+      notification.success({
+        message: 'Reply Added',
+        description: 'Your reply has been successfully posted.',
+      });
+    } catch {
+      notification.error({
+        message: 'Reply Failed',
+        description:
+          'There was a problem posting your reply. Please try again.',
+      });
     }
   };
 
@@ -127,18 +179,16 @@ const DiscussionDetails: React.FC = () => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      setPost((prev) =>
-        prev
-          ? {
-              ...prev,
-              comments: prev.comments.filter((c) => c.id !== commentId),
-            }
-          : prev
-      );
-      message.success('Comment deleted');
-    } catch (error) {
-      console.error(error);
-      message.error('Failed to delete comment');
+      fetchPostDetails(); // Refresh all comments
+      notification.success({
+        message: 'Comment Deleted',
+        description: 'The comment was successfully deleted.',
+      });
+    } catch {
+      notification.error({
+        message: 'Deleting Comment Failed',
+        description: 'Could not delete the comment. Please try again later.',
+      });
     }
   };
 
@@ -164,9 +214,12 @@ const DiscussionDetails: React.FC = () => {
             }
           : prev
       );
-    } catch (error) {
-      console.error(error);
-      message.error('Failed to like comment');
+    } catch {
+      notification.error({
+        message: 'Liking Comment Failed',
+        description:
+          'Could not like the comment. Please refresh the page and try again.',
+      });
     }
   };
 
@@ -178,21 +231,29 @@ const DiscussionDetails: React.FC = () => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      message.success('Post deleted successfully');
+      notification.success({
+        message: 'Post Deleted',
+        description: 'The post was successfully deleted.',
+      });
       navigate('/discussion-forum');
-    } catch (error) {
-      console.error(error);
-      message.error('Failed to delete post');
+    } catch {
+      notification.error({
+        message: 'Deleting Post Failed',
+        description: 'Could not delete the post. Please try again.',
+      });
     }
+  };
+
+  const toggleReplies = (commentId: string) => {
+    setExpandedReplies((prev) => ({
+      ...prev,
+      [commentId]: !prev[commentId],
+    }));
   };
 
   return (
     <StyledLayout>
-      <MenuPanel
-        collapsed={collapsed}
-        toggleCollapsed={toggleCollapsed}
-        selectedPage="/discussion-forum"
-      />
+      <MenuPanel collapsed={collapsed} toggleCollapsed={toggleCollapsed} />
       <Layout style={{ marginLeft: collapsed ? 100 : 250 }}>
         <StyledHeader>
           <Main_header />
@@ -254,6 +315,7 @@ const DiscussionDetails: React.FC = () => {
                   type="primary"
                   onClick={handleAddComment}
                   loading={addingComment}
+                  disabled={newComment.trim() === ''}
                 >
                   Add Comment
                 </AddCommentButton>
@@ -292,11 +354,65 @@ const DiscussionDetails: React.FC = () => {
                       </Button>
                     </Popconfirm>
                   </CommentActions>
+
+                  <div style={{ marginTop: 12 }}>
+                    <TextArea
+                      rows={2}
+                      placeholder="Write a reply..."
+                      value={replyTexts[comment.id] || ''}
+                      onChange={(e) =>
+                        setReplyTexts((prev) => ({
+                          ...prev,
+                          [comment.id]: e.target.value,
+                        }))
+                      }
+                    />
+                    <Button
+                      type="primary"
+                      style={{ marginTop: 8 }}
+                      disabled={!replyTexts[comment.id]?.trim()}
+                      onClick={() => handleAddReply(comment.id)}
+                    >
+                      Reply
+                    </Button>
+                  </div>
+
+                  {comment.replies && comment.replies.length > 0 && (
+                    <div style={{ marginTop: 8 }}>
+                      <ShowRepliesButton
+                        type="link"
+                        onClick={() => toggleReplies(comment.id)}
+                      >
+                        {expandedReplies[comment.id]
+                          ? 'Hide Replies'
+                          : `Show Replies (${comment.replies.length})`}
+                      </ShowRepliesButton>
+
+                      {expandedReplies[comment.id] && (
+                        <RepliesContainer>
+                          {comment.replies.map((reply) => (
+                            <ReplyCard key={reply.id}>
+                              <CommentHeader>
+                                <CommentAuthor>{reply.user}</CommentAuthor>
+                                <CommentDate>
+                                  {dayjs(reply.created_at).format(
+                                    'MMM D, YYYY HH:mm'
+                                  )}
+                                </CommentDate>
+                              </CommentHeader>
+                              <CommentText>{reply.content}</CommentText>
+                            </ReplyCard>
+                          ))}
+                        </RepliesContainer>
+                      )}
+                    </div>
+                  )}
                 </CommentCard>
               ))}
             </>
           )}
         </StyledContent>
+        <Foot />
       </Layout>
     </StyledLayout>
   );

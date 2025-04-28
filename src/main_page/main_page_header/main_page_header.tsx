@@ -9,6 +9,8 @@ import {
   NavLinks,
   NavLink,
   StyledButton,
+  ButtonGroup,
+  Burger,
 } from './main_page_header.styled';
 
 const AppHeader = () => {
@@ -17,6 +19,9 @@ const AppHeader = () => {
   const [showNav, setShowNav] = useState(true);
   const [showLoginButton, setShowLoginButton] = useState(true);
   const [showRegisterButton, setShowRegisterButton] = useState(true);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const isAuthenticated = Boolean(localStorage.getItem('accessToken'));
 
   const handleButtonClick = (auth: string): void => {
     if (location.pathname === '/register' || auth === 'login') {
@@ -54,27 +59,71 @@ const AppHeader = () => {
         </Link>
       </LogoContainer>
 
+      <Burger onClick={() => setMenuOpen(!menuOpen)}>&#9776;</Burger>
+
       {showNav && (
-        <RightSection>
+        <RightSection $isOpen={menuOpen}>
           <NavLinks>
-            <NavLink to="/login">News</NavLink>
-            <NavLink to="/login">iKomek</NavLink>
-            <NavLink to="/login">Forums</NavLink>
-            <NavLink to="/login">Marketplace</NavLink>
+            <NavLink
+              to="/info-hub"
+              onClick={(e) => {
+                if (!isAuthenticated) {
+                  e.preventDefault();
+                  navigate('/login');
+                }
+              }}
+            >
+              News
+            </NavLink>
+            <NavLink
+              to="/ikomek"
+              onClick={(e) => {
+                if (!isAuthenticated) {
+                  e.preventDefault();
+                  navigate('/login');
+                }
+              }}
+            >
+              iKomek
+            </NavLink>
+            <NavLink
+              to="/forum"
+              onClick={(e) => {
+                if (!isAuthenticated) {
+                  e.preventDefault();
+                  navigate('/login');
+                }
+              }}
+            >
+              Forums
+            </NavLink>
+            <NavLink
+              to="/marketplace"
+              onClick={(e) => {
+                if (!isAuthenticated) {
+                  e.preventDefault();
+                  navigate('/login');
+                }
+              }}
+            >
+              Marketplace
+            </NavLink>
             <NavLink to="/about-us">About us</NavLink>
           </NavLinks>
-        </RightSection>
-      )}
 
-      {showRegisterButton && (
-        <StyledButton onClick={() => handleButtonClick('register')}>
-          Register
-        </StyledButton>
-      )}
-      {showLoginButton && (
-        <StyledButton onClick={() => handleButtonClick('login')}>
-          Login
-        </StyledButton>
+          <ButtonGroup>
+            {showRegisterButton && (
+              <StyledButton onClick={() => handleButtonClick('register')}>
+                Register
+              </StyledButton>
+            )}
+            {showLoginButton && (
+              <StyledButton onClick={() => handleButtonClick('login')}>
+                Login
+              </StyledButton>
+            )}
+          </ButtonGroup>
+        </RightSection>
       )}
     </StyledHeader>
   );
