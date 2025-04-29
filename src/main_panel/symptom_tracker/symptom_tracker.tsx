@@ -24,7 +24,7 @@ import {
   ClockCircleOutlined,
 } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
+import axiosInstance from '../../main_panel/axios-instance';
 import dayjs, { Dayjs } from 'dayjs';
 import MenuPanel from '../../menu/menu-panel';
 import Main_header from '../main_header/Main_header';
@@ -46,8 +46,6 @@ import {
 
 const { Title } = Typography;
 const { Option } = Select;
-
-const accessToken = localStorage.getItem('accessToken');
 
 interface Symptom {
   id: string;
@@ -95,22 +93,12 @@ const SymptomTracker = () => {
   const childColorMap = new Map<string, string>();
 
   const fetchSymptoms = async (): Promise<Symptom[]> => {
-    const res = await axios.get(
-      'https://project-back-81mh.onrender.com/symptoms/entries/',
-      {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      }
-    );
+    const res = await axiosInstance.get('/symptoms/entries/');
     return res.data;
   };
 
   const fetchChildren = async (): Promise<Child[]> => {
-    const res = await axios.get(
-      'https://project-back-81mh.onrender.com/auth/children/',
-      {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      }
-    );
+    const res = await axiosInstance.get('/auth/children/');
     return res.data;
   };
 
@@ -131,13 +119,7 @@ const SymptomTracker = () => {
 
   const addSymptom = useMutation({
     mutationFn: (payload: SymptomPayload) =>
-      axios.post(
-        'https://project-back-81mh.onrender.com/symptoms/entries/',
-        payload,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      ),
+      axiosInstance.post('/symptoms/entries/', payload),
     onSuccess: () => {
       notification.success({
         message: 'Symptom Added',
@@ -156,13 +138,7 @@ const SymptomTracker = () => {
 
   const updateSymptom = useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: SymptomPayload }) =>
-      axios.patch(
-        `https://project-back-81mh.onrender.com/symptoms/entries/${id}/`,
-        payload,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      ),
+      axiosInstance.patch(`/symptoms/entries/${id}/`, payload),
     onSuccess: () => {
       notification.success({
         message: 'Symptom Updated',
@@ -181,12 +157,7 @@ const SymptomTracker = () => {
 
   const deleteSymptom = useMutation({
     mutationFn: (id: string) =>
-      axios.delete(
-        `https://project-back-81mh.onrender.com/symptoms/entries/${id}/`,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      ),
+      axiosInstance.delete(`/symptoms/entries/${id}/`),
     onSuccess: () => {
       notification.success({
         message: 'Symptom Deleted',

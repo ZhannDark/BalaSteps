@@ -17,7 +17,7 @@ import {
 } from '@ant-design/icons';
 import MenuPanel from '../../menu/menu-panel';
 import Main_header from '../main_header/Main_header';
-import axios from 'axios';
+import axiosInstance from '../../main_panel/axios-instance';
 import {
   DetailsContainer,
   BackButton,
@@ -53,8 +53,6 @@ const MarketplaceDetails: React.FC = () => {
   const [item, setItem] = useState<ItemDetails | null>(null);
   const [collapsed, setCollapsed] = useState(false);
   const [loading, setLoading] = useState(true);
-
-  const accessToken = localStorage.getItem('accessToken');
   const isMyItem = location.pathname.includes('my-items');
 
   const fetchItem = async () => {
@@ -63,9 +61,7 @@ const MarketplaceDetails: React.FC = () => {
         ? `https://project-back-81mh.onrender.com/marketplace/my-items/${id}/`
         : `https://project-back-81mh.onrender.com/marketplace/public-items/${id}/`;
 
-      const response = await axios.get(endpoint, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+      const response = await axiosInstance.get(endpoint);
       setItem(response.data);
     } catch (error) {
       console.error('Failed to load item details', error);
@@ -80,12 +76,7 @@ const MarketplaceDetails: React.FC = () => {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(
-        `https://project-back-81mh.onrender.com/marketplace/my-items/${id}/`,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      );
+      await axiosInstance.delete(`/marketplace/my-items/${id}/`);
       message.success('Item deleted successfully!');
       navigate('/marketplace');
     } catch (error) {

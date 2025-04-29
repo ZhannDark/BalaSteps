@@ -20,7 +20,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import axios from 'axios';
+import axiosInstance from '../../main_panel/axios-instance';
 import MenuPanel from '../../menu/menu-panel';
 import Main_header from '../main_header/Main_header';
 import {
@@ -39,8 +39,6 @@ import Foot from '../../main_page/main_content/footer/footer/footer';
 const { Header } = Layout;
 const { Option } = Select;
 const { TabPane } = Tabs;
-
-const accessToken = localStorage.getItem('accessToken');
 
 interface Item {
   id: string;
@@ -81,68 +79,38 @@ const Marketplace = () => {
   const { data: myItems = [], isLoading: myItemsLoading } = useQuery({
     queryKey: ['my-items'],
     queryFn: async () =>
-      (
-        await axios.get(
-          'https://project-back-81mh.onrender.com/marketplace/my-items/',
-          {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }
-        )
-      ).data,
+      (await axiosInstance.get('/marketplace/my-items/')).data,
   });
 
   const { data: publicItems = [], isLoading: publicItemsLoading } = useQuery({
     queryKey: ['public-items'],
     queryFn: async () =>
-      (
-        await axios.get(
-          'https://project-back-81mh.onrender.com/marketplace/public-items/'
-        )
-      ).data,
+      (await axiosInstance.get('/marketplace/public-items/')).data,
   });
 
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
     queryFn: async () =>
-      (
-        await axios.get(
-          'https://project-back-81mh.onrender.com/marketplace/categories/'
-        )
-      ).data,
+      (await axiosInstance.get('/marketplace/categories/')).data,
   });
 
   const { data: availabilities = [] } = useQuery({
     queryKey: ['availabilities'],
     queryFn: async () =>
-      (
-        await axios.get(
-          'https://project-back-81mh.onrender.com/marketplace/availability-types/'
-        )
-      ).data,
+      (await axiosInstance.get('/marketplace/availability-types/')).data,
   });
 
   const { data: conditions = [] } = useQuery({
     queryKey: ['conditions'],
     queryFn: async () =>
-      (
-        await axios.get(
-          'https://project-back-81mh.onrender.com/marketplace/conditions/'
-        )
-      ).data,
+      (await axiosInstance.get('/marketplace/conditions/')).data,
   });
 
   const addItemMutation = useMutation({
     mutationFn: (formData: FormData) =>
-      axios.post(
-        'https://project-back-81mh.onrender.com/marketplace/my-items/',
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      ),
+      axiosInstance.post('/marketplace/my-items/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }),
     onSuccess: async (response) => {
       const newItem = response.data;
       if (selectedImages.length > 0) {
@@ -151,14 +119,11 @@ const Marketplace = () => {
           imageForm.append('images', file.originFileObj);
         });
         try {
-          await axios.post(
-            'https://project-back-81mh.onrender.com/marketplace/equipment-photos/',
+          await axiosInstance.post(
+            '/marketplace/equipment-photos/',
             imageForm,
             {
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-                'Content-Type': 'multipart/form-data',
-              },
+              headers: { 'Content-Type': 'multipart/form-data' },
               params: { item_id: newItem.id },
             }
           );
@@ -176,12 +141,7 @@ const Marketplace = () => {
 
   const deleteItemMutation = useMutation({
     mutationFn: (id: string) =>
-      axios.delete(
-        `https://project-back-81mh.onrender.com/marketplace/my-items/${id}/`,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      ),
+      axiosInstance.delete(`/marketplace/my-items/${id}/`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-items'] });
       message.success('Item deleted!');

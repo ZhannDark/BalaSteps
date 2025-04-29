@@ -12,9 +12,11 @@ import {
   HeaderRight,
   ProfileDropdownButton,
 } from './main-header.styled';
+import { useQueryClient } from '@tanstack/react-query';
 
 const Main_header: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const handleLogout = async () => {
     const refreshToken = localStorage.getItem('refreshToken');
@@ -39,9 +41,10 @@ const Main_header: React.FC = () => {
           },
         }
       );
-
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
+      queryClient.clear();
+
       notification.success({
         message: 'Logged Out',
         description: 'You have been logged out successfully.',

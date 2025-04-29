@@ -13,7 +13,7 @@ import {
 import { SearchOutlined, PlusOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
-import axios from 'axios';
+import axiosInstance from '../../axios-instance';
 
 import {
   ForumLayout,
@@ -59,14 +59,10 @@ const DiscussionForum: React.FC = () => {
     []
   );
 
-  const token = localStorage.getItem('accessToken');
-
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await axios.get(
-          'https://project-back-81mh.onrender.com/forum/categories/'
-        );
+        const res = await axiosInstance.get('/forum/categories/');
         setCategories(res.data);
       } catch (error) {
         console.error('Failed to fetch categories:', error);
@@ -79,12 +75,7 @@ const DiscussionForum: React.FC = () => {
   useEffect(() => {
     const fetchThreads = async () => {
       try {
-        const response = await axios.get(
-          'https://project-back-81mh.onrender.com/forum/posts/',
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const response = await axiosInstance.get('/forum/posts/');
 
         const formatted = response.data.map((post: Thread) => ({
           id: post.id,
@@ -119,16 +110,7 @@ const DiscussionForum: React.FC = () => {
         category: values.topic,
       };
 
-      const response = await axios.post(
-        'https://project-back-81mh.onrender.com/forum/posts/',
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const response = await axiosInstance.post('/forum/posts/', payload);
 
       const newThread = {
         id: response.data.id,

@@ -26,7 +26,7 @@ import {
   MoreOutlined,
 } from '@ant-design/icons';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
+import axiosInstance from '../../main_panel/axios-instance';
 import dayjs from 'dayjs';
 import MenuPanel from '../../menu/menu-panel';
 import Main_header from '../main_header/Main_header';
@@ -98,7 +98,6 @@ const ProfilePage = () => {
 
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const accessToken = localStorage.getItem('accessToken');
 
   const otpInputRef = useRef<InputRef>(null);
 
@@ -124,18 +123,12 @@ const ProfilePage = () => {
   };
 
   const fetchProfile = async (): Promise<ProfileData> => {
-    const response = await axios.get(
-      'https://project-back-81mh.onrender.com/auth/profile/',
-      { headers: { Authorization: `Bearer ${accessToken}` } }
-    );
+    const response = await axiosInstance.get('/auth/profile/');
     return response.data;
   };
 
   const fetchChildren = async (): Promise<Child[]> => {
-    const response = await axios.get(
-      'https://project-back-81mh.onrender.com/auth/children/',
-      { headers: { Authorization: `Bearer ${accessToken}` } }
-    );
+    const response = await axiosInstance.get('/auth/children/');
     return response.data;
   };
 
@@ -152,16 +145,9 @@ const ProfilePage = () => {
     try {
       const formData = new FormData();
       formData.append('email', values.newEmail);
-      await axios.patch(
-        'https://project-back-81mh.onrender.com/auth/profile/',
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
+      await axiosInstance.patch('/auth/profile/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
       setNewEmail(values.newEmail);
       notification.success({
         message: 'OTP Sent',
@@ -181,16 +167,9 @@ const ProfilePage = () => {
     try {
       const formData = new FormData();
       formData.append('email', newEmail);
-      await axios.patch(
-        'https://project-back-81mh.onrender.com/auth/profile/',
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
+      await axiosInstance.patch('/auth/profile/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
       notification.success({
         message: 'OTP Resent',
         description: 'A new OTP code has been sent to your email.',
@@ -206,19 +185,10 @@ const ProfilePage = () => {
 
   const handleVerifyOtp = async (values: { otp: string }) => {
     try {
-      await axios.post(
-        'https://project-back-81mh.onrender.com/auth/verify-new-email/',
-        {
-          new_email: newEmail,
-          otp: values.otp,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      await axiosInstance.post('/auth/verify-new-email/', {
+        new_email: newEmail,
+        otp: values.otp,
+      });
       notification.success({
         message: 'Email Verified',
         description: 'Your email was successfully updated.',
@@ -242,16 +212,7 @@ const ProfilePage = () => {
         gender: values.gender,
         diagnoses: [{ name: values.diagnose }],
       };
-      await axios.post(
-        'https://project-back-81mh.onrender.com/auth/add-child/',
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      await axiosInstance.post('/auth/add-child/', payload);
       notification.success({
         message: 'Child Added',
         description: `${values.full_name} has been successfully added.`,
@@ -276,16 +237,9 @@ const ProfilePage = () => {
       if (values.profile_photo && values.profile_photo.length > 0) {
         formData.append('profile_photo', values.profile_photo[0].originFileObj);
       }
-      await axios.patch(
-        'https://project-back-81mh.onrender.com/auth/profile/',
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
+      await axiosInstance.patch('/auth/profile/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
       notification.success({
         message: 'Profile Updated',
         description: 'Your profile has been successfully updated.',
@@ -302,12 +256,7 @@ const ProfilePage = () => {
 
   const handleEditChildClick = async (childId: string) => {
     try {
-      const res = await axios.get(
-        `https://project-back-81mh.onrender.com/auth/edit-child/${childId}/`,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      );
+      const res = await axiosInstance.get(`/auth/edit-child/${childId}/`);
       const child = res.data;
       editChildForm.setFieldsValue({
         full_name: child.full_name,
@@ -335,16 +284,7 @@ const ProfilePage = () => {
         gender: values.gender,
         diagnoses: [{ name: values.diagnose }],
       };
-      await axios.patch(
-        `https://project-back-81mh.onrender.com/auth/edit-child/${editingChildId}/`,
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      await axiosInstance.patch(`/auth/edit-child/${editingChildId}/`, payload);
       notification.success({
         message: 'Child Info Updated',
         description: `${values.full_name}'s information has been successfully updated.`,

@@ -7,9 +7,9 @@ import {
   CloseCircleOutlined,
   ExclamationCircleOutlined,
 } from '@ant-design/icons';
-import { useMutation } from '@tanstack/react-query';
-import axios from 'axios';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import AppHeader from '../../main_page/main_page_header/main_page_header';
+import axiosInstance from '../../main_panel/axios-instance';
 import {
   LoginContainer,
   LoginFormContainer,
@@ -28,6 +28,7 @@ interface LoginFormValues {
 
 const Login = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [api, contextHolder] = notification.useNotification();
 
   const openNotification = (
@@ -51,18 +52,20 @@ const Login = () => {
 
   const loginMutation = useMutation({
     mutationFn: (values: LoginFormValues) =>
-      axios.post('https://project-back-81mh.onrender.com/auth/login/', values),
-    onSuccess: (response) => {
+      axiosInstance.post('/auth/login/', values),
+    onSuccess: async (response) => {
       localStorage.setItem('accessToken', response.data.access);
       localStorage.setItem('refreshToken', response.data.refresh);
+      queryClient.clear();
+      await queryClient.invalidateQueries({ queryKey: ['profile'] });
+
       openNotification(
         'success',
         'Login successful',
         'You have successfully logged in.'
       );
-      setTimeout(() => {
-        navigate('/symptom-tracker');
-      }, 3000);
+
+      navigate('/symptom-tracker');
     },
     onError: (error: { response?: { data?: { message?: string } } }) => {
       openNotification(
@@ -89,14 +92,12 @@ const Login = () => {
               name="email"
               rules={[
                 { required: true, message: 'Please enter an email' },
-                {
-                  type: 'email',
-                  message: 'Please enter a valid email address',
-                },
+                { type: 'email', message: 'Invalid email address' },
               ]}
             >
               <StyledInput placeholder="Enter your email" />
             </Form.Item>
+
             <Form.Item
               label="Password:"
               name="password"
@@ -106,6 +107,7 @@ const Login = () => {
             >
               <StyledPasswordInput placeholder="Enter password" />
             </Form.Item>
+
             <Form.Item>
               <StyledButton
                 type="primary"
@@ -116,6 +118,7 @@ const Login = () => {
               </StyledButton>
             </Form.Item>
           </Form>
+
           <LoginLinks>
             <StyledLink to="/forgot-password">Forgot password?</StyledLink>
             <StyledLink to="/register">New user? Register</StyledLink>

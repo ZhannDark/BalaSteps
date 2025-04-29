@@ -17,7 +17,7 @@ import {
 } from '@ant-design/icons';
 import MenuPanel from '../../../menu/menu-panel';
 import Main_header from '../../main_header/Main_header';
-import axios from 'axios';
+import axiosInstance from '../../axios-instance';
 import dayjs from 'dayjs';
 import {
   StyledLayout,
@@ -79,18 +79,11 @@ const DiscussionDetails: React.FC = () => {
     [key: string]: boolean;
   }>({});
 
-  const token = localStorage.getItem('accessToken');
-
   const toggleCollapsed = () => setCollapsed(!collapsed);
 
   const fetchPostDetails = async () => {
     try {
-      const response = await axios.get(
-        `https://project-back-81mh.onrender.com/forum/posts/${id}/`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const response = await axiosInstance.get(`/forum/posts/${id}/`);
       setPost(response.data);
     } catch {
       notification.error({
@@ -109,13 +102,9 @@ const DiscussionDetails: React.FC = () => {
     if (newComment.trim() === '') return;
     try {
       setAddingComment(true);
-      const response = await axios.post(
-        `https://project-back-81mh.onrender.com/forum/posts/${id}/comment/`,
-        { content: newComment },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const response = await axiosInstance.post(`/forum/posts/${id}/comment/`, {
+        content: newComment,
+      });
 
       setPost((prev) =>
         prev ? { ...prev, comments: [response.data, ...prev.comments] } : prev
@@ -139,13 +128,10 @@ const DiscussionDetails: React.FC = () => {
   const handleAddReply = async (parentId: string) => {
     if (replyTexts[parentId]?.trim() === '') return;
     try {
-      const response = await axios.post(
-        `https://project-back-81mh.onrender.com/forum/posts/${id}/comment/`,
-        { content: replyTexts[parentId], parent_id: parentId },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const response = await axiosInstance.post(`/forum/posts/${id}/comment/`, {
+        content: replyTexts[parentId],
+        parent_id: parentId,
+      });
 
       setPost((prev) => {
         if (!prev) return prev;
@@ -173,13 +159,8 @@ const DiscussionDetails: React.FC = () => {
 
   const handleDeleteComment = async (commentId: string) => {
     try {
-      await axios.delete(
-        `https://project-back-81mh.onrender.com/forum/comments/${commentId}/delete/`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      fetchPostDetails(); // Refresh all comments
+      await axiosInstance.delete(`/forum/comments/${commentId}/delete/`);
+      fetchPostDetails();
       notification.success({
         message: 'Comment Deleted',
         description: 'The comment was successfully deleted.',
@@ -194,14 +175,9 @@ const DiscussionDetails: React.FC = () => {
 
   const handleLikeComment = async (commentId: string) => {
     try {
-      const response = await axios.post(
-        `https://project-back-81mh.onrender.com/forum/comments/${commentId}/like/`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+      const response = await axiosInstance.post(
+        `/forum/comments/${commentId}/like/`
       );
-
       setPost((prev) =>
         prev
           ? {
@@ -225,12 +201,7 @@ const DiscussionDetails: React.FC = () => {
 
   const handleDeletePost = async () => {
     try {
-      await axios.delete(
-        `https://project-back-81mh.onrender.com/forum/posts/${id}/delete/`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      await axiosInstance.delete(`/forum/posts/${id}/delete/`);
       notification.success({
         message: 'Post Deleted',
         description: 'The post was successfully deleted.',
