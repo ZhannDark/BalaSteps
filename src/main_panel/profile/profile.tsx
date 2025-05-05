@@ -89,6 +89,9 @@ const ProfilePage = () => {
   const [step, setStep] = useState(0);
   const [newEmail, setNewEmail] = useState('');
   const [timer, setTimer] = useState(600);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [form] = Form.useForm();
   const [childForm] = Form.useForm();
@@ -160,6 +163,40 @@ const ProfilePage = () => {
         message: 'Sending OTP Failed',
         description: 'Could not send OTP code. Please try again later.',
       });
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!deletePassword) {
+      notification.warning({
+        message: 'Password Required',
+        description: 'Please enter your password to delete your account.',
+      });
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await axiosInstance.post('/auth/delete-account/', {
+        password: deletePassword,
+      });
+
+      notification.success({
+        message: 'Account Deleted',
+        description: 'Your account has been successfully deleted.',
+      });
+
+      localStorage.clear();
+      navigate('/');
+    } catch {
+      notification.error({
+        message: 'Deletion Failed',
+        description: 'Failed to delete your account.',
+      });
+    } finally {
+      setIsDeleting(false);
+      setDeleteModalVisible(false);
+      setDeletePassword('');
     }
   };
 
@@ -327,6 +364,13 @@ const ProfilePage = () => {
       >
         Change Password
       </Menu.Item>
+      <Menu.Item
+        key="delete"
+        danger
+        onClick={() => setDeleteModalVisible(true)}
+      >
+        Delete Account
+      </Menu.Item>
     </Menu>
   );
 
@@ -391,7 +435,10 @@ const ProfilePage = () => {
                     <h3>Your Children</h3>
                     <AddChildButton
                       icon={<PlusOutlined />}
-                      onClick={() => setAddChildModalVisible(true)}
+                      onClick={() => {
+                        childForm.resetFields();
+                        setAddChildModalVisible(true);
+                      }}
                       type="primary"
                     >
                       Add Child
@@ -545,7 +592,10 @@ const ProfilePage = () => {
           <Modal
             title="Add Child"
             open={addChildModalVisible}
-            onCancel={() => setAddChildModalVisible(false)}
+            onCancel={() => {
+              setAddChildModalVisible(false);
+              childForm.resetFields();
+            }}
             footer={null}
           >
             <Form layout="vertical" form={childForm} onFinish={handleAddChild}>
@@ -586,6 +636,22 @@ const ProfilePage = () => {
                 </SaveEditedProfileButton>
               </Form.Item>
             </Form>
+          </Modal>
+
+          <Modal
+            title="Confirm Account Deletion"
+            open={deleteModalVisible}
+            onCancel={() => setDeleteModalVisible(false)}
+            onOk={handleDeleteAccount}
+            okText="Delete"
+            okButtonProps={{ danger: true, loading: isDeleting }}
+          >
+            <p>Please enter your password to confirm deletion:</p>
+            <Input.Password
+              placeholder="Enter your password"
+              value={deletePassword}
+              onChange={(e) => setDeletePassword(e.target.value)}
+            />
           </Modal>
 
           <Modal

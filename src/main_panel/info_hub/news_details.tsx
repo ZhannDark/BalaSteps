@@ -20,7 +20,6 @@ import {
 import axios from 'axios';
 import MenuPanel from '../../menu/menu-panel';
 import Main_header from '../main_header/Main_header';
-import './information_hub.scss';
 import Foot from '../../main_page/main_content/footer/footer/footer';
 
 const { Title, Text } = Typography;

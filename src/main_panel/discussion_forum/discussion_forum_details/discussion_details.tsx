@@ -47,6 +47,15 @@ import Foot from '../../../main_page/main_content/footer/footer/footer';
 const { Title } = Typography;
 const { TextArea } = Input;
 
+interface Reply {
+  id: string;
+  user: string;
+  content: string;
+  created_at: string;
+  likes_count: number;
+  parent: string;
+}
+
 interface Comment {
   id: string;
   user: string;
@@ -54,7 +63,8 @@ interface Comment {
   created_at: string;
   likes_count: number;
   liked_by_user: boolean;
-  replies: Comment[];
+  replies: Reply[];
+  parent_id?: string | null;
 }
 
 interface PostDetails {
@@ -84,7 +94,14 @@ const DiscussionDetails: React.FC = () => {
   const fetchPostDetails = async () => {
     try {
       const response = await axiosInstance.get(`/forum/posts/${id}/`);
-      setPost(response.data);
+      const postData = response.data;
+
+      const commentsWithReplies = postData.comments.map((comment: Comment) => ({
+        ...comment,
+        replies: comment.replies || [],
+      }));
+
+      setPost({ ...postData, comments: commentsWithReplies });
     } catch {
       notification.error({
         message: 'Loading Failed',
@@ -102,13 +119,10 @@ const DiscussionDetails: React.FC = () => {
     if (newComment.trim() === '') return;
     try {
       setAddingComment(true);
-      const response = await axiosInstance.post(`/forum/posts/${id}/comment/`, {
+      await axiosInstance.post(`/forum/posts/${id}/comment/`, {
         content: newComment,
       });
-
-      setPost((prev) =>
-        prev ? { ...prev, comments: [response.data, ...prev.comments] } : prev
-      );
+      await fetchPostDetails();
       setNewComment('');
       notification.success({
         message: 'Comment Added',
@@ -128,21 +142,11 @@ const DiscussionDetails: React.FC = () => {
   const handleAddReply = async (parentId: string) => {
     if (replyTexts[parentId]?.trim() === '') return;
     try {
-      const response = await axiosInstance.post(`/forum/posts/${id}/comment/`, {
+      await axiosInstance.post(`/forum/comments/${parentId}/replies/`, {
         content: replyTexts[parentId],
-        parent_id: parentId,
+        parent: parentId,
       });
-
-      setPost((prev) => {
-        if (!prev) return prev;
-        const updatedComments = prev.comments.map((c) => {
-          if (c.id === parentId) {
-            return { ...c, replies: [response.data, ...(c.replies || [])] };
-          }
-          return c;
-        });
-        return { ...prev, comments: updatedComments };
-      });
+      await fetchPostDetails();
       setReplyTexts((prev) => ({ ...prev, [parentId]: '' }));
       notification.success({
         message: 'Reply Added',
@@ -153,22 +157,6 @@ const DiscussionDetails: React.FC = () => {
         message: 'Reply Failed',
         description:
           'There was a problem posting your reply. Please try again.',
-      });
-    }
-  };
-
-  const handleDeleteComment = async (commentId: string) => {
-    try {
-      await axiosInstance.delete(`/forum/comments/${commentId}/delete/`);
-      fetchPostDetails();
-      notification.success({
-        message: 'Comment Deleted',
-        description: 'The comment was successfully deleted.',
-      });
-    } catch {
-      notification.error({
-        message: 'Deleting Comment Failed',
-        description: 'Could not delete the comment. Please try again later.',
       });
     }
   };
@@ -195,6 +183,50 @@ const DiscussionDetails: React.FC = () => {
         message: 'Liking Comment Failed',
         description:
           'Could not like the comment. Please refresh the page and try again.',
+      });
+    }
+  };
+
+  const handleLikeReply = async (replyId: string) => {
+    try {
+      await axiosInstance.post(`/forum/comments/replies/${replyId}/like/`);
+      fetchPostDetails();
+    } catch {
+      notification.error({
+        message: 'Liking Reply Failed',
+        description: 'Could not like the reply. Please refresh and try again.',
+      });
+    }
+  };
+
+  const handleDeleteReplies = async (commentId: string) => {
+    try {
+      await axiosInstance.delete(`/forum/replies/${commentId}/delete/`);
+      fetchPostDetails();
+      notification.success({
+        message: 'Reply Deleted',
+        description: 'The reply was successfully deleted.',
+      });
+    } catch {
+      notification.error({
+        message: 'Deleting Failed',
+        description: 'Could not delete the message. Please try again.',
+      });
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    try {
+      await axiosInstance.delete(`/forum/comments/${commentId}/delete/`);
+      fetchPostDetails();
+      notification.success({
+        message: 'Comment Deleted',
+        description: 'The comment was successfully deleted.',
+      });
+    } catch {
+      notification.error({
+        message: 'Deleting Failed',
+        description: 'Could not delete the message. Please try again.',
       });
     }
   };
@@ -250,14 +282,12 @@ const DiscussionDetails: React.FC = () => {
                 </DiscussionMeta>
                 <Divider />
                 <DiscussionText>{post.content}</DiscussionText>
-
                 <CommentCount>
                   <MessageOutlined
                     style={{ marginRight: 6, color: '#426B1F' }}
                   />
                   {post.comments.length} comments
                 </CommentCount>
-
                 <Popconfirm
                   title="Are you sure you want to delete this post?"
                   onConfirm={handleDeletePost}
@@ -274,7 +304,6 @@ const DiscussionDetails: React.FC = () => {
                   </Button>
                 </Popconfirm>
               </DiscussionCard>
-
               <AddCommentSection>
                 <TextArea
                   rows={3}
@@ -358,7 +387,6 @@ const DiscussionDetails: React.FC = () => {
                           ? 'Hide Replies'
                           : `Show Replies (${comment.replies.length})`}
                       </ShowRepliesButton>
-
                       {expandedReplies[comment.id] && (
                         <RepliesContainer>
                           {comment.replies.map((reply) => (
@@ -370,6 +398,29 @@ const DiscussionDetails: React.FC = () => {
                                     'MMM D, YYYY HH:mm'
                                   )}
                                 </CommentDate>
+                                <CommentActions>
+                                  <Button
+                                    size="small"
+                                    icon={<LikeOutlined />}
+                                    onClick={() => handleLikeReply(reply.id)}
+                                  >
+                                    {reply.likes_count}
+                                  </Button>
+                                  <Popconfirm
+                                    title="Delete this reply?"
+                                    onConfirm={() =>
+                                      handleDeleteReplies(reply.id)
+                                    }
+                                    okText="Yes"
+                                    cancelText="No"
+                                  >
+                                    <Button
+                                      size="small"
+                                      danger
+                                      icon={<DeleteOutlined />}
+                                    />
+                                  </Popconfirm>
+                                </CommentActions>
                               </CommentHeader>
                               <CommentText>{reply.content}</CommentText>
                             </ReplyCard>

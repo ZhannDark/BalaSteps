@@ -106,6 +106,8 @@ const SymptomTracker = () => {
     queryKey: ['symptoms'],
     queryFn: fetchSymptoms,
   });
+  console.log('Loaded symptoms:', symptoms);
+
   const { data: children = [] } = useQuery<Child[]>({
     queryKey: ['children'],
     queryFn: fetchChildren,

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layout, Typography, Spin, Empty } from 'antd';
+import { Layout, Typography, Spin, Empty, Button } from 'antd';
 import { SendOutlined, PlusOutlined } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axiosBase from 'axios';
@@ -79,6 +79,16 @@ const IkomekAssistant = () => {
     },
   });
 
+  const deleteSession = useMutation({
+    mutationFn: (sessionId: string) =>
+      axios.delete(`/api/komekai/sessions/${sessionId}/delete/`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sessions'] });
+      setActiveSessionId(null);
+      setMessages([]);
+    },
+  });
+
   const sendMessage = useMutation({
     mutationFn: async ({
       sessionId,
@@ -152,13 +162,31 @@ const IkomekAssistant = () => {
                   <Empty description="No chats yet" />
                 ) : (
                   sessionsData.map((session) => (
-                    <HistoryItem
+                    <div
                       key={session.id}
-                      isActive={session.id === activeSessionId}
-                      onClick={() => handleSelectChat(session.id)}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                      }}
                     >
-                      {session.title || 'New Chat'}
-                    </HistoryItem>
+                      <HistoryItem
+                        isActive={session.id === activeSessionId}
+                        onClick={() => handleSelectChat(session.id)}
+                        style={{ flex: 1 }}
+                      >
+                        {session.title || 'New Chat'}
+                      </HistoryItem>
+                      <Button
+                        type="link"
+                        danger
+                        size="small"
+                        onClick={() => deleteSession.mutate(session.id)}
+                        style={{ marginLeft: 4 }}
+                      >
+                        ✕
+                      </Button>
+                    </div>
                   ))
                 )}
               </ChatHistoryList>
