@@ -34,6 +34,7 @@ import {
   ReplyCard,
   ReplyInput,
 } from './specialist-details.styled';
+import axiosInstance from '../../axios-instance';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -81,6 +82,14 @@ const SpecialistDetails = () => {
   const [newRating, setNewRating] = useState(0);
   const [replyTexts, setReplyTexts] = useState<{ [key: string]: string }>({});
   const token = localStorage.getItem('accessToken');
+  const [expandedReplies, setExpandedReplies] = useState<{
+    [key: string]: boolean;
+  }>({});
+
+  useEffect(() => {
+    fetchSpecialist();
+    fetchComments();
+  }, [id]);
 
   const fetchSpecialist = async () => {
     try {
@@ -88,7 +97,6 @@ const SpecialistDetails = () => {
         `https://project-back-81mh.onrender.com/info-hub/specialists/${id}/`
       );
       setSpecialist(res.data);
-      setComments(res.data.comments);
     } catch {
       notification.error({
         message: 'Loading Failed',
@@ -97,9 +105,18 @@ const SpecialistDetails = () => {
     }
   };
 
-  useEffect(() => {
-    fetchSpecialist();
-  }, [id]);
+  const fetchReplies = async (commentId: string) => {
+    try {
+      const res = await axiosInstance.get(
+        `/info-hub/specialists/comments/${commentId}/replies/`
+      );
+      setComments((prev) =>
+        prev.map((c) => (c.id === commentId ? { ...c, replies: res.data } : c))
+      );
+    } catch {
+      notification.error({ message: 'Failed to load replies' });
+    }
+  };
 
   const handleAddComment = async () => {
     if (!newComment.trim() || newRating === 0) {
@@ -118,6 +135,7 @@ const SpecialistDetails = () => {
       );
       setNewComment('');
       setNewRating(0);
+      fetchComments();
       fetchSpecialist();
       notification.success({
         message: 'Comment Added',
@@ -128,6 +146,21 @@ const SpecialistDetails = () => {
         message: 'Submission Failed',
         description: 'Could not add comment. Please try again.',
       });
+    }
+  };
+
+  const fetchComments = async () => {
+    try {
+      const res = await axiosInstance.get(
+        `/info-hub/therapy-centers/${id}/comments/`
+      );
+      const commentsWithEmptyReplies = res.data.map((c: Comment) => ({
+        ...c,
+        replies: [],
+      }));
+      setComments(commentsWithEmptyReplies);
+    } catch {
+      notification.error({ message: 'Failed to load comments' });
     }
   };
 

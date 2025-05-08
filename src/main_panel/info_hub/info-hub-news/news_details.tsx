@@ -1,21 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Layout,
-  Button,
   Typography,
-  List,
-  Popconfirm,
-  notification,
+  Button,
   Input,
+  notification,
+  Popconfirm,
 } from 'antd';
 import {
   ArrowLeftOutlined,
-  DeleteOutlined,
-  LikeOutlined,
   MessageOutlined,
+  DeleteOutlined,
 } from '@ant-design/icons';
-import axios from 'axios';
+import dayjs from 'dayjs';
 import MenuPanel from '../../../menu/menu-panel';
 import Main_header from '../../main_header/Main_header';
 import Foot from '../../../main_page/main_content/footer/footer/footer';
@@ -28,27 +26,33 @@ import {
   DetailsImage,
   CommentSection,
   CommentArea,
-  StyledListItem,
-  CommentMeta,
 } from './news-details.styled';
+import {
+  CommentCard,
+  CommentHeader,
+  CommentAuthor,
+  CommentDate,
+  CommentText,
+  CommentActions,
+  RepliesContainer,
+  ReplyCard,
+} from '../../discussion_forum/discussion_forum_details/discussion-details.styled';
+import axiosInstance from '../../axios-instance';
 
 const { Title, Text } = Typography;
-const { TextArea } = Input;
 
 interface Reply {
   id: string;
   user: string;
   content: string;
   created_at: string;
-  parent: string;
 }
 
 interface Comment {
   id: string;
-  user: { id: string; username: string };
+  user: string;
   content: string;
   created_at: string;
-  likes_count: number;
   replies: Reply[];
 }
 
@@ -57,110 +61,106 @@ interface NewsDetailsType {
   title: string;
   content: string;
   photo?: string;
-  tags: { id: string; name: string }[];
   created_at: string;
-  comments: Comment[];
   source?: string;
 }
 
 const NewsDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [collapsed, setCollapsed] = useState(false);
+  const token = localStorage.getItem('accessToken');
+
   const [post, setPost] = useState<NewsDetailsType | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
-  const [replyContent, setReplyContent] = useState('');
-  const [replyParentId, setReplyParentId] = useState<string | null>(null);
-  const token = localStorage.getItem('accessToken');
+  const [replyTexts, setReplyTexts] = useState<{ [key: string]: string }>({});
+  const [expandedReplies, setExpandedReplies] = useState<{
+    [key: string]: boolean;
+  }>({});
+  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
-    const fetchPost = async () => {
-      try {
-        const res = await axios.get(
-          `https://project-back-81mh.onrender.com/info-hub/news/${id}/`
-        );
-        setPost(res.data);
-        setComments(res.data.comments);
-      } catch {
-        notification.error({
-          message: 'Error',
-          description: 'Failed to load news',
-        });
-      }
-    };
     fetchPost();
+    fetchComments();
   }, [id]);
+
+  const fetchPost = async () => {
+    try {
+      const res = await axiosInstance.get(`/info-hub/news/${id}/`);
+      setPost(res.data);
+    } catch {
+      notification.error({ message: 'Failed to load news details' });
+    }
+  };
+
+  const fetchComments = async () => {
+    try {
+      const res = await axiosInstance.get(`/info-hub/news/${id}/comments/`);
+      const commentsWithEmptyReplies = res.data.map((c: Comment) => ({
+        ...c,
+        replies: [],
+      }));
+      setComments(commentsWithEmptyReplies);
+    } catch {
+      notification.error({ message: 'Failed to load comments' });
+    }
+  };
+
+  const fetchReplies = async (commentId: string) => {
+    try {
+      const res = await axiosInstance.get(
+        `/info-hub/news/comments/${commentId}/replies/`
+      );
+      setComments((prev) =>
+        prev.map((c) => (c.id === commentId ? { ...c, replies: res.data } : c))
+      );
+    } catch {
+      notification.error({ message: 'Failed to load replies' });
+    }
+  };
 
   const handleAddComment = async () => {
     if (!newComment.trim()) {
-      notification.warning({
-        message: 'Validation Error',
-        description: 'Comment content cannot be empty',
-      });
-      return;
+      return notification.warning({ message: 'Comment cannot be empty' });
     }
+
     try {
-      console.log('comment id: ', id);
-      const res = await axios.post(
-        `https://project-back-81mh.onrender.com/info-hub/news/${id}/comments/`,
+      await axiosInstance.post(
+        `/info-hub/news/${id}/comments/create/`,
         { content: newComment },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      console.log('res: ', res.data);
-      setComments((prev) => [res.data, ...(prev || [])]);
       setNewComment('');
-      notification.success({
-        message: 'Success',
-        description: 'Comment added successfully.',
-      });
+      fetchComments();
+      notification.success({ message: 'Comment added' });
     } catch {
-      notification.error({
-        message: 'Failed to add comment',
-        description: 'Try again later.',
-      });
+      notification.error({ message: 'Failed to add comment' });
     }
   };
 
-  const handleDelete = async (commentId: string) => {
+  const handleDeleteComment = async (commentId: string) => {
     try {
-      await axios.delete(
-        `https://project-back-81mh.onrender.com/info-hub/news/comments/${commentId}/delete/`,
-        { headers: { Authorization: `Bearer ${token}` } }
+      await axiosInstance.delete(
+        `/info-hub/news/comments/${commentId}/delete/`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
-      setComments((prev) => prev.filter((c) => c.id !== commentId));
-      notification.success({
-        message: 'Success',
-        description: 'Comment deleted successfully.',
-      });
+      fetchComments();
+      notification.success({ message: 'Comment deleted' });
     } catch {
-      notification.error({
-        message: 'Failed to delete comment',
-        description: 'Try again later.',
-      });
+      notification.error({ message: 'Failed to delete comment' });
     }
   };
 
-  const handleReply = async () => {
-    if (!replyContent.trim() || !replyParentId) return;
-    try {
-      await axios.post(
-        `https://project-back-81mh.onrender.com/info-hub/news/comments/${replyParentId}/replies/create/`,
-        { content: replyContent, parent: replyParentId },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setReplyContent('');
-      setReplyParentId(null);
-      notification.success({
-        message: 'Success',
-        description: 'Reply added successfully.',
-      });
-    } catch {
-      notification.error({
-        message: 'Failed to add reply',
-        description: 'Try again later.',
-      });
+  const handleToggleReplies = async (commentId: string) => {
+    if (!expandedReplies[commentId]) {
+      await fetchReplies(commentId);
     }
+    setExpandedReplies((prev) => ({
+      ...prev,
+      [commentId]: !prev[commentId],
+    }));
   };
 
   return (
@@ -174,18 +174,16 @@ const NewsDetails = () => {
           <Main_header />
         </StyledHeader>
         <StyledContent>
-          <BackButton
-            icon={<ArrowLeftOutlined />}
-            onClick={() => navigate('/info_hub')}
-          >
+          <BackButton icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
             Back
           </BackButton>
+
           {post && (
             <DetailsCard>
               {post.photo && <DetailsImage src={post.photo} alt={post.title} />}
               <Title>{post.title}</Title>
               <Text type="secondary">
-                {new Date(post.created_at).toLocaleString()}
+                {dayjs(post.created_at).format('MMM D, YYYY HH:mm')}
               </Text>
               <p style={{ whiteSpace: 'pre-line' }}>{post.content}</p>
               {post.source && <Text italic>Source: {post.source}</Text>}
@@ -196,7 +194,7 @@ const NewsDetails = () => {
             <Title level={3}>Comments</Title>
             <CommentArea
               rows={3}
-              placeholder="Write a comment..."
+              placeholder="Write your comment..."
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
             />
@@ -204,55 +202,52 @@ const NewsDetails = () => {
               Add Comment
             </Button>
 
-            <List
-              dataSource={comments}
-              renderItem={(comment) => (
-                <StyledListItem
-                  actions={[
-                    <Button key="like" icon={<LikeOutlined />} />,
-                    <Popconfirm
-                      key="delete"
-                      title="Are you sure?"
-                      onConfirm={() => handleDelete(comment.id)}
-                      okText="Yes"
-                      cancelText="No"
-                    >
-                      <Button danger icon={<DeleteOutlined />} />
-                    </Popconfirm>,
-                    <Button
-                      key="reply"
-                      icon={<MessageOutlined />}
-                      onClick={() => setReplyParentId(comment.id)}
-                    />,
-                  ]}
-                >
-                  <CommentMeta
-                    title={comment.user.username}
-                    description={new Date(comment.created_at).toLocaleString()}
-                  />
-                  <p>{comment.content}</p>
-                  {replyParentId === comment.id && (
-                    <div style={{ marginTop: 10 }}>
-                      <TextArea
-                        rows={2}
-                        value={replyContent}
-                        onChange={(e) => setReplyContent(e.target.value)}
-                        placeholder="Write a reply..."
-                      />
-                      <Button type="link" onClick={handleReply}>
-                        Send Reply
-                      </Button>
-                    </div>
-                  )}
-                  {comment.replies?.map((reply) => (
-                    <div key={reply.id} style={{ marginLeft: 20 }}>
-                      <Text strong>{reply.user}</Text>
-                      <p>{reply.content}</p>
-                    </div>
-                  ))}
-                </StyledListItem>
-              )}
-            />
+            {comments.map((comment) => (
+              <CommentCard key={comment.id}>
+                <CommentHeader>
+                  <CommentAuthor>{comment.user}</CommentAuthor>
+                  <CommentDate>
+                    {dayjs(comment.created_at).format('MMM D, YYYY HH:mm')}
+                  </CommentDate>
+                </CommentHeader>
+                <CommentText>{comment.content}</CommentText>
+                <CommentActions>
+                  <Popconfirm
+                    title="Delete this comment?"
+                    onConfirm={() => handleDeleteComment(comment.id)}
+                  >
+                    <Button size="small" danger icon={<DeleteOutlined />} />
+                  </Popconfirm>
+                  <Button
+                    size="small"
+                    icon={<MessageOutlined />}
+                    onClick={() => handleToggleReplies(comment.id)}
+                  >
+                    {expandedReplies[comment.id]
+                      ? 'Hide Replies'
+                      : 'Show Replies'}
+                  </Button>
+                </CommentActions>
+
+                {expandedReplies[comment.id] && (
+                  <RepliesContainer>
+                    {comment.replies.map((reply) => (
+                      <ReplyCard key={reply.id}>
+                        <CommentHeader>
+                          <CommentAuthor>{reply.user}</CommentAuthor>
+                          <CommentDate>
+                            {dayjs(reply.created_at).format(
+                              'MMM D, YYYY HH:mm'
+                            )}
+                          </CommentDate>
+                        </CommentHeader>
+                        <CommentText>{reply.content}</CommentText>
+                      </ReplyCard>
+                    ))}
+                  </RepliesContainer>
+                )}
+              </CommentCard>
+            ))}
           </CommentSection>
         </StyledContent>
         <Foot />

@@ -39,7 +39,7 @@ const InfoHubPreview = () => {
       const endpointMap = {
         news: '/info-hub/news/',
         specialists: '/info-hub/specialists/',
-        centers: '/info-hub/centers/',
+        centers: '/info-hub/therapy-centers/',
       };
       const response = await axiosInstance.get(endpointMap[active]);
       setItems(response.data.slice(0, 4));

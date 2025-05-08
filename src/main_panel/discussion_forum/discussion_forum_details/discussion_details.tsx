@@ -209,7 +209,7 @@ const DiscussionDetails: React.FC = () => {
       });
     } catch (error: any) {
       const detail = error?.response?.data?.detail;
-      if (detail === 'You can delete only your own replies.') {
+      if (detail === 'You can delete only your own comments.') {
         notification.warning({
           message: 'Access Denied',
           description: 'You can only delete your own replies.',

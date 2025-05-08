@@ -2,19 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Typography,
-  List,
   Tag,
-  Rate,
   Popconfirm,
   Divider,
   Layout,
   notification,
+  Button,
 } from 'antd';
-import {
-  ArrowLeftOutlined,
-  DeleteOutlined,
-  CommentOutlined,
-} from '@ant-design/icons';
+import { ArrowLeftOutlined, DeleteOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import MenuPanel from '../../../menu/menu-panel';
@@ -31,11 +26,19 @@ import {
   StyledTextarea,
   SubmitButton,
   CommentListContainer,
-  CommentMeta,
-  ReplyBox,
-  ReplyMeta,
   StyledRate,
 } from './therapy-centers.styled';
+import {
+  CommentActions,
+  CommentAuthor,
+  CommentCard,
+  CommentDate,
+  CommentHeader,
+  CommentText,
+  RepliesContainer,
+  ReplyCard,
+} from '../../discussion_forum/discussion_forum_details/discussion-details.styled';
+import axiosInstance from '../../axios-instance';
 
 const { Title, Text } = Typography;
 
@@ -44,17 +47,14 @@ interface Reply {
   user: string;
   content: string;
   created_at: string;
-  parent: string;
 }
 
 interface Comment {
   id: string;
-  user: { id: string; username: string };
+  user: string;
   content: string;
   created_at: string;
-  updated_at: string;
-  rating?: number;
-  replies?: Reply[];
+  replies: Reply[];
 }
 
 interface CenterDetailsType {
@@ -79,12 +79,13 @@ const CenterDetails = () => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [newRating, setNewRating] = useState(0);
-  const [replyContent, setReplyContent] = useState<{ [key: string]: string }>(
-    {}
-  );
+  const [expandedReplies, setExpandedReplies] = useState<{
+    [key: string]: boolean;
+  }>({});
 
   useEffect(() => {
     fetchCenter();
+    fetchComments();
   }, [id]);
 
   const fetchCenter = async () => {
@@ -93,7 +94,6 @@ const CenterDetails = () => {
         `https://project-back-81mh.onrender.com/info-hub/therapy-centers/${id}/`
       );
       setCenter(res.data);
-      setComments(res.data.comments);
     } catch {
       notification.error({
         message: 'Loading Failed',
@@ -110,13 +110,14 @@ const CenterDetails = () => {
       });
     }
     try {
-      const res = await axios.post(
-        `https://project-back-81mh.onrender.com/info-hub/therapy-centers/${id}/comments/`,
+      await axios.post(
+        `https://project-back-81mh.onrender.com/info-hub/therapy-centers/${id}/comments/create/`,
         { content: newComment, rating: newRating },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setNewComment('');
       setNewRating(0);
+      fetchComments();
       fetchCenter();
       notification.success({
         message: 'Comment Added',
@@ -130,28 +131,42 @@ const CenterDetails = () => {
     }
   };
 
-  const handleReply = async (commentId: string) => {
-    const content = replyContent[commentId];
-    if (!content.trim()) return;
-
+  const fetchComments = async () => {
     try {
-      await axios.post(
-        `https://project-back-81mh.onrender.com/info-hub/therapy-centers/comments/${commentId}/replies/create/`,
-        { content, parent: commentId },
-        { headers: { Authorization: `Bearer ${token}` } }
+      const res = await axiosInstance.get(
+        `/info-hub/therapy-centers/${id}/comments/`
       );
-      fetchCenter();
-      setReplyContent((prev) => ({ ...prev, [commentId]: '' }));
-      notification.success({
-        message: 'Reply Sent',
-        description: 'Your reply was sent successfully.',
-      });
+      const commentsWithEmptyReplies = res.data.map((c: Comment) => ({
+        ...c,
+        replies: [],
+      }));
+      setComments(commentsWithEmptyReplies);
     } catch {
-      notification.error({
-        message: 'Reply Failed',
-        description: 'Could not send your reply. Please try again.',
-      });
+      notification.error({ message: 'Failed to load comments' });
     }
+  };
+
+  const fetchReplies = async (commentId: string) => {
+    try {
+      const res = await axiosInstance.get(
+        `/info-hub/news/comments/${commentId}/replies/`
+      );
+      setComments((prev) =>
+        prev.map((c) => (c.id === commentId ? { ...c, replies: res.data } : c))
+      );
+    } catch {
+      notification.error({ message: 'Failed to load replies' });
+    }
+  };
+
+  const handleToggleReplies = async (commentId: string) => {
+    if (!expandedReplies[commentId]) {
+      await fetchReplies(commentId);
+    }
+    setExpandedReplies((prev) => ({
+      ...prev,
+      [commentId]: !prev[commentId],
+    }));
   };
 
   const handleDeleteComment = async (commentId: string) => {
@@ -160,7 +175,7 @@ const CenterDetails = () => {
         `https://project-back-81mh.onrender.com/info-hub/therapy-centers/comments/${commentId}/delete/`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      fetchCenter();
+      fetchComments();
       notification.success({
         message: 'Comment Deleted',
         description: 'The comment was successfully deleted.',
@@ -169,25 +184,6 @@ const CenterDetails = () => {
       notification.error({
         message: 'Permission Denied',
         description: 'You can only delete your own comment.',
-      });
-    }
-  };
-
-  const handleDeleteReply = async (replyId: string) => {
-    try {
-      await axios.delete(
-        `https://project-back-81mh.onrender.com/info-hub/therapy-centers/comments/replies/${replyId}/delete/`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      fetchCenter();
-      notification.success({
-        message: 'Reply Deleted',
-        description: 'The reply was successfully deleted.',
-      });
-    } catch {
-      notification.error({
-        message: 'Delete Reply Failed',
-        description: 'Failed to delete the reply. Please try again.',
       });
     }
   };
@@ -271,75 +267,52 @@ const CenterDetails = () => {
           </CommentForm>
 
           <CommentListContainer>
-            <Title level={4}>
-              <CommentOutlined /> Comments
-            </Title>
-            <List
-              dataSource={comments}
-              itemLayout="vertical"
-              renderItem={(comment) => (
-                <List.Item key={comment.id}>
-                  <strong>{comment.user.username}</strong>
-                  <CommentMeta>
-                    Created:{' '}
-                    {dayjs(comment.created_at).format('YYYY-MM-DD HH:mm')} |{' '}
-                    Updated:{' '}
-                    {dayjs(comment.updated_at).format('YYYY-MM-DD HH:mm')}
-                  </CommentMeta>
-                  <p>{comment.content}</p>
-                  {comment.rating && <Rate disabled value={comment.rating} />}
-                  <div style={{ marginTop: 8 }}>
-                    <Popconfirm
-                      title="Are you sure to delete this comment?"
-                      onConfirm={() => handleDeleteComment(comment.id)}
-                    >
-                      <DeleteOutlined
-                        style={{ color: 'red', cursor: 'pointer' }}
-                      />
-                    </Popconfirm>
-                  </div>
+            {comments.map((comment) => (
+              <CommentCard key={comment.id}>
+                <CommentHeader>
+                  <CommentAuthor>{comment.user}</CommentAuthor>
+                  <CommentDate>
+                    {dayjs(comment.created_at).format('MMM D, YYYY HH:mm')}
+                  </CommentDate>
+                </CommentHeader>
+                <CommentText>{comment.content}</CommentText>
+                <CommentActions>
+                  <Popconfirm
+                    title="Delete this comment?"
+                    onConfirm={() => handleDeleteComment(comment.id)}
+                  >
+                    <Button size="small" danger icon={<DeleteOutlined />} />
+                  </Popconfirm>
+                  {/*<Button*/}
+                  {/*  size="small"*/}
+                  {/*  icon={<MessageOutlined />}*/}
+                  {/*  onClick={() => handleToggleReplies(comment.id)}*/}
+                  {/*>*/}
+                  {/*  {expandedReplies[comment.id]*/}
+                  {/*    ? 'Hide Replies'*/}
+                  {/*    : 'Show Replies'}*/}
+                  {/*</Button>*/}
+                </CommentActions>
 
-                  <ReplyBox>
-                    <StyledTextarea
-                      rows={2}
-                      value={replyContent[comment.id] || ''}
-                      onChange={(e) =>
-                        setReplyContent((prev) => ({
-                          ...prev,
-                          [comment.id]: e.target.value,
-                        }))
-                      }
-                      placeholder="Write a reply..."
-                    />
-                    <SubmitButton
-                      size="small"
-                      onClick={() => handleReply(comment.id)}
-                      disabled={!replyContent[comment.id]?.trim()}
-                    >
-                      Reply
-                    </SubmitButton>
-
-                    {comment.replies?.map((reply) => (
-                      <div key={reply.id} style={{ marginTop: 10 }}>
-                        <strong>{reply.user}</strong>
-                        <ReplyMeta>
-                          {dayjs(reply.created_at).format('MMM D, YYYY HH:mm')}
-                        </ReplyMeta>
-                        <p>{reply.content}</p>
-                        <Popconfirm
-                          title="Delete this reply?"
-                          onConfirm={() => handleDeleteReply(reply.id)}
-                        >
-                          <DeleteOutlined
-                            style={{ color: '#aa2222', cursor: 'pointer' }}
-                          />
-                        </Popconfirm>
-                      </div>
+                {expandedReplies[comment.id] && (
+                  <RepliesContainer>
+                    {comment.replies.map((reply) => (
+                      <ReplyCard key={reply.id}>
+                        <CommentHeader>
+                          <CommentAuthor>{reply.user}</CommentAuthor>
+                          <CommentDate>
+                            {dayjs(reply.created_at).format(
+                              'MMM D, YYYY HH:mm'
+                            )}
+                          </CommentDate>
+                        </CommentHeader>
+                        <CommentText>{reply.content}</CommentText>
+                      </ReplyCard>
                     ))}
-                  </ReplyBox>
-                </List.Item>
-              )}
-            />
+                  </RepliesContainer>
+                )}
+              </CommentCard>
+            ))}
           </CommentListContainer>
         </StyledContent>
         <Foot />
