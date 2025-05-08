@@ -144,6 +144,9 @@ export const Contact = () => {
           form, email, or social media platforms. Our team is ready to support
           you and provide the answers you need.
         </Text>
+        <Text>
+          Email: <strong>210107028@stu.sdu.edu.kz</strong>
+        </Text>
         <BackButton onClick={() => navigate(-1)}>← Back to Home</BackButton>
       </motion.div>
     </Wrapper>

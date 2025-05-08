@@ -26,6 +26,10 @@ export const StyledHeader = styled(Header)`
   }
 `;
 
+export const UserFullName = styled(Button)`
+  color: #426b1f;
+`;
+
 export const LogoContainer = styled.div`
   display: flex;
   align-items: center;

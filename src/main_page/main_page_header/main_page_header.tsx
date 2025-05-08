@@ -11,17 +11,22 @@ import {
   StyledButton,
   ButtonGroup,
   Burger,
+  UserFullName,
 } from './main_page_header.styled';
+import axios from 'axios';
 
 const AppHeader = () => {
   const navigate = useNavigate();
   const location = useLocation();
+
   const [showNav, setShowNav] = useState(true);
   const [showLoginButton, setShowLoginButton] = useState(true);
   const [showRegisterButton, setShowRegisterButton] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [fullName, setFullName] = useState<string | null>(null);
 
-  const isAuthenticated = Boolean(localStorage.getItem('accessToken'));
+  const token = localStorage.getItem('accessToken');
+  const isAuthenticated = Boolean(token);
 
   const handleButtonClick = (auth: 'login' | 'register'): void => {
     navigate(`/${auth}`);
@@ -39,6 +44,7 @@ const AppHeader = () => {
 
   useEffect(() => {
     const path = location.pathname;
+
     if (path === '/register') {
       setShowNav(false);
       setShowLoginButton(true);
@@ -51,6 +57,21 @@ const AppHeader = () => {
       setShowNav(false);
     } else {
       setShowNav(true);
+    }
+
+    if (isAuthenticated) {
+      axios
+        .get('https://project-back-81mh.onrender.com/auth/profile/', {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .then((res) => {
+          setFullName(res.data.full_name);
+        })
+        .catch(() => {
+          setFullName(null);
+        });
+    } else {
+      setFullName(null);
     }
   }, [location.pathname]);
 
@@ -100,15 +121,26 @@ const AppHeader = () => {
           </NavLinks>
 
           <ButtonGroup>
-            {showRegisterButton && (
-              <StyledButton onClick={() => handleButtonClick('register')}>
-                Register
-              </StyledButton>
-            )}
-            {showLoginButton && (
-              <StyledButton onClick={() => handleButtonClick('login')}>
-                Login
-              </StyledButton>
+            {fullName ? (
+              <UserFullName
+                onClick={() => navigate('profile')}
+                style={{ fontSize: '16px', fontWeight: 500 }}
+              >
+                {fullName}
+              </UserFullName>
+            ) : (
+              <>
+                {showRegisterButton && (
+                  <StyledButton onClick={() => handleButtonClick('register')}>
+                    Register
+                  </StyledButton>
+                )}
+                {showLoginButton && (
+                  <StyledButton onClick={() => handleButtonClick('login')}>
+                    Login
+                  </StyledButton>
+                )}
+              </>
             )}
           </ButtonGroup>
         </RightSection>
