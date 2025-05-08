@@ -16,6 +16,11 @@ export const MainWrapper = styled.div`
   @media ${device.tablet} {
     padding-bottom: 80px;
   }
+
+  @media ${device.mobileL} {
+    padding: 60px 10px 40px;
+    margin-top: 0;
+  }
 `;
 
 export const MainTitle = styled(Title)`
@@ -36,7 +41,13 @@ export const MainTitle = styled(Title)`
   }
 
   @media ${device.mobileL} {
+    width: 100%;
     font-size: 28px !important;
+  }
+
+  @media ${device.mobileS} {
+    width: 100%;
+    font-size: 22px !important;
   }
 `;
 
@@ -71,13 +82,14 @@ export const GetStartedButton = styled(AntButton)`
 export const ImagesContainer = styled.div`
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: 100px;
   margin-top: 20px;
 
-  @media ${device.tablet} {
+  @media ${device.mobileL} {
     flex-direction: column;
     align-items: center;
-    gap: 30px;
+    gap: 20px;
   }
 `;
 
@@ -91,8 +103,15 @@ export const ContentImage = styled.img`
     width: 80%;
   }
 
+  @media ${device.mobileS} {
+    height: 150px;
+    width: 100%;
+  }
+
   @media ${device.mobileL} {
-    height: 200px;
-    width: 90%;
+    width: 85%;
+    max-width: 280px;
+    height: auto;
+    object-fit: cover;
   }
 `;

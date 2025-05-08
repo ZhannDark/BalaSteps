@@ -7,16 +7,11 @@ import {
   Upload,
   Select,
   Tabs,
-  message,
   Skeleton,
-  Button,
-  Popconfirm,
+  notification,
+  UploadFile,
 } from 'antd';
-import {
-  PlusOutlined,
-  UploadOutlined,
-  DeleteOutlined,
-} from '@ant-design/icons';
+import { PlusOutlined, UploadOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
@@ -64,14 +59,26 @@ interface Condition {
   name: string;
 }
 
+interface AddItemFormValues {
+  name: string;
+  description: string;
+  price: string;
+  location: string;
+  contact_method: string;
+  category: string;
+  condition: string;
+  availability: string[];
+}
+
 const Marketplace = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [form] = Form.useForm();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('all');
-  const [selectedImages, setSelectedImages] = useState<any[]>([]);
-  const [editingItem, setEditingItem] = useState<Item | null>(null);
+  const [selectedImages, setSelectedImages] = useState<UploadFile[]>([]);
+  const [searchText, setSearchText] = useState('');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -115,8 +122,10 @@ const Marketplace = () => {
       const newItem = response.data;
       if (selectedImages.length > 0) {
         const imageForm = new FormData();
-        selectedImages.forEach((file: any) => {
-          imageForm.append('images', file.originFileObj);
+        selectedImages.forEach((file) => {
+          if (file.originFileObj) {
+            imageForm.append('images', file.originFileObj as File);
+          }
         });
         try {
           await axiosInstance.post(
@@ -133,30 +142,26 @@ const Marketplace = () => {
       }
       queryClient.invalidateQueries({ queryKey: ['my-items'] });
       queryClient.invalidateQueries({ queryKey: ['public-items'] });
-      message.success('Item added!');
+      notification.success({
+        message: 'Success',
+        description: 'Item added successfully.',
+      });
       resetForm();
     },
-    onError: () => message.error('Failed to add item'),
-  });
-
-  const deleteItemMutation = useMutation({
-    mutationFn: (id: string) =>
-      axiosInstance.delete(`/marketplace/my-items/${id}/`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['my-items'] });
-      message.success('Item deleted!');
-    },
-    onError: () => message.error('Failed to delete item'),
+    onError: () =>
+      notification.error({
+        message: 'Error',
+        description: 'Failed to add item.',
+      }),
   });
 
   const resetForm = () => {
     setIsModalOpen(false);
     form.resetFields();
     setSelectedImages([]);
-    setEditingItem(null);
   };
 
-  const handleAddItem = (values: any) => {
+  const handleAddItem = (values: AddItemFormValues) => {
     const formData = new FormData();
     formData.append('name', values.name);
     formData.append('description', values.description);
@@ -174,17 +179,27 @@ const Marketplace = () => {
   };
 
   const handleCardClick = (item: Item) => {
-    if (activeTab === 'my') {
-      navigate(`/marketplace/my-items/${item.id}`);
-    } else {
-      navigate(`/marketplace/public-items/${item.id}`);
-    }
+    navigate(
+      `/marketplace/${activeTab === 'my' ? 'my-items' : 'public-items'}/${item.id}`
+    );
   };
 
   const displayedItems = activeTab === 'my' ? myItems : publicItems;
-  const filteredItems = displayedItems.filter((item: Item) =>
-    selectedCategory ? item.category.id === selectedCategory : true
-  );
+  const filteredItems = displayedItems
+    .filter((item: Item) => {
+      const matchesCategory = selectedCategory
+        ? item.category.id === selectedCategory
+        : true;
+      const matchesSearch = item.name
+        .toLowerCase()
+        .includes(searchText.toLowerCase());
+      return matchesCategory && matchesSearch;
+    })
+    .sort((a: Item, b: Item) => {
+      const priceA: number = parseFloat(a.price);
+      const priceB: number = parseFloat(b.price);
+      return sortOrder === 'asc' ? priceA - priceB : priceB - priceA;
+    });
 
   const loading = myItemsLoading || publicItemsLoading;
 
@@ -195,7 +210,17 @@ const Marketplace = () => {
         toggleCollapsed={() => setCollapsed(!collapsed)}
       />
       <Layout style={{ marginLeft: collapsed ? 100 : 250 }}>
-        <Header style={{ background: '#E2E3E0', height: '48px', padding: 0 }}>
+        <Header
+          style={{
+            padding: 0,
+            marginLeft: '5px',
+            background: '#E2E3E0',
+            height: '48px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
           <Main_header />
         </Header>
 
@@ -212,18 +237,36 @@ const Marketplace = () => {
             <TabPane tab="My Items" key="my" />
           </Tabs>
 
-          <Select
-            placeholder="Filter by category"
-            style={{ width: 250, marginBottom: 20 }}
-            onChange={(value) => setSelectedCategory(value as string)}
-            allowClear
-          >
-            {categories.map((cat: Category) => (
-              <Option key={cat.id} value={cat.id}>
-                {cat.name}
-              </Option>
-            ))}
-          </Select>
+          <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
+            <Select
+              placeholder="Filter by category"
+              style={{ width: 250 }}
+              onChange={(value) => setSelectedCategory(value as string)}
+              allowClear
+            >
+              {categories.map((cat: Category) => (
+                <Option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </Option>
+              ))}
+            </Select>
+
+            <Select
+              defaultValue="asc"
+              style={{ width: 180 }}
+              onChange={(value) => setSortOrder(value as 'asc' | 'desc')}
+            >
+              <Option value="asc">Price: Low to High</Option>
+              <Option value="desc">Price: High to Low</Option>
+            </Select>
+
+            <Input.Search
+              placeholder="Search by item name"
+              style={{ width: 300 }}
+              allowClear
+              onChange={(e) => setSearchText(e.target.value)}
+            />
+          </div>
 
           <ItemsGrid>
             {loading
@@ -242,32 +285,10 @@ const Marketplace = () => {
                       }
                       alt={item.name}
                     />
-                    <div style={{ padding: '10px' }}>
+                    <div style={{ padding: '10px', textAlign: 'center' }}>
                       <h3 style={{ marginBottom: 8 }}>{item.name}</h3>
                       <p style={{ fontWeight: 'bold' }}>{item.price} ₸</p>
                     </div>
-                    {activeTab === 'my' && (
-                      <div
-                        style={{
-                          marginTop: 10,
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                        }}
-                      >
-                        <Popconfirm
-                          title="Delete this item?"
-                          onConfirm={() => deleteItemMutation.mutate(item.id)}
-                          okText="Yes"
-                          cancelText="No"
-                        >
-                          <Button
-                            icon={<DeleteOutlined />}
-                            danger
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                        </Popconfirm>
-                      </div>
-                    )}
                   </ItemCard>
                 ))}
           </ItemsGrid>
@@ -285,84 +306,93 @@ const Marketplace = () => {
                 destroyOnClose
               >
                 <Form layout="vertical" form={form} onFinish={handleAddItem}>
-                  {/* Все поля */}
                   <Form.Item
                     name="name"
                     label="Item Name"
                     rules={[{ required: true }]}
                   >
-                    <Input />
+                    {' '}
+                    <Input />{' '}
                   </Form.Item>
                   <Form.Item
                     name="description"
                     label="Description"
                     rules={[{ required: true }]}
                   >
-                    <Input.TextArea />
+                    {' '}
+                    <Input.TextArea />{' '}
                   </Form.Item>
                   <Form.Item
                     name="price"
                     label="Price"
                     rules={[{ required: true }]}
                   >
-                    <Input type="number" />
+                    {' '}
+                    <Input type="number" />{' '}
                   </Form.Item>
                   <Form.Item
                     name="location"
                     label="Location"
                     rules={[{ required: true }]}
                   >
-                    <Input />
+                    {' '}
+                    <Input />{' '}
                   </Form.Item>
                   <Form.Item
                     name="contact_method"
                     label="Contact Method"
                     rules={[{ required: true }]}
                   >
-                    <Input />
+                    {' '}
+                    <Input />{' '}
                   </Form.Item>
                   <Form.Item
                     name="availability"
                     label="Availability"
                     rules={[{ required: true }]}
                   >
-                    <Select mode="multiple" placeholder="Select availability">
+                    {' '}
+                    <Select mode="multiple">
+                      {' '}
                       {availabilities.map((a: Availability) => (
                         <Option key={a.id} value={a.id}>
                           {a.name}
                         </Option>
-                      ))}
-                    </Select>
+                      ))}{' '}
+                    </Select>{' '}
                   </Form.Item>
                   <Form.Item
                     name="condition"
                     label="Condition"
                     rules={[{ required: true }]}
                   >
-                    <Select placeholder="Select condition">
+                    {' '}
+                    <Select>
+                      {' '}
                       {conditions.map((c: Condition) => (
                         <Option key={c.id} value={c.id}>
                           {c.name}
                         </Option>
-                      ))}
-                    </Select>
+                      ))}{' '}
+                    </Select>{' '}
                   </Form.Item>
                   <Form.Item
                     name="category"
                     label="Category"
                     rules={[{ required: true }]}
                   >
-                    <Select placeholder="Select category">
+                    {' '}
+                    <Select>
+                      {' '}
                       {categories.map((cat: Category) => (
                         <Option key={cat.id} value={cat.id}>
                           {cat.name}
                         </Option>
-                      ))}
-                    </Select>
+                      ))}{' '}
+                    </Select>{' '}
                   </Form.Item>
-
-                  {/* Upload images */}
                   <Form.Item label="Upload Images">
+                    {' '}
                     <Upload.Dragger
                       multiple
                       listType="picture"
@@ -372,16 +402,18 @@ const Marketplace = () => {
                         setSelectedImages(fileList.slice(0, 5))
                       }
                     >
+                      {' '}
                       <p className="ant-upload-drag-icon">
-                        <UploadOutlined />
-                      </p>
-                      <p>Click or drag files here to upload (Max 5)</p>
-                    </Upload.Dragger>
+                        {' '}
+                        <UploadOutlined />{' '}
+                      </p>{' '}
+                      <p>Click or drag files here to upload (Max 5)</p>{' '}
+                    </Upload.Dragger>{' '}
                   </Form.Item>
-
-                  <Button type="primary" htmlType="submit" block>
-                    Add Item
-                  </Button>
+                  <AddItemButton htmlType="submit" block>
+                    {' '}
+                    Add Item{' '}
+                  </AddItemButton>
                 </Form>
               </Modal>
             </motion.div>

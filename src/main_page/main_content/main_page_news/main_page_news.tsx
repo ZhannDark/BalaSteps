@@ -1,9 +1,7 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import news1 from '../../../assets/images/main_content/news/news1.png';
-import news2 from '../../../assets/images/main_content/news/news2.png';
-import news3 from '../../../assets/images/main_content/news/news3.png';
+import axiosInstance from '../../../main_panel/axios-instance';
 import {
   NewsSection,
   NewsTitleContainer,
@@ -13,37 +11,54 @@ import {
   NewsItem,
   NewsImage,
   NewsText,
+  TabsContainer,
+  TabButton,
+  ActiveDot,
+  ShowMoreButton,
+  NewsMeta,
 } from './main-page-news.styled';
 
-const News = () => {
+interface NewsItemType {
+  id: string;
+  photo: string;
+  title: string;
+  name?: string;
+}
+
+const InfoHubPreview = () => {
   const navigate = useNavigate();
   const isAuthenticated = !!localStorage.getItem('accessToken');
+  const [active, setActive] = useState<'news' | 'specialists' | 'centers'>(
+    'news'
+  );
+  const [items, setItems] = useState<NewsItemType[]>([]);
+  type TabKey = 'news' | 'specialists' | 'centers';
 
-  const handleProtectedClick = () => {
-    if (isAuthenticated) {
-      navigate('/login');
-    } else {
-      navigate('/info_hub');
+  const fetchItems = async () => {
+    try {
+      const endpointMap = {
+        news: '/info-hub/news/',
+        specialists: '/info-hub/specialists/',
+        centers: '/info-hub/centers/',
+      };
+      const response = await axiosInstance.get(endpointMap[active]);
+      setItems(response.data.slice(0, 4));
+    } catch {
+      console.error('Failed to load content.');
     }
   };
 
-  const news = [
-    {
-      id: 1,
-      img: news1,
-      text: 'The issues of parents raising special needs children were discussed at the JSDP platform.',
-    },
-    {
-      id: 2,
-      img: news2,
-      text: 'A special day for special children.',
-    },
-    {
-      id: 3,
-      img: news3,
-      text: 'A sports relay competition was held among special needs children in Nur-Sultan.',
-    },
-  ];
+  useEffect(() => {
+    fetchItems();
+  }, [active]);
+
+  const handleShowMore = () => {
+    if (isAuthenticated) {
+      navigate('/info_hub');
+    } else {
+      navigate('/login');
+    }
+  };
 
   return (
     <NewsSection>
@@ -55,31 +70,55 @@ const News = () => {
       >
         <NewsTitleContainer>
           <NewsTitleLine />
-          <NewsTitle>NEWS</NewsTitle>
+          <NewsTitle>INFO HUB</NewsTitle>
           <NewsTitleLine />
         </NewsTitleContainer>
       </motion.div>
 
-      <NewsContainer>
-        {news.map((item, index) => (
-          <motion.div
-            key={item.id}
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: index * 0.2 }}
-            viewport={{ once: false }}
-            onClick={handleProtectedClick}
-            style={{ cursor: 'pointer' }}
+      <TabsContainer>
+        {(['news', 'specialists', 'centers'] as TabKey[]).map((key) => (
+          <TabButton
+            key={key}
+            isActive={active === key}
+            onClick={() => setActive(key)}
           >
-            <NewsItem>
-              <NewsImage src={item.img} alt={`News ${item.id}`} />
-              <NewsText>{item.text}</NewsText>
-            </NewsItem>
-          </motion.div>
+            {key.toUpperCase()}
+            {active === key && <ActiveDot layoutId="active-dot" />}
+          </TabButton>
         ))}
-      </NewsContainer>
+      </TabsContainer>
+
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={active}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.4 }}
+        >
+          <NewsContainer>
+            {items.map((item, index) => (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.15 }}
+                onClick={handleShowMore}
+                style={{ cursor: 'pointer' }}
+              >
+                <NewsItem>
+                  <NewsImage src={item.photo} alt={`item ${item.id}`} />
+                  <NewsText>{item.title}</NewsText>
+                  {active !== 'news' && <NewsMeta>{item.name}</NewsMeta>}
+                </NewsItem>
+              </motion.div>
+            ))}
+          </NewsContainer>
+          <ShowMoreButton onClick={handleShowMore}>Show More →</ShowMoreButton>
+        </motion.div>
+      </AnimatePresence>
     </NewsSection>
   );
 };
 
-export default News;
+export default InfoHubPreview;

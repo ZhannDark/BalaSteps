@@ -2,11 +2,7 @@ import React from 'react';
 import { Form, notification } from 'antd';
 import 'antd/dist/reset.css';
 import { useNavigate } from 'react-router-dom';
-import {
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-  ExclamationCircleOutlined,
-} from '@ant-design/icons';
+import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import AppHeader from '../../main_page/main_page_header/main_page_header';
 import axiosInstance from '../../main_panel/axios-instance';
@@ -29,26 +25,6 @@ interface LoginFormValues {
 const Login = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [api, contextHolder] = notification.useNotification();
-
-  const openNotification = (
-    type: 'success' | 'error' | 'warning',
-    message: string,
-    description: string
-  ) => {
-    api[type]({
-      message,
-      description,
-      icon:
-        type === 'success' ? (
-          <CheckCircleOutlined style={{ color: '#067908' }} />
-        ) : type === 'error' ? (
-          <CloseCircleOutlined style={{ color: '#d01843' }} />
-        ) : (
-          <ExclamationCircleOutlined style={{ color: '#da881c' }} />
-        ),
-    });
-  };
 
   const loginMutation = useMutation({
     mutationFn: (values: LoginFormValues) =>
@@ -59,26 +35,30 @@ const Login = () => {
       queryClient.clear();
       await queryClient.invalidateQueries({ queryKey: ['profile'] });
 
-      openNotification(
-        'success',
-        'Login successful',
-        'You have successfully logged in.'
-      );
+      notification.success({
+        message: 'Login successful',
+        description: 'You have successfully logged in.',
+        icon: <CheckCircleOutlined style={{ color: '#067908' }} />,
+        duration: 3,
+      });
 
-      navigate('/symptom-tracker');
+      setTimeout(() => {
+        navigate('/');
+      }, 4000);
     },
     onError: (error: { response?: { data?: { message?: string } } }) => {
-      openNotification(
-        'error',
-        'Login failed',
-        error.response?.data?.message || 'Incorrect email or password.'
-      );
+      notification.error({
+        message: 'Login failed',
+        description:
+          error.response?.data?.message || 'Incorrect email or password.',
+        icon: <CloseCircleOutlined style={{ color: '#d01843' }} />,
+        duration: 3,
+      });
     },
   });
 
   return (
     <>
-      {contextHolder}
       <AppHeader />
       <LoginContainer>
         <LoginFormContainer>

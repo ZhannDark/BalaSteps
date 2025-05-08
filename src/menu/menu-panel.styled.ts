@@ -21,6 +21,7 @@ export const MenuHeader = styled.div`
 export const Logo = styled.img`
   height: 50px;
   margin-left: 15px;
+  cursor: pointer;
 `;
 
 export const ToggleButton = styled(Button)`

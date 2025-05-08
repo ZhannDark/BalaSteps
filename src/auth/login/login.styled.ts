@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 import { Button, Input } from 'antd';
 import { Link } from 'react-router-dom';
+import { device } from '../../styles/media';
 
 export const LoginContainer = styled.div`
   display: flex;
@@ -8,6 +9,11 @@ export const LoginContainer = styled.div`
   justify-content: center;
   height: 750px;
   background-color: #f8f8f8;
+
+  @media ${device.tablet} {
+    height: auto;
+    padding: 60px 20px;
+  }
 `;
 
 export const LoginFormContainer = styled.div`
@@ -19,6 +25,16 @@ export const LoginFormContainer = styled.div`
   height: 410px;
   text-align: center;
   border: 1px solid #426b1f;
+
+  @media ${device.tablet} {
+    width: 100%;
+    max-width: 420px;
+    height: auto;
+  }
+
+  @media ${device.mobileL} {
+    padding: 20px;
+  }
 `;
 
 export const LoginTitle = styled.h2`
@@ -27,6 +43,10 @@ export const LoginTitle = styled.h2`
   font-weight: bold;
   color: #4b244a;
   margin-bottom: 20px;
+
+  @media ${device.mobileL} {
+    font-size: 26px;
+  }
 `;
 
 export const StyledInput = styled(Input)`
@@ -56,6 +76,12 @@ export const StyledButton = styled(Button)`
   &:hover {
     background-color: #629432 !important;
   }
+
+  @media ${device.mobileL} {
+    width: 100%;
+    padding: 10px 0;
+    font-size: 18px;
+  }
 `;
 
 export const LoginLinks = styled.div`
@@ -63,6 +89,13 @@ export const LoginLinks = styled.div`
   justify-content: space-between;
   margin-top: 20px;
   font-size: 16px;
+
+  @media ${device.mobileL} {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+  }
 `;
 
 export const StyledLink = styled(Link)`

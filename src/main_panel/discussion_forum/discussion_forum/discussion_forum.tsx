@@ -3,12 +3,12 @@ import {
   Layout,
   Modal,
   Form,
-  message,
   List,
   Skeleton,
   Typography,
   Select,
   Input,
+  notification,
 } from 'antd';
 import { SearchOutlined, PlusOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
@@ -40,7 +40,7 @@ const { Option } = FilterDropdown;
 interface Thread {
   id: string;
   title: string;
-  author: string;
+  user: string;
   createdAt: string;
   content: string;
   category: string;
@@ -80,16 +80,19 @@ const DiscussionForum: React.FC = () => {
         const formatted = response.data.map((post: Thread) => ({
           id: post.id,
           title: post.title,
-          author: post.author,
+          user: post.user,
           createdAt: dayjs(post.createdAt).format('MMMM D, YYYY'),
           content: post.content,
           category: post.category,
         }));
 
         setThreads(formatted);
-      } catch (error) {
-        console.error('Failed to fetch threads:', error);
-        message.error('Failed to load discussion posts.');
+      } catch {
+        notification.error({
+          message: 'Load Failed',
+          description:
+            'Failed to load discussion posts. Please try again later.',
+        });
       } finally {
         setLoading(false);
       }
@@ -115,7 +118,7 @@ const DiscussionForum: React.FC = () => {
       const newThread = {
         id: response.data.id,
         title: response.data.title,
-        author: response.data.user || 'You',
+        user: response.data.user,
         createdAt: dayjs(response.data.created_at).format('MMMM D, YYYY'),
         content: response.data.content,
         category: response.data.category,
@@ -124,10 +127,15 @@ const DiscussionForum: React.FC = () => {
       setThreads((prev) => [newThread, ...prev]);
       setIsModalOpen(false);
       form.resetFields();
-      message.success('Thread created successfully!');
-    } catch (error) {
-      console.error('Failed to create thread:', error);
-      message.error('Failed to create thread.');
+      notification.success({
+        message: 'Thread Created',
+        description: 'Your discussion thread has been successfully created.',
+      });
+    } catch {
+      notification.error({
+        message: 'Creation Failed',
+        description: 'Unable to create the thread. Please try again.',
+      });
     }
   };
 
@@ -219,7 +227,7 @@ const DiscussionForum: React.FC = () => {
                   <ThreadTopic>{thread.category}</ThreadTopic>
                   <Title level={4}>{thread.title}</Title>
                   <ThreadMeta>
-                    By {thread.author} - {thread.createdAt}
+                    By {thread.user} - {thread.createdAt}
                   </ThreadMeta>
                   <ThreadText>{thread.content}</ThreadText>
                 </ThreadCard>

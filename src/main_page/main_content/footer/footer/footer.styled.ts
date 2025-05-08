@@ -35,6 +35,11 @@ export const FooterLink = styled(Link)`
     color: #c54a16;
     text-decoration: underline;
   }
+
+  @media ${device.mobileL} {
+    font-size: 12px;
+    text-align: center;
+  }
 `;
 
 export const FooterSocial = styled.div`
@@ -57,7 +62,14 @@ export const CopyRight = styled.span`
   font-size: 14px;
   text-align: center;
 
+  @media ${device.mobileS} {
+    font-size: 12px;
+    text-align: center;
+    line-height: 1.4;
+  }
+
   @media ${device.mobileL} {
-    font-size: 13px;
+    font-size: 12px;
+    text-align: center;
   }
 `;

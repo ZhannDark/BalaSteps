@@ -31,18 +31,18 @@ export const SymptomHeader = styled.div`
   margin-bottom: 20px;
   justify-content: left;
 
-  h2 {
-    margin: 0;
-    font-family: 'Jacques Francois', serif;
-    font-weight: lighter;
-    font-size: 32px;
-    color: #591c00;
-  }
-
   .anticon-info-circle {
     color: #9c9c9c;
     cursor: pointer;
   }
+`;
+
+export const SymptomTitle = styled.h1`
+  font-family: 'Jacques Francois', serif;
+  font-weight: lighter;
+  font-size: 36px;
+  color: #591c00;
+  margin-bottom: 20px;
 `;
 
 export const CalendarCell = styled.div`

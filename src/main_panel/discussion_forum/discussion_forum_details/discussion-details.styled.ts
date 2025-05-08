@@ -50,7 +50,7 @@ export const DiscussionMeta = styled.div`
   align-items: center;
 `;
 
-export const AuthorName = styled.h5`
+export const AuthorName = styled.h3`
   font-weight: 600;
   color: #426b1f;
   margin: 0;

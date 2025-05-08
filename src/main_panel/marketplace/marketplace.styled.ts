@@ -3,26 +3,30 @@ import { Layout, Button, Card } from 'antd';
 
 export const MarketplaceLayout = styled(Layout)`
   min-height: 100vh;
-  background: #f5f5f5;
+  background: #f0f2f5;
 `;
 
 export const MarketplaceContent = styled(Layout.Content)`
-  padding: 24px;
-  background: #f5f5f5;
+  margin: 10px;
+  padding: 15px;
+  background-color: #fff;
+  border-radius: 10px;
+  min-height: calc(100vh - 96px);
 `;
 
 export const TopBar = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 `;
 
 export const MarketplaceTitle = styled.h1`
-  font-size: 28px;
-  font-weight: bold;
-  color: #4b163b;
-  margin: 0;
+  font-family: 'Jacques Francois', serif;
+  font-weight: lighter;
+  font-size: 36px;
+  color: #591c00;
+  margin-bottom: 20px;
 `;
 
 export const AddItemButton = styled(Button)`
@@ -30,43 +34,47 @@ export const AddItemButton = styled(Button)`
   color: #ffffff;
   border: none;
   border-radius: 8px;
-  height: 40px;
-  font-weight: bold;
+  width: auto;
+  height: 35px;
+  padding: 0 20px;
+  font-weight: 600;
   display: flex;
   align-items: center;
+  transition: all 0.3s ease;
 
   &:hover {
-    background-color: #6b8e23;
-    color: #ffffff;
+    background-color: #6b8e23 !important;
+    color: #ffffff !important;
   }
 `;
 
 export const ItemsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 24px;
 `;
 
 export const ItemCard = styled(Card)`
   cursor: pointer;
-  border-radius: 10px;
+  border-radius: 12px;
   overflow: hidden;
-  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
 
   &:hover {
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
     transform: translateY(-4px);
   }
 
   .ant-card-body {
-    padding: 0;
+    padding: 12px 16px;
   }
 `;
 
 export const ItemImage = styled.img`
   width: 100%;
-  height: 220px;
+  height: 200px;
   object-fit: cover;
-  border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
 `;

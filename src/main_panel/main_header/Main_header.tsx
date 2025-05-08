@@ -49,7 +49,7 @@ const Main_header: React.FC = () => {
         message: 'Logged Out',
         description: 'You have been logged out successfully.',
       });
-      navigate('/login');
+      navigate('/');
     } catch (error) {
       if (axios.isAxiosError(error)) {
         notification.error({

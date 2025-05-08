@@ -65,7 +65,9 @@ const MenuPanel: React.FC<MenuPanelProps> = ({
   return (
     <MenuContainer $collapsed={collapsed}>
       <MenuHeader>
-        {!collapsed && <Logo src={img} alt="Logo" />}
+        {!collapsed && (
+          <Logo src={img} alt="Logo" onClick={() => navigate('/')} />
+        )}
         <ToggleButton onClick={toggleCollapsed}>
           {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
         </ToggleButton>

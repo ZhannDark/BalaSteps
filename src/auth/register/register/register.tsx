@@ -14,11 +14,7 @@ import {
   RegisterButton,
   LoginLink,
 } from './register.styled';
-import {
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-  ExclamationCircleOutlined,
-} from '@ant-design/icons';
+import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 
 interface RegisterFormValues {
   email: string;
@@ -29,27 +25,7 @@ interface RegisterFormValues {
 }
 
 const Register = () => {
-  const [api, contextHolder] = notification.useNotification();
   const navigate = useNavigate();
-
-  const openNotification = (
-    type: 'success' | 'error' | 'warning',
-    message: string,
-    description: string
-  ) => {
-    api[type]({
-      message,
-      description,
-      icon:
-        type === 'success' ? (
-          <CheckCircleOutlined style={{ color: '#067908' }} />
-        ) : type === 'error' ? (
-          <CloseCircleOutlined style={{ color: '#d01843' }} />
-        ) : (
-          <ExclamationCircleOutlined style={{ color: '#da881c' }} />
-        ),
-    });
-  };
 
   const registerMutation = useMutation({
     mutationFn: (values: {
@@ -64,11 +40,13 @@ const Register = () => {
         password: values.password,
       }),
     onSuccess: (_, variables) => {
-      openNotification(
-        'success',
-        'Registration successful!',
-        'You have successfully registered. Please verify your email.'
-      );
+      notification.success({
+        message: 'Registration successful!',
+        description:
+          'You have successfully registered. Please verify your email.',
+        icon: <CheckCircleOutlined style={{ color: '#067908' }} />,
+        duration: 3,
+      });
       setTimeout(() => {
         navigate('/send-otp', { state: { email: variables.email } });
       }, 4000);
@@ -78,18 +56,22 @@ const Register = () => {
     }) => {
       const emailError = error?.response?.data?.email?.[0];
       if (emailError === 'user with this email already exists.') {
-        openNotification(
-          'error',
-          'Registration failed',
-          'A user with this email already exists. Please try logging in.'
-        );
+        notification.error({
+          message: 'Registration failed',
+          description:
+            'A user with this email already exists. Please try logging in.',
+          icon: <CloseCircleOutlined style={{ color: '#d01843' }} />,
+          duration: 3,
+        });
       } else {
-        openNotification(
-          'error',
-          'Registration failed',
-          error?.response?.data?.message ||
-            'An error occurred. Please try again.'
-        );
+        notification.error({
+          message: 'Registration failed',
+          description:
+            error?.response?.data?.message ||
+            'An error occurred. Please try again.',
+          icon: <CloseCircleOutlined style={{ color: '#d01843' }} />,
+          duration: 3,
+        });
       }
     },
   });
@@ -105,7 +87,6 @@ const Register = () => {
 
   return (
     <>
-      {contextHolder}
       <AppHeader />
       <RegisterContainer>
         <RegisterFormContainer>
@@ -145,8 +126,14 @@ const Register = () => {
             <Form.Item
               label="Password:"
               name="password"
+              tooltip="Use 8+ chars including uppercase, lowercase, number & symbol"
               rules={[
                 { required: true, message: 'Please enter your password!' },
+                {
+                  pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/,
+                  message:
+                    'Password must be at least 8 characters and contain uppercase, lowercase, number, and symbol.',
+                },
               ]}
               hasFeedback
             >

@@ -199,19 +199,27 @@ const DiscussionDetails: React.FC = () => {
     }
   };
 
-  const handleDeleteReplies = async (commentId: string) => {
+  const handleDeleteReplies = async (replyId: string) => {
     try {
-      await axiosInstance.delete(`/forum/replies/${commentId}/delete/`);
+      await axiosInstance.delete(`/forum/replies/${replyId}/delete/`);
       fetchPostDetails();
       notification.success({
         message: 'Reply Deleted',
         description: 'The reply was successfully deleted.',
       });
-    } catch {
-      notification.error({
-        message: 'Deleting Failed',
-        description: 'Could not delete the message. Please try again.',
-      });
+    } catch (error: any) {
+      const detail = error?.response?.data?.detail;
+      if (detail === 'You can delete only your own replies.') {
+        notification.warning({
+          message: 'Access Denied',
+          description: 'You can only delete your own replies.',
+        });
+      } else {
+        notification.error({
+          message: 'Deleting Failed',
+          description: 'Could not delete the reply. Please try again.',
+        });
+      }
     }
   };
 
@@ -223,11 +231,19 @@ const DiscussionDetails: React.FC = () => {
         message: 'Comment Deleted',
         description: 'The comment was successfully deleted.',
       });
-    } catch {
-      notification.error({
-        message: 'Deleting Failed',
-        description: 'Could not delete the message. Please try again.',
-      });
+    } catch (error: any) {
+      const detail = error?.response?.data?.detail;
+      if (detail === 'You can delete only your own comments.') {
+        notification.warning({
+          message: 'Access Denied',
+          description: 'You can only delete your own comments.',
+        });
+      } else {
+        notification.error({
+          message: 'Deleting Failed',
+          description: 'Could not delete the comment. Please try again.',
+        });
+      }
     }
   };
 

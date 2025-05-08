@@ -5,14 +5,16 @@ const { Search } = Input;
 const { Content } = Layout;
 
 export const StyledLayout = styled(Layout)`
-  background-color: #f8f8f8;
   min-height: 100vh;
+  background-color: #f5f5f5;
 `;
 
 export const ContentContainer = styled(Content)`
-  width: 100%;
-  margin: auto;
-  padding: 40px;
+  margin: 10px;
+  padding: 15px;
+  background-color: #fff;
+  border-radius: 10px;
+  min-height: calc(100vh - 96px);
 `;
 
 export const NameSearch = styled.div`
@@ -22,8 +24,39 @@ export const NameSearch = styled.div`
   margin-bottom: 30px;
 `;
 
+export const HubTitle = styled.h1`
+  font-family: 'Jacques Francois', serif;
+  font-weight: lighter;
+  font-size: 36px;
+  color: #591c00;
+  margin-bottom: 20px;
+`;
+
 export const SearchBar = styled(Search)`
   width: 300px;
+
+  .ant-input {
+    border: 1px solid #6d3c2c;
+    border-radius: 8px;
+    color: #6d3c2c;
+
+    &:focus,
+    &:hover {
+      border-color: #6d3c2c;
+      box-shadow: 0 0 0 2px rgba(109, 60, 44, 0.2);
+    }
+  }
+
+  .ant-btn {
+    background-color: #6d3c2c;
+    border-color: #6d3c2c;
+    color: #fff;
+
+    &:hover {
+      background-color: #8a4c3a;
+      border-color: #8a4c3a;
+    }
+  }
 `;
 
 export const Section = styled.section`
@@ -82,4 +115,12 @@ export const CardImage = styled.img`
   margin-bottom: 10px;
   object-fit: cover;
   border-radius: 8px 8px 0 0;
+`;
+
+export const TagDropdownContainer = styled.div`
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 10px 20px;
+  background-color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 `;

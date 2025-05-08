@@ -1,16 +1,13 @@
 import React, { useRef, useState } from 'react';
-import styled from 'styled-components';
 import {
-  Typography,
   Card,
-  Input,
   Button,
   Layout,
-  message,
   Tooltip,
   Space,
   Dropdown,
   Checkbox,
+  notification,
 } from 'antd';
 import { DownOutlined, RightOutlined, LeftOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
@@ -19,99 +16,24 @@ import axios from 'axios';
 import MenuPanel from '../../menu/menu-panel';
 import Main_header from '../main_header/Main_header';
 import Foot from '../../main_page/main_content/footer/footer/footer';
+import {
+  StyledLayout,
+  TagDropdownContainer,
+  ContentContainer,
+  ScrollContainer,
+  ScrollContent,
+  ScrollButton,
+  InfoCard,
+  CardImage,
+  NameSearch,
+  SearchBar,
+  Section,
+  SectionTitle,
+  HubTitle,
+} from './info-hub.styled';
 
-const { Title } = Typography;
 const { Meta } = Card;
-const { Search } = Input;
-const { Header, Content } = Layout;
-
-const StyledLayout = styled(Layout)`
-  background-color: #f8f8f8;
-  min-height: 100vh;
-`;
-
-const ContentContainer = styled(Content)`
-  width: 100%;
-  margin: auto;
-  padding: 40px;
-`;
-
-const NameSearch = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-`;
-
-const SearchBar = styled(Search)`
-  width: 300px;
-`;
-
-const Section = styled.section`
-  margin-bottom: 40px;
-`;
-
-const SectionTitle = styled(Title)`
-  && {
-    color: #426b1f;
-    margin-bottom: 10px;
-  }
-`;
-
-const ScrollContainer = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-`;
-
-const ScrollContent = styled.div`
-  display: flex;
-  overflow-x: auto;
-  scroll-behavior: smooth;
-  gap: 15px;
-  padding: 10px 0;
-  white-space: nowrap;
-  width: 100%;
-  &::-webkit-scrollbar {
-    display: none;
-  }
-`;
-
-const ScrollButton = styled(Button)`
-  background-color: #426b1f;
-  color: white;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  border: none;
-  &:hover {
-    background-color: #6b8e23 !important;
-  }
-`;
-
-const InfoCard = styled(Card)`
-  width: 250px;
-  text-align: center;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-`;
-
-const CardImage = styled.img`
-  width: 100%;
-  height: 150px;
-  margin-bottom: 10px;
-  object-fit: cover;
-  border-radius: 8px 8px 0 0;
-`;
-
-const TagDropdownContainer = styled.div`
-  max-height: 300px;
-  overflow-y: auto;
-  padding: 10px 20px;
-  background-color: #fff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-`;
+const { Header } = Layout;
 
 interface TagType {
   id: string;
@@ -151,14 +73,18 @@ const InformationHub = () => {
     queryKey: ['centers'],
     queryFn: async () => {
       const res = await axios.get(
-        'https://project-back-81mh.onrender.com/info-hub/centers/'
+        'https://project-back-81mh.onrender.com/info-hub/therapy-centers/'
       );
       return res.data;
     },
   });
 
   if (newsError || specialistsError || centersError) {
-    message.error('Failed to load information hub items');
+    notification.error({
+      message: 'Failed to Load Data',
+      description:
+        'Unable to load some sections of the Information Hub. Please try again later.',
+    });
     return null;
   }
 
@@ -244,7 +170,7 @@ const InformationHub = () => {
 
         <ContentContainer>
           <NameSearch>
-            <h1 className="title">Information Hub</h1>
+            <HubTitle>Information Hub</HubTitle>
             <Space>
               <Dropdown
                 overlay={tagMenu}
@@ -256,7 +182,7 @@ const InformationHub = () => {
                 </Button>
               </Dropdown>
               <SearchBar
-                placeholder="Search for topics, keywords"
+                placeholder="Search for topics"
                 allowClear
                 enterButton
                 onChange={(e) => setSearchTerm(e.target.value)}

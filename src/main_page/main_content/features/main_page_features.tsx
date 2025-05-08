@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import ikomekImage from '../../../assets/images/main_content/features/ikomek_img.png';
 import communityImage from '../../../assets/images/main_content/features/forum_img.png';
 import marketImage from '../../../assets/images/main_content/features/marketplace_img.png';
-import aboutUsImage from '../../../assets/images/main_content/features/about_us_img.png';
+import symptomTrackerImage from '../../../assets/images/main_content/features/symptom-tracker_img.png';
 import {
   ButtonContainer,
   ButtonBlock,
@@ -20,9 +20,9 @@ const HeaderButtons = () => {
 
   const handleProtectedClick = (path: string) => {
     if (isAuthenticated) {
-      navigate('/login');
-    } else {
       navigate(path);
+    } else {
+      navigate('/login');
     }
   };
 
@@ -46,10 +46,10 @@ const HeaderButtons = () => {
       path: '/marketplace',
     },
     {
-      title: 'About us',
-      text: "Personalized step-by-step guidance tailored to your child's needs.",
-      image: aboutUsImage,
-      path: '/about-us',
+      title: 'Symptom Tracker',
+      text: 'Track and manage symptoms for your child with ease.',
+      image: symptomTrackerImage,
+      path: '/symptom-tracker',
     },
   ];
 

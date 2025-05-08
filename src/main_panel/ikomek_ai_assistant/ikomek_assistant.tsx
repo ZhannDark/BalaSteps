@@ -1,6 +1,11 @@
-import React, { useState } from 'react';
-import { Layout, Typography, Spin, Empty, Button } from 'antd';
-import { SendOutlined, PlusOutlined } from '@ant-design/icons';
+import React, { useEffect, useState } from 'react';
+import { Layout, Typography, Spin, Empty, Button, Drawer, Tooltip } from 'antd';
+import {
+  SendOutlined,
+  PlusOutlined,
+  DeleteOutlined,
+  HistoryOutlined,
+} from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axiosBase from 'axios';
 import MenuPanel from '../../menu/menu-panel';
@@ -8,20 +13,22 @@ import Main_header from '../main_header/Main_header';
 import Foot from '../../main_page/main_content/footer/footer/footer';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import dayjs from 'dayjs';
+import groupBy from 'lodash.groupby';
 import {
   AssistantLayout,
   AssistantHeader,
   AssistantContent,
-  Sidebar,
   ChatHistoryList,
   ChatMainContent,
   MessageCard,
   MessageInputArea,
   MessageInput,
-  NewChatButton,
   SendButton,
   HistoryItem,
-  HistoryTitle,
+  HistoryItemWrapper,
+  DeleteIcon,
+  IconRow,
 } from './ikomek.styled';
 
 const { Header } = Layout;
@@ -61,6 +68,8 @@ const IkomekAssistant = () => {
   const [input, setInput] = useState('');
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: sessionsData = [], isLoading: sessionsLoading } = useQuery<
@@ -78,6 +87,12 @@ const IkomekAssistant = () => {
       setMessages([]);
     },
   });
+
+  useEffect(() => {
+    if (sessionsData.length > 0 && !activeSessionId) {
+      createSession.mutate();
+    }
+  }, [sessionsData]);
 
   const deleteSession = useMutation({
     mutationFn: (sessionId: string) =>
@@ -97,6 +112,7 @@ const IkomekAssistant = () => {
       sessionId: string;
       message: string;
     }) => {
+      setIsTyping(true);
       const res = await axios.post(
         `/api/komekai/sessions/${sessionId}/message/`,
         { message }
@@ -110,11 +126,22 @@ const IkomekAssistant = () => {
         { text: res.reply, sender: 'bot' },
       ]);
       setInput('');
+      setIsTyping(false);
     },
   });
 
-  const handleSendMessage = () => {
-    if (!input.trim() || !activeSessionId) return;
+  const handleSendMessage = async () => {
+    if (!input.trim()) return;
+
+    if (!activeSessionId) {
+      const res = await createSession.mutateAsync();
+      const sessionId = res.data.id;
+      setActiveSessionId(sessionId);
+      setMessages([{ text: input, sender: 'user' }]);
+      sendMessage.mutate({ sessionId, message: input });
+      return;
+    }
+
     sendMessage.mutate({ sessionId: activeSessionId, message: input });
   };
 
@@ -127,7 +154,13 @@ const IkomekAssistant = () => {
         sender: m.sender === 'assistant' ? 'bot' : 'user',
       })) || [];
     setMessages(parsedMessages);
+    setDrawerOpen(false);
   };
+
+  const groupedSessions: Record<string, Session[]> = groupBy(
+    sessionsData,
+    (s) => dayjs(s.created_at).format('YYYY-MM-DD')
+  );
 
   return (
     <AssistantLayout>
@@ -141,57 +174,37 @@ const IkomekAssistant = () => {
           transition: 'margin-left 0.3s',
         }}
       >
-        <Header style={{ padding: 0, background: '#E2E3E0', height: '48px' }}>
+        <Header
+          style={{
+            padding: 0,
+            marginLeft: '5px',
+            background: '#E2E3E0',
+            height: '48px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
           <Main_header />
         </Header>
 
         <AssistantContent>
-          <Sidebar>
-            <HistoryTitle>Chats</HistoryTitle>
-            <NewChatButton
-              icon={<PlusOutlined />}
-              onClick={() => createSession.mutate()}
-            >
-              New Chat
-            </NewChatButton>
-            {sessionsLoading ? (
-              <Spin style={{ marginTop: 20 }} />
-            ) : (
-              <ChatHistoryList>
-                {sessionsData.length === 0 ? (
-                  <Empty description="No chats yet" />
-                ) : (
-                  sessionsData.map((session) => (
-                    <div
-                      key={session.id}
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                      }}
-                    >
-                      <HistoryItem
-                        isActive={session.id === activeSessionId}
-                        onClick={() => handleSelectChat(session.id)}
-                        style={{ flex: 1 }}
-                      >
-                        {session.title || 'New Chat'}
-                      </HistoryItem>
-                      <Button
-                        type="link"
-                        danger
-                        size="small"
-                        onClick={() => deleteSession.mutate(session.id)}
-                        style={{ marginLeft: 4 }}
-                      >
-                        ✕
-                      </Button>
-                    </div>
-                  ))
-                )}
-              </ChatHistoryList>
-            )}
-          </Sidebar>
+          <IconRow>
+            <Tooltip title="New Chat">
+              <Button
+                shape="circle"
+                icon={<PlusOutlined />}
+                onClick={() => createSession.mutate()}
+              />
+            </Tooltip>
+            <Tooltip title="Chat History">
+              <Button
+                shape="circle"
+                icon={<HistoryOutlined />}
+                onClick={() => setDrawerOpen(true)}
+              />
+            </Tooltip>
+          </IconRow>
 
           <ChatMainContent>
             <AssistantHeader>
@@ -217,6 +230,11 @@ const IkomekAssistant = () => {
                     </ReactMarkdown>
                   </MessageCard>
                 ))
+              )}
+              {isTyping && (
+                <MessageCard sender="bot">
+                  <i>Typing...</i>
+                </MessageCard>
               )}
             </div>
 
@@ -244,6 +262,46 @@ const IkomekAssistant = () => {
         </AssistantContent>
         <Foot />
       </Layout>
+
+      <Drawer
+        title="Chat History"
+        placement="right"
+        onClose={() => setDrawerOpen(false)}
+        open={drawerOpen}
+        width={320}
+      >
+        {sessionsLoading ? (
+          <Spin />
+        ) : (
+          <ChatHistoryList>
+            {Object.entries(groupedSessions).map(
+              ([date, sessions]: [string, Session[]]) => (
+                <div key={date}>
+                  <div style={{ margin: '8px 0', fontWeight: 500 }}>
+                    {dayjs(date).format('MMMM D, YYYY')}
+                  </div>
+                  {sessions.map((session) => (
+                    <HistoryItemWrapper key={session.id}>
+                      <HistoryItem
+                        isActive={session.id === activeSessionId}
+                        onClick={() => handleSelectChat(session.id)}
+                      >
+                        {session.title || 'New Chat'}
+                      </HistoryItem>
+                      <DeleteIcon
+                        icon={<DeleteOutlined />}
+                        type="text"
+                        size="small"
+                        onClick={() => deleteSession.mutate(session.id)}
+                      />
+                    </HistoryItemWrapper>
+                  ))}
+                </div>
+              )
+            )}
+          </ChatHistoryList>
+        )}
+      </Drawer>
     </AssistantLayout>
   );
 };

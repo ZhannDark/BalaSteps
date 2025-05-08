@@ -55,6 +55,12 @@ export const ProfileLeft = styled.div`
   display: flex;
   flex-direction: row;
   gap: 40px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
 `;
 
 export const ProfileImage = styled.img`
@@ -64,6 +70,11 @@ export const ProfileImage = styled.img`
   border-radius: 10px;
   border: 1px solid #ccc;
   object-fit: cover;
+
+  @media (max-width: 768px) {
+    height: auto;
+    max-width: 100px !important;
+  }
 `;
 
 export const ProfileDropdownTrigger = styled.div`
@@ -97,6 +108,10 @@ export const DescriptionBlock = styled(Descriptions)`
   .ant-descriptions-item-content {
     color: #333;
   }
+
+  @media (max-width: 768px) {
+    font-size: 13px;
+  }
 `;
 
 export const ChildrenSection = styled.div`
@@ -126,7 +141,11 @@ export const ChildrenSection = styled.div`
   }
 
   @media (max-width: 768px) {
-    padding: 16px;
+    width: 100%;
+    padding: 12px;
+    margin-top: 20px;
+    border: none;
+    border-radius: 0;
   }
 `;
 
@@ -208,6 +227,11 @@ export const SaveEditedProfileButton = styled(Button)`
   &:hover {
     background-color: #629432 !important;
     color: white !important;
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    font-size: 16px;
   }
 `;
 

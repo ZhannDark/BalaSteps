@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   Calendar,
   Button,
-  Typography,
   Modal,
   Form,
   Input,
@@ -42,9 +41,8 @@ import {
   AddSymptomDrawerButton,
   DrawerContainer,
   SymptomDrawerTitle,
+  SymptomTitle,
 } from './symptom-tracker.styled';
-
-const { Title } = Typography;
 const { Option } = Select;
 
 interface Symptom {
@@ -106,7 +104,6 @@ const SymptomTracker = () => {
     queryKey: ['symptoms'],
     queryFn: fetchSymptoms,
   });
-  console.log('Loaded symptoms:', symptoms);
 
   const { data: children = [] } = useQuery<Child[]>({
     queryKey: ['children'],
@@ -279,9 +276,7 @@ const SymptomTracker = () => {
         </SymptomHeaderBar>
         <SymptomContent>
           <SymptomHeader>
-            <Title level={3} style={{ color: '#591C00', marginBottom: 0 }}>
-              Symptom Tracker
-            </Title>
+            <SymptomTitle>Symptom Tracker</SymptomTitle>
             <Tooltip title="Click a day to view or add symptoms">
               <InfoCircleOutlined style={{ marginLeft: 10, color: '#999' }} />
             </Tooltip>

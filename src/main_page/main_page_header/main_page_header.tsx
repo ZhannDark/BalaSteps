@@ -23,29 +23,32 @@ const AppHeader = () => {
 
   const isAuthenticated = Boolean(localStorage.getItem('accessToken'));
 
-  const handleButtonClick = (auth: string): void => {
-    if (location.pathname === '/register' || auth === 'login') {
+  const handleButtonClick = (auth: 'login' | 'register'): void => {
+    navigate(`/${auth}`);
+  };
+
+  const handleProtectedRoute = (e: React.MouseEvent, path: string) => {
+    if (!isAuthenticated) {
+      e.preventDefault();
       navigate('/login');
     } else {
-      navigate('/register');
+      navigate(path);
     }
+    setMenuOpen(false);
   };
 
   useEffect(() => {
-    if (location.pathname === '/register') {
+    const path = location.pathname;
+    if (path === '/register') {
       setShowNav(false);
       setShowLoginButton(true);
       setShowRegisterButton(false);
-    } else if (location.pathname === '/login') {
+    } else if (path === '/login') {
       setShowNav(false);
       setShowLoginButton(false);
       setShowRegisterButton(true);
-    } else if (location.pathname === '/forgot-password') {
+    } else if (['/forgot-password', '/send-otp'].includes(path)) {
       setShowNav(false);
-    } else if (location.pathname === '/send-otp') {
-      setShowNav(false);
-      setShowLoginButton(true);
-      setShowRegisterButton(false);
     } else {
       setShowNav(true);
     }
@@ -65,50 +68,35 @@ const AppHeader = () => {
         <RightSection $isOpen={menuOpen}>
           <NavLinks>
             <NavLink
-              to="/info-hub"
-              onClick={(e) => {
-                if (!isAuthenticated) {
-                  e.preventDefault();
-                  navigate('/login');
-                }
-              }}
+              onClick={(e) => handleProtectedRoute(e, '/info_hub')}
+              to="/info_hub"
             >
               News
             </NavLink>
             <NavLink
-              to="/ikomek"
-              onClick={(e) => {
-                if (!isAuthenticated) {
-                  e.preventDefault();
-                  navigate('/login');
-                }
-              }}
+              onClick={(e) => handleProtectedRoute(e, '/ikomek')}
+              to="/ikomek_assistant"
             >
               iKomek
             </NavLink>
             <NavLink
-              to="/forum"
-              onClick={(e) => {
-                if (!isAuthenticated) {
-                  e.preventDefault();
-                  navigate('/login');
-                }
-              }}
+              onClick={(e) => handleProtectedRoute(e, '/forum')}
+              to="/discussion-forum"
             >
               Forums
             </NavLink>
             <NavLink
+              onClick={(e) => handleProtectedRoute(e, '/marketplace')}
               to="/marketplace"
-              onClick={(e) => {
-                if (!isAuthenticated) {
-                  e.preventDefault();
-                  navigate('/login');
-                }
-              }}
             >
               Marketplace
             </NavLink>
-            <NavLink to="/about-us">About us</NavLink>
+            <NavLink
+              onClick={(e) => handleProtectedRoute(e, '/symptom-tracker')}
+              to="/symptom-tracker"
+            >
+              Tracker
+            </NavLink>
           </NavLinks>
 
           <ButtonGroup>
