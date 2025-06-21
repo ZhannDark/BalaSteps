@@ -8,11 +8,7 @@ import {
   notification,
   Popconfirm,
 } from 'antd';
-import {
-  ArrowLeftOutlined,
-  MessageOutlined,
-  DeleteOutlined,
-} from '@ant-design/icons';
+import { ArrowLeftOutlined, DeleteOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import MenuPanel from '../../../menu/menu-panel';
 import Main_header from '../../main_header/Main_header';
@@ -22,30 +18,32 @@ import {
   StyledHeader,
   StyledContent,
   BackButton,
-  DetailsCard,
-  DetailsImage,
-  CommentSection,
-  CommentArea,
-} from './news-details.styled';
-import {
+  ShowRepliesButton,
+  ReplyCard,
   CommentCard,
   CommentHeader,
-  CommentAuthor,
-  CommentDate,
   CommentText,
+  CommentDate,
   CommentActions,
   RepliesContainer,
-  ReplyCard,
-} from '../../discussion_forum/discussion_forum_details/discussion-details.styled';
+  CommentAuthor,
+  AddCommentButton,
+  CommentArea,
+  CommentSection,
+  DetailsCard,
+  DetailsImage,
+} from './news-details.styled';
 import axiosInstance from '../../axios-instance';
 
 const { Title, Text } = Typography;
+const { TextArea } = Input;
 
 interface Reply {
   id: string;
   user: string;
   content: string;
   created_at: string;
+  parent: string;
 }
 
 interface Comment {
@@ -123,7 +121,6 @@ const NewsDetails = () => {
     if (!newComment.trim()) {
       return notification.warning({ message: 'Comment cannot be empty' });
     }
-
     try {
       await axiosInstance.post(
         `/info-hub/news/${id}/comments/create/`,
@@ -135,6 +132,23 @@ const NewsDetails = () => {
       notification.success({ message: 'Comment added' });
     } catch {
       notification.error({ message: 'Failed to add comment' });
+    }
+  };
+
+  const handleAddReply = async (commentId: string) => {
+    const content = replyTexts[commentId];
+    if (!content?.trim()) return;
+    try {
+      await axiosInstance.post(
+        `/info-hub/news/comments/${commentId}/replies/create/`,
+        { content, parent: commentId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setReplyTexts((prev) => ({ ...prev, [commentId]: '' }));
+      fetchReplies(commentId);
+      notification.success({ message: 'Reply added' });
+    } catch {
+      notification.error({ message: 'Failed to add reply' });
     }
   };
 
@@ -150,6 +164,21 @@ const NewsDetails = () => {
       notification.success({ message: 'Comment deleted' });
     } catch {
       notification.error({ message: 'Failed to delete comment' });
+    }
+  };
+
+  const handleDeleteReply = async (replyId: string, commentId: string) => {
+    try {
+      await axiosInstance.delete(
+        `/info-hub/news/comments/replies/${replyId}/delete/`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      fetchReplies(commentId);
+      notification.success({ message: 'Reply deleted' });
+    } catch {
+      notification.error({ message: 'Failed to delete reply' });
     }
   };
 
@@ -198,9 +227,13 @@ const NewsDetails = () => {
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
             />
-            <Button type="primary" onClick={handleAddComment}>
+            <AddCommentButton
+              type="primary"
+              onClick={handleAddComment}
+              disabled={!newComment.trim()}
+            >
               Add Comment
-            </Button>
+            </AddCommentButton>
 
             {comments.map((comment) => (
               <CommentCard key={comment.id}>
@@ -218,34 +251,83 @@ const NewsDetails = () => {
                   >
                     <Button size="small" danger icon={<DeleteOutlined />} />
                   </Popconfirm>
-                  <Button
-                    size="small"
-                    icon={<MessageOutlined />}
-                    onClick={() => handleToggleReplies(comment.id)}
-                  >
-                    {expandedReplies[comment.id]
-                      ? 'Hide Replies'
-                      : 'Show Replies'}
-                  </Button>
+                  {comment.replies.length > 0 && (
+                    <ShowRepliesButton
+                      type="link"
+                      onClick={() => handleToggleReplies(comment.id)}
+                    >
+                      {expandedReplies[comment.id]
+                        ? 'Hide Replies'
+                        : `Show Replies (${comment.replies.length})`}
+                    </ShowRepliesButton>
+                  )}
                 </CommentActions>
+                <>
+                  {/* Reply input */}
+                  <TextArea
+                    rows={2}
+                    placeholder="Write a reply..."
+                    value={replyTexts[comment.id] || ''}
+                    onChange={(e) =>
+                      setReplyTexts((prev) => ({
+                        ...prev,
+                        [comment.id]: e.target.value,
+                      }))
+                    }
+                    style={{ marginTop: 10 }}
+                  />
+                  <Button
+                    type="primary"
+                    style={{ marginTop: 6 }}
+                    disabled={!replyTexts[comment.id]?.trim()}
+                    onClick={() => handleAddReply(comment.id)}
+                  >
+                    Reply
+                  </Button>
 
-                {expandedReplies[comment.id] && (
+                  {/* Replies */}
                   <RepliesContainer>
-                    {comment.replies.map((reply) => (
-                      <ReplyCard key={reply.id}>
-                        <CommentHeader>
-                          <CommentAuthor>{reply.user}</CommentAuthor>
-                          <CommentDate>
-                            {dayjs(reply.created_at).format(
-                              'MMM D, YYYY HH:mm'
-                            )}
-                          </CommentDate>
-                        </CommentHeader>
-                        <CommentText>{reply.content}</CommentText>
-                      </ReplyCard>
-                    ))}
+                    {comment.replies.length > 0 ? (
+                      comment.replies.map((reply) => (
+                        <ReplyCard key={reply.id}>
+                          <CommentHeader>
+                            <CommentAuthor>{reply.user}</CommentAuthor>
+                            <CommentDate>
+                              {dayjs(reply.created_at).format(
+                                'MMM D, YYYY HH:mm'
+                              )}
+                            </CommentDate>
+                            <CommentActions>
+                              <Popconfirm
+                                title="Delete this reply?"
+                                onConfirm={() =>
+                                  handleDeleteReply(reply.id, comment.id)
+                                }
+                              >
+                                <Button
+                                  size="small"
+                                  danger
+                                  icon={<DeleteOutlined />}
+                                />
+                              </Popconfirm>
+                            </CommentActions>
+                          </CommentHeader>
+                          <CommentText>{reply.content}</CommentText>
+                        </ReplyCard>
+                      ))
+                    ) : (
+                      <p
+                        style={{
+                          fontSize: '13px',
+                          color: '#999',
+                          marginTop: 10,
+                        }}
+                      >
+                        No replies yet.
+                      </p>
+                    )}
                   </RepliesContainer>
-                )}
+                </>
               </CommentCard>
             ))}
           </CommentSection>

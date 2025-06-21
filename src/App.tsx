@@ -24,7 +24,6 @@ import {
   PrivacyPolicy,
   Services,
   Support,
-  About,
 } from './main_page/main_content/footer/footer_links/links';
 
 const App = () => {
@@ -33,7 +32,6 @@ const App = () => {
       <GlobalFonts />
       <Routes>
         <Route path="/" element={<Main_Page />} />
-        <Route path="/about-us" element={<About />} />
         <Route path="/services" element={<Services />} />
         <Route path="/support" element={<Support />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />

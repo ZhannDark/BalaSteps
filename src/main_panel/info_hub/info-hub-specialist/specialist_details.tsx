@@ -105,19 +105,6 @@ const SpecialistDetails = () => {
     }
   };
 
-  const fetchReplies = async (commentId: string) => {
-    try {
-      const res = await axiosInstance.get(
-        `/info-hub/specialists/comments/${commentId}/replies/`
-      );
-      setComments((prev) =>
-        prev.map((c) => (c.id === commentId ? { ...c, replies: res.data } : c))
-      );
-    } catch {
-      notification.error({ message: 'Failed to load replies' });
-    }
-  };
-
   const handleAddComment = async () => {
     if (!newComment.trim() || newRating === 0) {
       notification.warning({
@@ -129,7 +116,7 @@ const SpecialistDetails = () => {
 
     try {
       await axios.post(
-        `https://project-back-81mh.onrender.com/info-hub/specialists/${id}/comments/`,
+        `https://project-back-81mh.onrender.com/info-hub/specialists/${id}/comments/create/`,
         { content: newComment, rating: newRating },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -152,7 +139,7 @@ const SpecialistDetails = () => {
   const fetchComments = async () => {
     try {
       const res = await axiosInstance.get(
-        `/info-hub/therapy-centers/${id}/comments/`
+        `/info-hub/specialists/${id}/comments/`
       );
       const commentsWithEmptyReplies = res.data.map((c: Comment) => ({
         ...c,
@@ -161,6 +148,19 @@ const SpecialistDetails = () => {
       setComments(commentsWithEmptyReplies);
     } catch {
       notification.error({ message: 'Failed to load comments' });
+    }
+  };
+
+  const fetchReplies = async (commentId: string) => {
+    try {
+      const res = await axiosInstance.get(
+        `/info-hub/specialists/comments/${commentId}/replies/`
+      );
+      setComments((prev) =>
+        prev.map((c) => (c.id === commentId ? { ...c, replies: res.data } : c))
+      );
+    } catch {
+      notification.error({ message: 'Failed to load replies' });
     }
   };
 

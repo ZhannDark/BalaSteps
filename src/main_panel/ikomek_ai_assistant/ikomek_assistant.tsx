@@ -76,11 +76,11 @@ const IkomekAssistant = () => {
     Session[]
   >({
     queryKey: ['sessions'],
-    queryFn: async () => (await axios.get('/api/komekai/sessions/')).data,
+    queryFn: async () => (await axios.get('/komekai/sessions/')).data,
   });
 
   const createSession = useMutation({
-    mutationFn: () => axios.post('/api/komekai/sessions/', {}),
+    mutationFn: () => axios.post('/komekai/sessions/', {}),
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
       setActiveSessionId(res.data.id);
@@ -96,7 +96,7 @@ const IkomekAssistant = () => {
 
   const deleteSession = useMutation({
     mutationFn: (sessionId: string) =>
-      axios.delete(`/api/komekai/sessions/${sessionId}/delete/`),
+      axios.delete(`/komekai/sessions/${sessionId}/delete/`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
       setActiveSessionId(null);
@@ -113,19 +113,16 @@ const IkomekAssistant = () => {
       message: string;
     }) => {
       setIsTyping(true);
-      const res = await axios.post(
-        `/api/komekai/sessions/${sessionId}/message/`,
-        { message }
-      );
+      const res = await axios.post(`/komekai/sessions/${sessionId}/message/`, {
+        message,
+      });
       return res.data;
     },
     onSuccess: (res) => {
-      setMessages((prev) => [
-        ...prev,
-        { text: input, sender: 'user' },
-        { text: res.reply, sender: 'bot' },
-      ]);
-      setInput('');
+      setMessages((prev) => [...prev, { text: res.reply, sender: 'bot' }]);
+      setIsTyping(false);
+    },
+    onError: () => {
       setIsTyping(false);
     },
   });
@@ -133,15 +130,20 @@ const IkomekAssistant = () => {
   const handleSendMessage = async () => {
     if (!input.trim()) return;
 
+    const userMessage = { text: input, sender: 'user' as const };
+
     if (!activeSessionId) {
       const res = await createSession.mutateAsync();
       const sessionId = res.data.id;
       setActiveSessionId(sessionId);
-      setMessages([{ text: input, sender: 'user' }]);
+      setMessages([userMessage]);
       sendMessage.mutate({ sessionId, message: input });
+      setInput('');
       return;
     }
 
+    setMessages((prev) => [...prev, userMessage]);
+    setInput('');
     sendMessage.mutate({ sessionId: activeSessionId, message: input });
   };
 

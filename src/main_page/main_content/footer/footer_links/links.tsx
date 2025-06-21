@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import axios from '../../../../main_panel/axios-instance';
+import { Input, Radio, Button, notification } from 'antd';
+import { SendOutlined } from '@ant-design/icons';
 
 const Wrapper = styled.div`
   max-width: 900px;
@@ -44,6 +47,17 @@ const Text = styled.p`
   @media (max-width: 480px) {
     font-size: 15px;
     line-height: 1.6;
+  }
+`;
+
+const CustomRadioGroup = styled(Radio.Group)`
+  .ant-radio-checked .ant-radio-inner {
+    background-color: #426b1f;
+    border-color: #426b1f;
+  }
+
+  .ant-radio-inner {
+    border-color: #ccc;
   }
 `;
 
@@ -131,6 +145,48 @@ export const PrivacyPolicy = () => {
 
 export const Contact = () => {
   const navigate = useNavigate();
+  const [method, setMethod] = useState<'email' | 'phone'>('email');
+  const [contactValue, setContactValue] = useState('');
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const validateContact = () => {
+    if (method === 'email') {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(contactValue);
+    } else {
+      const phoneRegex = /^[0-9]{10}$/; // only digits, since +7 is added separately
+      return phoneRegex.test(contactValue);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!validateContact()) {
+      notification.error({ message: 'Invalid contact information' });
+      return;
+    }
+    if (!message.trim()) {
+      notification.error({ message: 'Message cannot be empty' });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await axios.post('/contact_us/contact/', {
+        method,
+        contact_value: method === 'phone' ? `+7${contactValue}` : contactValue,
+        message,
+      });
+      notification.success({ message: 'Your message was sent successfully!' });
+      setContactValue('');
+      setMessage('');
+    } catch {
+      notification.error({ message: 'Failed to send message' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Wrapper>
       <motion.div
@@ -141,36 +197,71 @@ export const Contact = () => {
         <Title>Contact Us</Title>
         <Text>
           Got a question? We’d love to hear from you. Reach out via our contact
-          form, email, or social media platforms. Our team is ready to support
-          you and provide the answers you need.
+          form.
         </Text>
-        <Text>
-          Email: <strong>210107028@stu.sdu.edu.kz</strong>
-        </Text>
-        <BackButton onClick={() => navigate(-1)}>← Back to Home</BackButton>
-      </motion.div>
-    </Wrapper>
-  );
-};
 
-export const About = () => {
-  const navigate = useNavigate();
+        <CustomRadioGroup
+          onChange={(e) => {
+            setMethod(e.target.value);
+            setContactValue('');
+          }}
+          value={method}
+          style={{ marginBottom: 16 }}
+        >
+          <Radio value="email">Email</Radio>
+          <Radio value="phone">Phone</Radio>
+        </CustomRadioGroup>
 
-  return (
-    <Wrapper>
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-      >
-        <Title>About BalaSteps</Title>
-        <Text>
-          BalaSteps is a dedicated space for parents of children with special
-          needs. We offer personalized resources, a supportive community, and
-          tools to help you navigate everyday challenges with confidence. Our
-          mission is to empower families with information, connection, and care.
-        </Text>
-        <BackButton onClick={() => navigate(-1)}>← Back to Home</BackButton>
+        {method === 'email' ? (
+          <Input
+            placeholder="Enter your email"
+            value={contactValue}
+            onChange={(e) => setContactValue(e.target.value)}
+            style={{ marginBottom: 16 }}
+          />
+        ) : (
+          <Input
+            addonBefore="+7"
+            placeholder="Enter 10-digit phone number"
+            maxLength={10}
+            value={contactValue}
+            onChange={(e) => {
+              const digitsOnly = e.target.value.replace(/\D/g, '');
+              if (digitsOnly.length <= 10) {
+                setContactValue(digitsOnly);
+              }
+            }}
+            style={{ marginBottom: 16 }}
+          />
+        )}
+
+        <div style={{ position: 'relative' }}>
+          <Input.TextArea
+            rows={4}
+            placeholder="Write your message..."
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+          />
+          <Button
+            type="primary"
+            onClick={handleSubmit}
+            loading={loading}
+            disabled={!message.trim()}
+            style={{
+              position: 'absolute',
+              bottom: 8,
+              right: 8,
+              backgroundColor: '#426b1f',
+              color: !message.trim() ? 'darkgray' : 'white',
+            }}
+          >
+            <SendOutlined style={{ fontSize: 18 }} />
+          </Button>
+        </div>
+
+        <BackButton onClick={() => navigate(-1)} style={{ marginTop: 24 }}>
+          ← Back to Home
+        </BackButton>
       </motion.div>
     </Wrapper>
   );

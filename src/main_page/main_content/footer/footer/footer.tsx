@@ -19,11 +19,10 @@ const Footer = () => {
     <StyledFooter>
       <FooterNav>
         <FooterLink to="/">Home</FooterLink>
-        <FooterLink to="/about-us">About Us</FooterLink>
+        <FooterLink to="/contact-us">Contact Us</FooterLink>
         <FooterLink to="/services">Services</FooterLink>
         <FooterLink to="/support">Support</FooterLink>
         <FooterLink to="/privacy-policy">Privacy Policy</FooterLink>
-        <FooterLink to="/contact-us">Contact</FooterLink>
       </FooterNav>
       <FooterSocial>
         <a href="https://facebook.com" target="_blank" rel="noreferrer">
