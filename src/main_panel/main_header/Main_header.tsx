@@ -1,5 +1,5 @@
-import React from 'react';
-import { Dropdown, Layout, Avatar, notification } from 'antd';
+import React, { useState } from 'react';
+import { Dropdown, Layout, Avatar, notification, Button, Modal } from 'antd';
 import {
   UserOutlined,
   LogoutOutlined,
@@ -13,16 +13,20 @@ import {
   ProfileDropdownButton,
 } from './main-header.styled';
 import { useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../../hooks/useAuth';
 
 const Main_header: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const token = localStorage.getItem('accessToken');
+  const isAuthenticated = useAuth();
+
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const handleLogout = async () => {
     const refreshToken = localStorage.getItem('refreshToken');
-    const accessToken = localStorage.getItem('accessToken');
 
-    if (!refreshToken || !accessToken) {
+    if (!refreshToken || !token) {
       notification.warning({
         message: 'Already Logged Out',
         description: 'You are already logged out.',
@@ -36,7 +40,7 @@ const Main_header: React.FC = () => {
         { refresh: refreshToken },
         {
           headers: {
-            Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         }
@@ -69,46 +73,69 @@ const Main_header: React.FC = () => {
 
   const handleMenuClick = ({ key }: { key: string }) => {
     if (key === 'profile') {
-      navigate('/profile');
+      if (!isAuthenticated) {
+        setShowLoginModal(true);
+      } else {
+        navigate('/profile');
+      }
     } else if (key === 'logout') {
       handleLogout();
     }
   };
 
-  const items = [
-    {
-      key: 'profile',
-      icon: <ProfileOutlined />,
-      label: 'Profile',
-    },
-    {
-      key: 'logout',
-      icon: <LogoutOutlined />,
-      label: 'Log Out',
-    },
-  ];
+  const items = isAuthenticated
+    ? [
+        { key: 'profile', icon: <ProfileOutlined />, label: 'Profile' },
+        { key: 'logout', icon: <LogoutOutlined />, label: 'Log Out' },
+      ]
+    : [];
 
   return (
     <Layout style={{ backgroundColor: '#E2E3E0' }}>
       <StyledHeader>
         <HeaderRight>
-          <Dropdown
-            menu={{ items, onClick: handleMenuClick }}
-            trigger={['click']}
-          >
-            <ProfileDropdownButton type="text">
-              <Avatar
-                size="default"
-                icon={<UserOutlined />}
-                style={{
-                  color: '#591C00',
-                  backgroundColor: '#E2E3E0',
-                }}
-              />
-            </ProfileDropdownButton>
-          </Dropdown>
+          {isAuthenticated && (
+            <Dropdown
+              menu={{ items, onClick: handleMenuClick }}
+              trigger={['click']}
+            >
+              <ProfileDropdownButton type="text">
+                <Avatar
+                  size="default"
+                  icon={<UserOutlined />}
+                  style={{
+                    color: '#591C00',
+                    backgroundColor: '#E2E3E0',
+                  }}
+                />
+              </ProfileDropdownButton>
+            </Dropdown>
+          )}
         </HeaderRight>
       </StyledHeader>
+
+      <Modal
+        title="Login Required"
+        open={showLoginModal}
+        onCancel={() => setShowLoginModal(false)}
+        footer={[
+          <Button key="cancel" onClick={() => setShowLoginModal(false)}>
+            Cancel
+          </Button>,
+          <Button
+            key="login"
+            type="primary"
+            onClick={() => {
+              navigate('/login?next=/profile');
+              setShowLoginModal(false);
+            }}
+          >
+            Go to Login
+          </Button>,
+        ]}
+      >
+        <p>You must be logged in to access your profile.</p>
+      </Modal>
     </Layout>
   );
 };

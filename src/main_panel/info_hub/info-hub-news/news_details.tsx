@@ -1,5 +1,3 @@
-// Refactored NewsDetails.tsx with unified styles and logic from DiscussionDetails
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -37,6 +35,7 @@ import {
   DetailsCard,
   DetailsImage,
 } from './news-details.styled';
+import { useAuth } from '../../../hooks/useAuth';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -79,10 +78,13 @@ const NewsDetails = () => {
     [key: string]: boolean;
   }>({});
   const [collapsed, setCollapsed] = useState(false);
+  const isAuthenticated = useAuth();
 
   useEffect(() => {
     fetchPost();
-    fetchComments();
+    if (isAuthenticated) {
+      fetchComments();
+    }
   }, [id]);
 
   const fetchPost = async () => {
@@ -128,7 +130,7 @@ const NewsDetails = () => {
 
   const handleAddComment = async () => {
     if (!newComment.trim()) {
-      notification.warning({
+      return notification.warning({
         message: 'Empty Comment',
         description: 'Please enter your comment before submitting.',
       });
@@ -270,20 +272,28 @@ const NewsDetails = () => {
 
           <CommentSection>
             <Title level={3}>Comments</Title>
-            <CommentArea
-              rows={3}
-              placeholder="Write your comment..."
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-            />
-            <AddCommentButton
-              type="primary"
-              onClick={handleAddComment}
-              disabled={!newComment.trim()}
-            >
-              Add Comment
-            </AddCommentButton>
-
+            {isAuthenticated ? (
+              <>
+                <CommentArea
+                  rows={3}
+                  placeholder="Write your comment..."
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                />
+                <AddCommentButton
+                  type="primary"
+                  onClick={handleAddComment}
+                  disabled={!newComment.trim()}
+                >
+                  Add Comment
+                </AddCommentButton>
+              </>
+            ) : (
+              <Text type="secondary">
+                Please <a onClick={() => navigate('/login')}>log in</a> to leave
+                a comment.
+              </Text>
+            )}
             {comments.length === 0 ? (
               <Empty description="No comments yet" style={{ marginTop: 20 }} />
             ) : (
@@ -316,26 +326,35 @@ const NewsDetails = () => {
                       )}
                   </CommentActions>
 
-                  <TextArea
-                    rows={2}
-                    placeholder="Write a reply..."
-                    value={replyTexts[comment.id] || ''}
-                    onChange={(e) =>
-                      setReplyTexts((prev) => ({
-                        ...prev,
-                        [comment.id]: e.target.value,
-                      }))
-                    }
-                    style={{ marginTop: 10 }}
-                  />
-                  <Button
-                    type="primary"
-                    style={{ marginTop: 6 }}
-                    disabled={!replyTexts[comment.id]?.trim()}
-                    onClick={() => handleAddReply(comment.id)}
-                  >
-                    Reply
-                  </Button>
+                  {isAuthenticated ? (
+                    <>
+                      <TextArea
+                        rows={2}
+                        placeholder="Write a reply..."
+                        value={replyTexts[comment.id] || ''}
+                        onChange={(e) =>
+                          setReplyTexts((prev) => ({
+                            ...prev,
+                            [comment.id]: e.target.value,
+                          }))
+                        }
+                        style={{ marginTop: 10 }}
+                      />
+                      <Button
+                        type="primary"
+                        style={{ marginTop: 6 }}
+                        disabled={!replyTexts[comment.id]?.trim()}
+                        onClick={() => handleAddReply(comment.id)}
+                      >
+                        Reply
+                      </Button>
+                    </>
+                  ) : (
+                    <Text type="secondary" style={{ marginTop: 10 }}>
+                      Please <a onClick={() => navigate('/login')}>log in</a> to
+                      reply.
+                    </Text>
+                  )}
 
                   {expandedReplies[comment.id] && (
                     <RepliesContainer>

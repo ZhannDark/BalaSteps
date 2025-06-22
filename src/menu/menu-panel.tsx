@@ -8,7 +8,7 @@ import {
   ShoppingOutlined,
 } from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   MenuContainer,
   StyledMenu,
@@ -17,6 +17,7 @@ import {
   Logo,
 } from './menu-panel.styled';
 import img from '../assets/images/logo/main_logo.png';
+import { Button, Modal } from 'antd';
 
 const items = [
   {
@@ -57,8 +58,32 @@ const MenuPanel: React.FC<MenuPanelProps> = ({
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    !!localStorage.getItem('accessToken')
+  );
+
+  const protectedRoutes = [
+    '/symptom-tracker',
+    '/discussion-forum',
+    '/marketplace',
+    '/ikomek_assistant',
+    '/profile',
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsAuthenticated(!!localStorage.getItem('accessToken'));
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleMenuClick = (e: { key: string }) => {
+    if (!isAuthenticated && protectedRoutes.includes(e.key)) {
+      setShowAuthModal(true);
+      return;
+    }
     navigate(e.key);
   };
 
@@ -72,6 +97,7 @@ const MenuPanel: React.FC<MenuPanelProps> = ({
           {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
         </ToggleButton>
       </MenuHeader>
+
       <StyledMenu
         mode="inline"
         theme="light"
@@ -80,6 +106,29 @@ const MenuPanel: React.FC<MenuPanelProps> = ({
         items={items}
         onClick={handleMenuClick}
       />
+
+      <Modal
+        title="Login Required"
+        open={showAuthModal}
+        onCancel={() => setShowAuthModal(false)}
+        footer={[
+          <Button key="cancel" onClick={() => setShowAuthModal(false)}>
+            Cancel
+          </Button>,
+          <Button
+            key="login"
+            type="primary"
+            onClick={() => {
+              navigate(`/login`);
+              setShowAuthModal(false);
+            }}
+          >
+            Go to Login
+          </Button>,
+        ]}
+      >
+        <p>You need to be logged in to access this section.</p>
+      </Modal>
     </MenuContainer>
   );
 };

@@ -53,11 +53,7 @@ const InfoHubPreview = () => {
   }, [active]);
 
   const handleShowMore = () => {
-    if (isAuthenticated) {
-      navigate('/info_hub');
-    } else {
-      navigate('/login');
-    }
+    navigate('/info_hub');
   };
 
   return (
