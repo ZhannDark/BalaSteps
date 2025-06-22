@@ -33,7 +33,7 @@ export const StyledContent = styled(Content)`
 export const BackButton = styled(Button)`
   margin-bottom: 20px;
   font-size: 16px;
-  color: #426b1f;
+  color: #426b1f !important;
 `;
 
 export const DiscussionCard = styled(Card)`

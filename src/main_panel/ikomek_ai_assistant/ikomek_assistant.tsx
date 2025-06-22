@@ -1,5 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Layout, Typography, Spin, Empty, Button, Drawer, Tooltip } from 'antd';
+import {
+  Layout,
+  Typography,
+  Spin,
+  Empty,
+  Button,
+  Drawer,
+  Tooltip,
+  Input,
+} from 'antd';
 import {
   SendOutlined,
   PlusOutlined,
@@ -70,7 +79,10 @@ const IkomekAssistant = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [visibleCount, setVisibleCount] = useState(10);
   const queryClient = useQueryClient();
+  const { Search } = Input;
 
   const { data: sessionsData = [], isLoading: sessionsLoading } = useQuery<
     Session[]
@@ -78,6 +90,19 @@ const IkomekAssistant = () => {
     queryKey: ['sessions'],
     queryFn: async () => (await axios.get('/komekai/sessions/')).data,
   });
+
+  const filteredSessions = sessionsData.filter((session) =>
+    (session.title || 'New Chat')
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase())
+  );
+
+  const visibleSessions = filteredSessions.slice(0, visibleCount);
+
+  const groupedSessions: Record<string, Session[]> = groupBy(
+    visibleSessions,
+    (s) => dayjs(s.created_at).format('YYYY-MM-DD')
+  );
 
   const createSession = useMutation({
     mutationFn: () => axios.post('/komekai/sessions/', {}),
@@ -158,12 +183,6 @@ const IkomekAssistant = () => {
     setMessages(parsedMessages);
     setDrawerOpen(false);
   };
-
-  const groupedSessions: Record<string, Session[]> = groupBy(
-    sessionsData,
-    (s) => dayjs(s.created_at).format('YYYY-MM-DD')
-  );
-
   return (
     <AssistantLayout>
       <MenuPanel
@@ -272,12 +291,22 @@ const IkomekAssistant = () => {
         open={drawerOpen}
         width={320}
       >
+        <Search
+          placeholder="Search chats"
+          allowClear
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setVisibleCount(20);
+          }}
+          style={{ marginBottom: 12 }}
+        />
+
         {sessionsLoading ? (
           <Spin />
         ) : (
-          <ChatHistoryList>
-            {Object.entries(groupedSessions).map(
-              ([date, sessions]: [string, Session[]]) => (
+          <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+            <ChatHistoryList>
+              {Object.entries(groupedSessions).map(([date, sessions]) => (
                 <div key={date}>
                   <div style={{ margin: '8px 0', fontWeight: 500 }}>
                     {dayjs(date).format('MMMM D, YYYY')}
@@ -299,9 +328,20 @@ const IkomekAssistant = () => {
                     </HistoryItemWrapper>
                   ))}
                 </div>
-              )
+              ))}
+            </ChatHistoryList>
+
+            {visibleCount < filteredSessions.length && (
+              <Button
+                type="link"
+                onClick={() => setVisibleCount((prev) => prev + 10)}
+                style={{ marginTop: 10 }}
+                block
+              >
+                Load More
+              </Button>
             )}
-          </ChatHistoryList>
+          </div>
         )}
       </Drawer>
     </AssistantLayout>

@@ -6,7 +6,7 @@ export const MenuContainer = styled.div<{ $collapsed: boolean }>`
   width: ${({ $collapsed }) => ($collapsed ? '100px' : '250px')};
   transition: width 0.3s;
   background-color: #e2e3e0;
-  padding: 10px;
+  padding: 5px;
   height: 100%;
 `;
 
@@ -58,7 +58,7 @@ export const StyledMenu = styled(Menu)`
 
   .ant-menu-item-selected {
     background-color: #f0f8e8 !important;
-    border: 2px solid #426b1f;
+    border: 1px solid #426b1f;
     border-radius: 10px;
   }
 

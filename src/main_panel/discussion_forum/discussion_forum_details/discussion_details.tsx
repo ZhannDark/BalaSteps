@@ -207,6 +207,7 @@ const DiscussionDetails: React.FC = () => {
         message: 'Reply Deleted',
         description: 'The reply was successfully deleted.',
       });
+      //eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       const detail = error?.response?.data?.detail;
       if (detail === 'You can delete only your own comments.') {
@@ -231,6 +232,7 @@ const DiscussionDetails: React.FC = () => {
         message: 'Comment Deleted',
         description: 'The comment was successfully deleted.',
       });
+      //eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       const detail = error?.response?.data?.detail;
       if (detail === 'You can delete only your own comments.') {

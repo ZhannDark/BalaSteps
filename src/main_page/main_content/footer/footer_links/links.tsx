@@ -162,11 +162,21 @@ export const Contact = () => {
 
   const handleSubmit = async () => {
     if (!validateContact()) {
-      notification.error({ message: 'Invalid contact information' });
+      notification.error({
+        message: 'Invalid Contact Information',
+        description:
+          method === 'email'
+            ? 'Please enter a valid email address.'
+            : 'Please enter a valid 10-digit phone number.',
+      });
       return;
     }
+
     if (!message.trim()) {
-      notification.error({ message: 'Message cannot be empty' });
+      notification.error({
+        message: 'Message is Empty',
+        description: 'Please enter a message before submitting the form.',
+      });
       return;
     }
 
@@ -177,11 +187,21 @@ export const Contact = () => {
         contact_value: method === 'phone' ? `+7${contactValue}` : contactValue,
         message,
       });
-      notification.success({ message: 'Your message was sent successfully!' });
+
+      notification.success({
+        message: 'Message Sent Successfully',
+        description:
+          'Thank you for reaching out to us. We’ll get back to you shortly.',
+      });
+
       setContactValue('');
       setMessage('');
     } catch {
-      notification.error({ message: 'Failed to send message' });
+      notification.error({
+        message: 'Submission Failed',
+        description:
+          'Something went wrong while sending your message. Please try again later.',
+      });
     } finally {
       setLoading(false);
     }

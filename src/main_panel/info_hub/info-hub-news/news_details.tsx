@@ -1,3 +1,5 @@
+// Refactored NewsDetails.tsx with unified styles and logic from DiscussionDetails
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -7,12 +9,14 @@ import {
   Input,
   notification,
   Popconfirm,
+  Empty,
 } from 'antd';
 import { ArrowLeftOutlined, DeleteOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import MenuPanel from '../../../menu/menu-panel';
 import Main_header from '../../main_header/Main_header';
 import Foot from '../../../main_page/main_content/footer/footer/footer';
+import axiosInstance from '../../axios-instance';
 import {
   StyledLayout,
   StyledHeader,
@@ -33,7 +37,6 @@ import {
   DetailsCard,
   DetailsImage,
 } from './news-details.styled';
-import axiosInstance from '../../axios-instance';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -87,20 +90,23 @@ const NewsDetails = () => {
       const res = await axiosInstance.get(`/info-hub/news/${id}/`);
       setPost(res.data);
     } catch {
-      notification.error({ message: 'Failed to load news details' });
+      notification.error({
+        message: 'News Loading Failed',
+        description: 'Unable to fetch news details. Please try again later.',
+      });
     }
   };
 
   const fetchComments = async () => {
     try {
       const res = await axiosInstance.get(`/info-hub/news/${id}/comments/`);
-      const commentsWithEmptyReplies = res.data.map((c: Comment) => ({
-        ...c,
-        replies: [],
-      }));
-      setComments(commentsWithEmptyReplies);
+      setComments(res.data);
     } catch {
-      notification.error({ message: 'Failed to load comments' });
+      notification.error({
+        message: 'Failed to Load Comments',
+        description:
+          'An error occurred while loading comments for this news post.',
+      });
     }
   };
 
@@ -113,13 +119,19 @@ const NewsDetails = () => {
         prev.map((c) => (c.id === commentId ? { ...c, replies: res.data } : c))
       );
     } catch {
-      notification.error({ message: 'Failed to load replies' });
+      notification.error({
+        message: 'Failed to Load Replies',
+        description: 'Could not retrieve replies for this comment.',
+      });
     }
   };
 
   const handleAddComment = async () => {
     if (!newComment.trim()) {
-      return notification.warning({ message: 'Comment cannot be empty' });
+      notification.warning({
+        message: 'Empty Comment',
+        description: 'Please enter your comment before submitting.',
+      });
     }
     try {
       await axiosInstance.post(
@@ -129,9 +141,15 @@ const NewsDetails = () => {
       );
       setNewComment('');
       fetchComments();
-      notification.success({ message: 'Comment added' });
+      notification.success({
+        message: 'Comment Posted',
+        description: 'Your comment was successfully added.',
+      });
     } catch {
-      notification.error({ message: 'Failed to add comment' });
+      notification.error({
+        message: 'Failed to Post Comment',
+        description: 'Could not post your comment. Please try again.',
+      });
     }
   };
 
@@ -146,9 +164,15 @@ const NewsDetails = () => {
       );
       setReplyTexts((prev) => ({ ...prev, [commentId]: '' }));
       fetchReplies(commentId);
-      notification.success({ message: 'Reply added' });
+      notification.success({
+        message: 'Reply Added',
+        description: 'Your reply was successfully posted under this comment.',
+      });
     } catch {
-      notification.error({ message: 'Failed to add reply' });
+      notification.error({
+        message: 'Failed to Add Reply',
+        description: 'Could not post your reply. Please try again later.',
+      });
     }
   };
 
@@ -161,9 +185,24 @@ const NewsDetails = () => {
         }
       );
       fetchComments();
-      notification.success({ message: 'Comment deleted' });
-    } catch {
-      notification.error({ message: 'Failed to delete comment' });
+      notification.success({
+        message: 'Comment Deleted',
+        description: 'The comment was successfully deleted.',
+      });
+      //eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      const detail = error?.response?.data?.detail;
+      if (detail === 'You can delete only your own comments.') {
+        notification.warning({
+          message: 'Access Denied',
+          description: 'You can only delete your own comments.',
+        });
+      } else {
+        notification.error({
+          message: 'Failed to Delete Comment',
+          description: 'An unexpected error occurred. Please try again later.',
+        });
+      }
     }
   };
 
@@ -176,20 +215,30 @@ const NewsDetails = () => {
         }
       );
       fetchReplies(commentId);
-      notification.success({ message: 'Reply deleted' });
-    } catch {
-      notification.error({ message: 'Failed to delete reply' });
+      notification.success({
+        message: 'Reply Deleted',
+        description: 'The reply was successfully deleted.',
+      });
+      //eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      const detail = error?.response?.data?.detail;
+      if (detail === 'You can delete only your own replies.') {
+        notification.warning({
+          message: 'Access Denied',
+          description: 'You can only delete your own replies.',
+        });
+      } else {
+        notification.error({
+          message: 'Failed to Delete Reply',
+          description: 'An unexpected error occurred. Please try again later.',
+        });
+      }
     }
   };
 
   const handleToggleReplies = async (commentId: string) => {
-    if (!expandedReplies[commentId]) {
-      await fetchReplies(commentId);
-    }
-    setExpandedReplies((prev) => ({
-      ...prev,
-      [commentId]: !prev[commentId],
-    }));
+    if (!expandedReplies[commentId]) await fetchReplies(commentId);
+    setExpandedReplies((prev) => ({ ...prev, [commentId]: !prev[commentId] }));
   };
 
   return (
@@ -235,35 +284,38 @@ const NewsDetails = () => {
               Add Comment
             </AddCommentButton>
 
-            {comments.map((comment) => (
-              <CommentCard key={comment.id}>
-                <CommentHeader>
-                  <CommentAuthor>{comment.user}</CommentAuthor>
-                  <CommentDate>
-                    {dayjs(comment.created_at).format('MMM D, YYYY HH:mm')}
-                  </CommentDate>
-                </CommentHeader>
-                <CommentText>{comment.content}</CommentText>
-                <CommentActions>
-                  <Popconfirm
-                    title="Delete this comment?"
-                    onConfirm={() => handleDeleteComment(comment.id)}
-                  >
-                    <Button size="small" danger icon={<DeleteOutlined />} />
-                  </Popconfirm>
-                  {comment.replies.length > 0 && (
-                    <ShowRepliesButton
-                      type="link"
-                      onClick={() => handleToggleReplies(comment.id)}
+            {comments.length === 0 ? (
+              <Empty description="No comments yet" style={{ marginTop: 20 }} />
+            ) : (
+              comments.map((comment) => (
+                <CommentCard key={comment.id}>
+                  <CommentHeader>
+                    <CommentAuthor>{comment.user}</CommentAuthor>
+                    <CommentDate>
+                      {dayjs(comment.created_at).format('MMM D, YYYY HH:mm')}
+                    </CommentDate>
+                  </CommentHeader>
+                  <CommentText>{comment.content}</CommentText>
+                  <CommentActions>
+                    <Popconfirm
+                      title="Delete this comment?"
+                      onConfirm={() => handleDeleteComment(comment.id)}
                     >
-                      {expandedReplies[comment.id]
-                        ? 'Hide Replies'
-                        : `Show Replies (${comment.replies.length})`}
-                    </ShowRepliesButton>
-                  )}
-                </CommentActions>
-                <>
-                  {/* Reply input */}
+                      <Button size="small" danger icon={<DeleteOutlined />} />
+                    </Popconfirm>
+                    {Array.isArray(comment.replies) &&
+                      comment.replies.length > 0 && (
+                        <ShowRepliesButton
+                          type="link"
+                          onClick={() => handleToggleReplies(comment.id)}
+                        >
+                          {expandedReplies[comment.id]
+                            ? 'Hide Replies'
+                            : `Show Replies (${comment.replies.length})`}
+                        </ShowRepliesButton>
+                      )}
+                  </CommentActions>
+
                   <TextArea
                     rows={2}
                     placeholder="Write a reply..."
@@ -285,10 +337,9 @@ const NewsDetails = () => {
                     Reply
                   </Button>
 
-                  {/* Replies */}
-                  <RepliesContainer>
-                    {comment.replies.length > 0 ? (
-                      comment.replies.map((reply) => (
+                  {expandedReplies[comment.id] && (
+                    <RepliesContainer>
+                      {comment.replies.map((reply) => (
                         <ReplyCard key={reply.id}>
                           <CommentHeader>
                             <CommentAuthor>{reply.user}</CommentAuthor>
@@ -314,22 +365,12 @@ const NewsDetails = () => {
                           </CommentHeader>
                           <CommentText>{reply.content}</CommentText>
                         </ReplyCard>
-                      ))
-                    ) : (
-                      <p
-                        style={{
-                          fontSize: '13px',
-                          color: '#999',
-                          marginTop: 10,
-                        }}
-                      >
-                        No replies yet.
-                      </p>
-                    )}
-                  </RepliesContainer>
-                </>
-              </CommentCard>
-            ))}
+                      ))}
+                    </RepliesContainer>
+                  )}
+                </CommentCard>
+              ))
+            )}
           </CommentSection>
         </StyledContent>
         <Foot />
