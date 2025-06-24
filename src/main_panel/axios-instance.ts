@@ -9,6 +9,7 @@ const PUBLIC_GET_ENDPOINTS = [
   '/info-hub/specialists/',
   '/info-hub/therapy-centers/',
 ];
+
 const PUBLIC_ENDPOINTS = [
   '/auth/login/',
   '/auth/register/',
@@ -22,12 +23,15 @@ const PUBLIC_ENDPOINTS = [
 axiosInstance.interceptors.request.use((config) => {
   const token = localStorage.getItem('accessToken');
 
+  // 👉 получаем абсолютный путь (после host)
+  const url = new URL(config.url || '', config.baseURL).pathname;
+
   const isPublicGet =
     config.method === 'get' &&
-    PUBLIC_GET_ENDPOINTS.some((route) => config.url?.startsWith(route));
+    PUBLIC_GET_ENDPOINTS.some((route) => url.startsWith(route));
 
   const isPublicRequest = PUBLIC_ENDPOINTS.some((route) =>
-    config.url?.startsWith(route)
+    url.startsWith(route)
   );
 
   if (token && !isPublicGet && !isPublicRequest) {

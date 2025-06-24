@@ -34,6 +34,8 @@ import {
   CommentSection,
   DetailsCard,
   DetailsImage,
+  CommentInputWrapper,
+  InlineButton
 } from './news-details.styled';
 import { useAuth } from '../../../hooks/useAuth';
 
@@ -99,11 +101,20 @@ const NewsDetails = () => {
     }
   };
 
+  console.log('token in NewsDetails', token);
+  console.log('isAuthenticated', isAuthenticated);
+
+
   const fetchComments = async () => {
     try {
-      const res = await axiosInstance.get(`/info-hub/news/${id}/comments/`);
+      const res = await axiosInstance.get(`/info-hub/news/${id}/comments/`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setComments(res.data);
-    } catch {
+    } catch (error) {
+      console.error('Fetch comments error:', error);
       notification.error({
         message: 'Failed to Load Comments',
         description:
@@ -273,21 +284,22 @@ const NewsDetails = () => {
           <CommentSection>
             <Title level={3}>Comments</Title>
             {isAuthenticated ? (
-              <>
-                <CommentArea
+              <CommentInputWrapper>
+                <TextArea
                   rows={3}
                   placeholder="Write your comment..."
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
+                  style={{ paddingRight: 100 }}
                 />
-                <AddCommentButton
+                <InlineButton
                   type="primary"
                   onClick={handleAddComment}
                   disabled={!newComment.trim()}
                 >
-                  Add Comment
-                </AddCommentButton>
-              </>
+                  {' > '}
+                </InlineButton>
+              </CommentInputWrapper>
             ) : (
               <Text type="secondary">
                 Please <a onClick={() => navigate('/login')}>log in</a> to leave

@@ -39,6 +39,7 @@ import {
   ReplyCard,
 } from '../../discussion_forum/discussion_forum_details/discussion-details.styled';
 import axiosInstance from '../../axios-instance';
+import { useAuth } from '../../../hooks/useAuth';
 
 const { Title, Text } = Typography;
 
@@ -73,12 +74,14 @@ const CenterDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const token = localStorage.getItem('accessToken');
+  const isAuthenticated = useAuth();
 
   const [collapsed, setCollapsed] = useState(false);
   const [center, setCenter] = useState<CenterDetailsType | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [newRating, setNewRating] = useState(0);
+  const [replyTexts, setReplyTexts] = useState<{ [key: string]: string }>({});
   const [expandedReplies, setExpandedReplies] = useState<{
     [key: string]: boolean;
   }>({});
@@ -100,6 +103,39 @@ const CenterDetails = () => {
         description: 'Failed to load center details. Please refresh the page.',
       });
     }
+  };
+
+  const fetchComments = async () => {
+    try {
+      const res = await axiosInstance.get(
+        `/info-hub/therapy-centers/${id}/comments/`
+      );
+      const commentsWithEmptyReplies = res.data.map((c: Comment) => ({
+        ...c,
+        replies: [],
+      }));
+      setComments(commentsWithEmptyReplies);
+    } catch {
+      notification.error({ message: 'Failed to load comments' });
+    }
+  };
+
+  const fetchReplies = async (commentId: string) => {
+    try {
+      const res = await axiosInstance.get(
+        `/info-hub/therapy-centers/comments/${commentId}/replies/`
+      );
+      setComments((prev) =>
+        prev.map((c) => (c.id === commentId ? { ...c, replies: res.data } : c))
+      );
+    } catch {
+      notification.error({ message: 'Failed to load replies' });
+    }
+  };
+
+  const handleToggleReplies = async (commentId: string) => {
+    if (!expandedReplies[commentId]) await fetchReplies(commentId);
+    setExpandedReplies((prev) => ({ ...prev, [commentId]: !prev[commentId] }));
   };
 
   const handleAddComment = async () => {
@@ -131,42 +167,27 @@ const CenterDetails = () => {
     }
   };
 
-  const fetchComments = async () => {
+  const handleAddReply = async (commentId: string) => {
+    const content = replyTexts[commentId];
+    if (!content?.trim()) return;
     try {
-      const res = await axiosInstance.get(
-        `/info-hub/therapy-centers/${id}/comments/`
+      await axiosInstance.post(
+        `/info-hub/therapy-centers/comments/${commentId}/replies/create/`,
+        { content, parent: commentId },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      const commentsWithEmptyReplies = res.data.map((c: Comment) => ({
-        ...c,
-        replies: [],
-      }));
-      setComments(commentsWithEmptyReplies);
+      setReplyTexts((prev) => ({ ...prev, [commentId]: '' }));
+      fetchReplies(commentId);
+      notification.success({
+        message: 'Reply Added',
+        description: 'Your reply has been posted.',
+      });
     } catch {
-      notification.error({ message: 'Failed to load comments' });
+      notification.error({
+        message: 'Failed to Add Reply',
+        description: 'Could not post your reply.',
+      });
     }
-  };
-
-  const fetchReplies = async (commentId: string) => {
-    try {
-      const res = await axiosInstance.get(
-        `/info-hub/news/comments/${commentId}/replies/`
-      );
-      setComments((prev) =>
-        prev.map((c) => (c.id === commentId ? { ...c, replies: res.data } : c))
-      );
-    } catch {
-      notification.error({ message: 'Failed to load replies' });
-    }
-  };
-
-  const handleToggleReplies = async (commentId: string) => {
-    if (!expandedReplies[commentId]) {
-      await fetchReplies(commentId);
-    }
-    setExpandedReplies((prev) => ({
-      ...prev,
-      [commentId]: !prev[commentId],
-    }));
   };
 
   const handleDeleteComment = async (commentId: string) => {
@@ -199,11 +220,7 @@ const CenterDetails = () => {
           <Main_header />
         </StyledHeader>
         <StyledContent>
-          <BackButton
-            type="link"
-            icon={<ArrowLeftOutlined />}
-            onClick={() => navigate(-1)}
-          >
+          <BackButton icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
             Back
           </BackButton>
 
@@ -238,33 +255,38 @@ const CenterDetails = () => {
                 height="300"
                 frameBorder="0"
                 style={{ border: 0, borderRadius: '8px' }}
-                src={`https://www.google.com/maps?q=${encodeURIComponent(
-                  center.address
-                )}&output=embed`}
+                src={`https://www.google.com/maps?q=${encodeURIComponent(center.address)}&output=embed`}
                 allowFullScreen
               />
             </InfoCard>
           )}
 
-          <CommentForm>
-            <Title level={4}>Leave a Review</Title>
-            <StyledTextarea
-              rows={3}
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Write your comment..."
-            />
-            <div style={{ marginBottom: 12 }}>
-              <Text>Rating:</Text>
-              <StyledRate
-                value={newRating}
-                onChange={(value) => setNewRating(value)}
+          {isAuthenticated ? (
+            <CommentForm>
+              <Title level={4}>Leave a Review</Title>
+              <StyledTextarea
+                rows={3}
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Write your comment..."
               />
-            </div>
-            <SubmitButton type="primary" onClick={handleAddComment}>
-              Submit
-            </SubmitButton>
-          </CommentForm>
+              <div style={{ marginBottom: 12 }}>
+                <Text>Rating:</Text>
+                <StyledRate
+                  value={newRating}
+                  onChange={(value) => setNewRating(value)}
+                />
+              </div>
+              <SubmitButton type="primary" onClick={handleAddComment}>
+                Submit
+              </SubmitButton>
+            </CommentForm>
+          ) : (
+            <Text type="secondary" style={{ marginTop: 24 }}>
+              Please <a onClick={() => navigate('/login')}>log in</a> to leave a
+              comment.
+            </Text>
+          )}
 
           <CommentListContainer>
             {comments.map((comment) => (
@@ -283,16 +305,46 @@ const CenterDetails = () => {
                   >
                     <Button size="small" danger icon={<DeleteOutlined />} />
                   </Popconfirm>
-                  {/*<Button*/}
-                  {/*  size="small"*/}
-                  {/*  icon={<MessageOutlined />}*/}
-                  {/*  onClick={() => handleToggleReplies(comment.id)}*/}
-                  {/*>*/}
-                  {/*  {expandedReplies[comment.id]*/}
-                  {/*    ? 'Hide Replies'*/}
-                  {/*    : 'Show Replies'}*/}
-                  {/*</Button>*/}
+                  <Button
+                    size="small"
+                    onClick={() => handleToggleReplies(comment.id)}
+                  >
+                    {expandedReplies[comment.id]
+                      ? 'Hide Replies'
+                      : 'Show Replies'}
+                  </Button>
                 </CommentActions>
+
+                {isAuthenticated ? (
+                  <>
+                    <StyledTextarea
+                      rows={2}
+                      placeholder="Write a reply..."
+                      value={replyTexts[comment.id] || ''}
+                      onChange={(e) =>
+                        setReplyTexts((prev) => ({
+                          ...prev,
+                          [comment.id]: e.target.value,
+                        }))
+                      }
+                      style={{ marginTop: 10 }}
+                    />
+                    <Button
+                      type="primary"
+                      size="small"
+                      style={{ marginTop: 6 }}
+                      disabled={!replyTexts[comment.id]?.trim()}
+                      onClick={() => handleAddReply(comment.id)}
+                    >
+                      Reply
+                    </Button>
+                  </>
+                ) : (
+                  <Text type="secondary" style={{ marginTop: 10 }}>
+                    Please <a onClick={() => navigate('/login')}>log in</a> to
+                    reply.
+                  </Text>
+                )}
 
                 {expandedReplies[comment.id] && (
                   <RepliesContainer>

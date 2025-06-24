@@ -139,3 +139,18 @@ export const ShowRepliesButton = styled(Button)`
     background: none;
   }
 `;
+
+export const CommentInputWrapper = styled.div`
+  position: relative;
+  width: 100%;
+  margin-bottom: 30px;
+`;
+
+export const InlineButton = styled(Button)`
+  position: absolute;
+  background-color: #426b1f;
+  color: white;
+  right: 8px;
+  bottom: 8px;
+  z-index: 1;
+`;

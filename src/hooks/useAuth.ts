@@ -1,12 +1,19 @@
-import { useSyncExternalStore } from 'react';
-
-const subscribe = (callback: () => void) => {
-  window.addEventListener('storage', callback);
-  return () => window.removeEventListener('storage', callback);
-};
-
-const getSnapshot = () => !!localStorage.getItem('accessToken');
+import { useState, useEffect } from 'react';
 
 export const useAuth = () => {
-  return useSyncExternalStore(subscribe, getSnapshot);
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    !!localStorage.getItem('accessToken')
+  );
+
+  useEffect(() => {
+    const checkAuth = () => {
+      setIsAuthenticated(!!localStorage.getItem('accessToken'));
+    };
+
+    checkAuth();
+    window.addEventListener('storage', checkAuth);
+    return () => window.removeEventListener('storage', checkAuth);
+  }, []);
+
+  return isAuthenticated;
 };

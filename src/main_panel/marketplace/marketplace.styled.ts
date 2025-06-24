@@ -1,5 +1,6 @@
 import styled from 'styled-components';
-import { Layout, Button, Card } from 'antd';
+import { Layout, Button, Card, Progress } from 'antd';
+import { motion } from 'framer-motion';
 
 export const MarketplaceLayout = styled(Layout)`
   min-height: 100vh;
@@ -77,4 +78,52 @@ export const ItemImage = styled.img`
   object-fit: cover;
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
+`;
+
+export const DonationCardContainer = styled(motion.div)<{
+  bordercolor: string;
+}>`
+  border: 2px solid ${(props) => props.bordercolor};
+  border-radius: 12px;
+  overflow: hidden;
+`;
+
+export const DonationContent = styled.div`
+  padding: 10px;
+  text-align: center;
+
+  h3 {
+    margin-bottom: 6px;
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  p {
+    margin: 4px 0;
+    font-size: 14px;
+  }
+`;
+
+export const DonationProgress = styled(Progress)`
+  margin-top: 4px;
+
+  .ant-progress-bg {
+    background-color: #426b1f;
+  }
+`;
+
+export const ItemInfo = styled.div`
+  padding: 10px;
+  text-align: center;
+`;
+
+export const ItemTitle = styled.h3`
+  margin-bottom: 8px;
+  font-size: 16px;
+  font-weight: 600;
+`;
+
+export const ItemPrice = styled.p`
+  font-weight: bold;
+  color: #333;
 `;
