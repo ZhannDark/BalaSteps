@@ -40,6 +40,7 @@ import {
 } from '../../discussion_forum/discussion_forum_details/discussion-details.styled';
 import axiosInstance from '../../axios-instance';
 import { useAuth } from '../../../hooks/useAuth';
+import { ShowRepliesButton } from '../info-hub-news/news-details.styled';
 
 const { Title, Text } = Typography;
 
@@ -88,7 +89,9 @@ const CenterDetails = () => {
 
   useEffect(() => {
     fetchCenter();
-    fetchComments();
+    if (isAuthenticated) {
+      fetchComments();
+    }
   }, [id]);
 
   const fetchCenter = async () => {
@@ -117,6 +120,36 @@ const CenterDetails = () => {
       setComments(commentsWithEmptyReplies);
     } catch {
       notification.error({ message: 'Failed to load comments' });
+    }
+  };
+
+  const handleDeleteReply = async (replyId: string, commentId: string) => {
+    try {
+      await axiosInstance.delete(
+        `/info-hub/therapy-centers/comments/replies/${replyId}/delete/`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      fetchReplies(commentId);
+      notification.success({
+        message: 'Reply Deleted',
+        description: 'The reply was successfully deleted.',
+      });
+      //eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      const detail = error?.response?.data?.detail;
+      if (detail === 'You can delete only your own replies.') {
+        notification.warning({
+          message: 'Access Denied',
+          description: 'You can only delete your own replies.',
+        });
+      } else {
+        notification.error({
+          message: 'Failed to Delete Reply',
+          description: 'An unexpected error occurred. Please try again later.',
+        });
+      }
     }
   };
 
@@ -263,7 +296,7 @@ const CenterDetails = () => {
 
           {isAuthenticated ? (
             <CommentForm>
-              <Title level={4}>Leave a Review</Title>
+              <Title level={4}>Comments</Title>
               <StyledTextarea
                 rows={3}
                 value={newComment}
@@ -305,14 +338,17 @@ const CenterDetails = () => {
                   >
                     <Button size="small" danger icon={<DeleteOutlined />} />
                   </Popconfirm>
-                  <Button
-                    size="small"
-                    onClick={() => handleToggleReplies(comment.id)}
-                  >
-                    {expandedReplies[comment.id]
-                      ? 'Hide Replies'
-                      : 'Show Replies'}
-                  </Button>
+                  {Array.isArray(comment.replies) &&
+                    comment.replies.length > 0 && (
+                      <ShowRepliesButton
+                        type="link"
+                        onClick={() => handleToggleReplies(comment.id)}
+                      >
+                        {expandedReplies[comment.id]
+                          ? 'Hide Replies'
+                          : `Show Replies (${comment.replies.length})`}
+                      </ShowRepliesButton>
+                    )}
                 </CommentActions>
 
                 {isAuthenticated ? (
@@ -329,7 +365,7 @@ const CenterDetails = () => {
                       }
                       style={{ marginTop: 10 }}
                     />
-                    <Button
+                    <ShowRepliesButton
                       type="primary"
                       size="small"
                       style={{ marginTop: 6 }}
@@ -337,7 +373,7 @@ const CenterDetails = () => {
                       onClick={() => handleAddReply(comment.id)}
                     >
                       Reply
-                    </Button>
+                    </ShowRepliesButton>
                   </>
                 ) : (
                   <Text type="secondary" style={{ marginTop: 10 }}>
@@ -357,6 +393,20 @@ const CenterDetails = () => {
                               'MMM D, YYYY HH:mm'
                             )}
                           </CommentDate>
+                          <CommentActions>
+                            <Popconfirm
+                              title="Delete this reply?"
+                              onConfirm={() =>
+                                handleDeleteReply(reply.id, comment.id)
+                              }
+                            >
+                              <Button
+                                size="small"
+                                danger
+                                icon={<DeleteOutlined />}
+                              />
+                            </Popconfirm>
+                          </CommentActions>
                         </CommentHeader>
                         <CommentText>{reply.content}</CommentText>
                       </ReplyCard>

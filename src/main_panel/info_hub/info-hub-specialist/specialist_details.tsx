@@ -3,12 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   Layout,
   Typography,
-  Input,
   Button,
-  List,
   Rate,
   Popconfirm,
-  Divider,
   notification,
 } from 'antd';
 import { ArrowLeftOutlined, DeleteOutlined } from '@ant-design/icons';
@@ -26,18 +23,29 @@ import {
   InfoBlock,
   StyledImage,
   TagList,
-  CommentCard,
-  CommentHeader,
-  CommentText,
-  CommentDate,
-  CommentActions,
-  ReplyCard,
-  ReplyInput,
 } from './specialist-details.styled';
 import axiosInstance from '../../axios-instance';
+import { useAuth } from '../../../hooks/useAuth';
+import {
+  CommentForm,
+  CommentListContainer,
+  StyledRate,
+  StyledTextarea,
+  SubmitButton,
+} from '../info-hub-centers/therapy-centers.styled';
+import {
+  CommentActions,
+  CommentAuthor,
+  CommentCard,
+  CommentDate,
+  CommentHeader,
+  CommentText,
+  RepliesContainer,
+  ReplyCard,
+} from '../../discussion_forum/discussion_forum_details/discussion-details.styled';
+import { ShowRepliesButton } from '../info-hub-news/news-details.styled';
 
 const { Title, Text } = Typography;
-const { TextArea } = Input;
 
 interface Tag {
   id: string;
@@ -53,10 +61,9 @@ interface Reply {
 
 interface Comment {
   id: string;
-  user: { id: string; username: string };
+  user: string;
   content: string;
   created_at: string;
-  rating?: number;
   replies: Reply[];
 }
 
@@ -82,13 +89,14 @@ const SpecialistDetails = () => {
   const [newRating, setNewRating] = useState(0);
   const [replyTexts, setReplyTexts] = useState<{ [key: string]: string }>({});
   const token = localStorage.getItem('accessToken');
+  const isAuthenticated = useAuth();
   const [expandedReplies, setExpandedReplies] = useState<{
     [key: string]: boolean;
   }>({});
 
   useEffect(() => {
     fetchSpecialist();
-    fetchComments();
+    if (isAuthenticated) fetchComments();
   }, [id]);
 
   const fetchSpecialist = async () => {
@@ -141,11 +149,7 @@ const SpecialistDetails = () => {
       const res = await axiosInstance.get(
         `/info-hub/specialists/${id}/comments/`
       );
-      const commentsWithEmptyReplies = res.data.map((c: Comment) => ({
-        ...c,
-        replies: [],
-      }));
-      setComments(commentsWithEmptyReplies);
+      setComments(res.data);
     } catch {
       notification.error({ message: 'Failed to load comments' });
     }
@@ -163,27 +167,30 @@ const SpecialistDetails = () => {
       notification.error({ message: 'Failed to load replies' });
     }
   };
+  const handleToggleReplies = async (commentId: string) => {
+    if (!expandedReplies[commentId]) await fetchReplies(commentId);
+    setExpandedReplies((prev) => ({ ...prev, [commentId]: !prev[commentId] }));
+  };
 
-  const handleReplySubmit = async (commentId: string) => {
-    const content = replyTexts[commentId]?.trim();
-    if (!content) return;
-
+  const handleAddReply = async (commentId: string) => {
+    const content = replyTexts[commentId];
+    if (!content?.trim()) return;
     try {
-      await axios.post(
-        `https://project-back-81mh.onrender.com/info-hub/specialists/comments/${commentId}/replies/create/`,
-        { content },
+      await axiosInstance.post(
+        `/info-hub/specialists/comments/${commentId}/replies/create/`,
+        { content, parent: commentId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      fetchSpecialist();
       setReplyTexts((prev) => ({ ...prev, [commentId]: '' }));
+      fetchReplies(commentId);
       notification.success({
         message: 'Reply Added',
-        description: 'Your reply was successfully submitted.',
+        description: 'Your reply has been posted.',
       });
     } catch {
       notification.error({
-        message: 'Reply Failed',
-        description: 'Could not send reply. Please try again.',
+        message: 'Failed to Add Reply',
+        description: 'Could not post your reply.',
       });
     }
   };
@@ -194,7 +201,7 @@ const SpecialistDetails = () => {
         `https://project-back-81mh.onrender.com/info-hub/specialists/comments/${commentId}/delete/`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      fetchSpecialist();
+      fetchComments();
       notification.success({
         message: 'Comment Deleted',
         description: 'Your comment was deleted successfully.',
@@ -207,13 +214,13 @@ const SpecialistDetails = () => {
     }
   };
 
-  const handleDeleteReply = async (replyId: string) => {
+  const handleDeleteReply = async (replyId: string, commentId: string) => {
     try {
       await axios.delete(
         `https://project-back-81mh.onrender.com/info-hub/specialists/comments/replies/${replyId}/delete/`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      fetchSpecialist();
+      fetchReplies(commentId);
       notification.success({
         message: 'Reply Deleted',
         description: 'The reply was successfully deleted.',
@@ -268,100 +275,127 @@ const SpecialistDetails = () => {
             </SpecialistCard>
           )}
 
-          <Divider />
-          <Title level={4}>Add Comment</Title>
-          <TextArea
-            value={newComment}
-            rows={3}
-            placeholder="Write your comment..."
-            onChange={(e) => setNewComment(e.target.value)}
-          />
-          <div style={{ marginTop: 8 }}>
-            <Text>Rating:</Text>
-            <Rate value={newRating} onChange={setNewRating} />
-          </div>
-          <Button
-            type="primary"
-            onClick={handleAddComment}
-            style={{ marginTop: 12 }}
-          >
-            Submit
-          </Button>
-
-          <Divider />
-          <Title level={4}>Comments</Title>
-          <List
-            dataSource={comments}
-            renderItem={(comment) => (
+          {isAuthenticated ? (
+            <CommentForm>
+              <Title level={4}>Comments</Title>
+              <StyledTextarea
+                rows={3}
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Write your comment..."
+              />
+              <div style={{ marginBottom: 12 }}>
+                <Text>Rating:</Text>
+                <StyledRate
+                  value={newRating}
+                  onChange={(value) => setNewRating(value)}
+                />
+              </div>
+              <SubmitButton type="primary" onClick={handleAddComment}>
+                Submit
+              </SubmitButton>
+            </CommentForm>
+          ) : (
+            <Text type="secondary" style={{ marginTop: 24 }}>
+              Please <a onClick={() => navigate('/login')}>log in</a> to leave a
+              comment.
+            </Text>
+          )}
+          <CommentListContainer>
+            {comments.map((comment) => (
               <CommentCard key={comment.id}>
                 <CommentHeader>
-                  <b>{comment.user.username}</b>
+                  <CommentAuthor>{comment.user}</CommentAuthor>
                   <CommentDate>
                     {dayjs(comment.created_at).format('MMM D, YYYY HH:mm')}
                   </CommentDate>
                 </CommentHeader>
                 <CommentText>{comment.content}</CommentText>
-                {comment.rating && <Rate disabled value={comment.rating} />}
                 <CommentActions>
                   <Popconfirm
-                    title="Delete comment?"
+                    title="Delete this comment?"
                     onConfirm={() => handleDeleteComment(comment.id)}
                   >
-                    <Button
-                      icon={<DeleteOutlined />}
-                      danger
-                      size="small"
-                      style={{ marginTop: 8 }}
-                    >
-                      Delete
-                    </Button>
+                    <Button size="small" danger icon={<DeleteOutlined />} />
                   </Popconfirm>
+                  {Array.isArray(comment.replies) &&
+                    comment.replies.length > 0 && (
+                      <ShowRepliesButton
+                        type="link"
+                        onClick={() => handleToggleReplies(comment.id)}
+                      >
+                        {expandedReplies[comment.id]
+                          ? 'Hide Replies'
+                          : `Show Replies (${comment.replies.length})`}
+                      </ShowRepliesButton>
+                    )}
                 </CommentActions>
 
-                {comment.replies?.map((reply) => (
-                  <ReplyCard key={reply.id}>
-                    <CommentHeader>
-                      <b>{reply.user}</b>
-                      <CommentDate>
-                        {dayjs(reply.created_at).format('MMM D, YYYY HH:mm')}
-                      </CommentDate>
-                    </CommentHeader>
-                    <CommentText>{reply.content}</CommentText>
-                    <Popconfirm
-                      title="Delete reply?"
-                      onConfirm={() => handleDeleteReply(reply.id)}
+                {isAuthenticated ? (
+                  <>
+                    <StyledTextarea
+                      rows={2}
+                      placeholder="Write a reply..."
+                      value={replyTexts[comment.id] || ''}
+                      onChange={(e) =>
+                        setReplyTexts((prev) => ({
+                          ...prev,
+                          [comment.id]: e.target.value,
+                        }))
+                      }
+                      style={{ marginTop: 10 }}
+                    />
+                    <ShowRepliesButton
+                      type="primary"
+                      size="small"
+                      style={{ marginTop: 6 }}
+                      disabled={!replyTexts[comment.id]?.trim()}
+                      onClick={() => handleAddReply(comment.id)}
                     >
-                      <Button
-                        icon={<DeleteOutlined />}
-                        size="small"
-                        danger
-                        style={{ marginTop: 4 }}
-                      />
-                    </Popconfirm>
-                  </ReplyCard>
-                ))}
+                      Reply
+                    </ShowRepliesButton>
+                  </>
+                ) : (
+                  <Text type="secondary" style={{ marginTop: 10 }}>
+                    Please <a onClick={() => navigate('/login')}>log in</a> to
+                    reply.
+                  </Text>
+                )}
 
-                <ReplyInput
-                  rows={2}
-                  placeholder="Reply to comment..."
-                  value={replyTexts[comment.id] || ''}
-                  onChange={(e) =>
-                    setReplyTexts((prev) => ({
-                      ...prev,
-                      [comment.id]: e.target.value,
-                    }))
-                  }
-                />
-                <Button
-                  type="link"
-                  onClick={() => handleReplySubmit(comment.id)}
-                  disabled={!replyTexts[comment.id]?.trim()}
-                >
-                  Send Reply
-                </Button>
+                {expandedReplies[comment.id] && (
+                  <RepliesContainer>
+                    {comment.replies.map((reply) => (
+                      <ReplyCard key={reply.id}>
+                        <CommentHeader>
+                          <CommentAuthor>{reply.user}</CommentAuthor>
+                          <CommentDate>
+                            {dayjs(reply.created_at).format(
+                              'MMM D, YYYY HH:mm'
+                            )}
+                          </CommentDate>
+                          <CommentActions>
+                            <Popconfirm
+                              title="Delete this reply?"
+                              onConfirm={() =>
+                                handleDeleteReply(reply.id, comment.id)
+                              }
+                            >
+                              <Button
+                                size="small"
+                                danger
+                                icon={<DeleteOutlined />}
+                              />
+                            </Popconfirm>
+                          </CommentActions>
+                        </CommentHeader>
+                        <CommentText>{reply.content}</CommentText>
+                      </ReplyCard>
+                    ))}
+                  </RepliesContainer>
+                )}
               </CommentCard>
-            )}
-          />
+            ))}
+          </CommentListContainer>
         </StyledContent>
         <Foot />
       </Layout>

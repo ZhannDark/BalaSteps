@@ -42,9 +42,8 @@ export const CenterImage = styled.img`
 `;
 
 export const CommentForm = styled.div`
-  background: #dcdcdc;
   padding: 24px;
-  border: 1px solid #ddd;
+  border: 1px solid #c5d1bc;
   border-radius: 12px;
   margin-bottom: 40px;
 `;
@@ -66,16 +65,21 @@ export const ReplyBox = styled.div`
 export const CommentMeta = styled.div`
   margin-bottom: 8px;
   font-size: 12px;
-  color: #777;
 `;
 
 export const ReplyMeta = styled.div`
   font-size: 12px;
-  color: #999;
 `;
 
 export const SubmitButton = styled(Button)`
   margin-top: 12px;
+  background-color: #426b1f;
+  color: white;
+
+  &:hover {
+    background-color: #5d8828 !important;
+    border-color: #5d8828 !important;
+  }
 `;
 
 export const StyledRate = styled(Rate)`

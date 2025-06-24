@@ -23,15 +23,11 @@ const PUBLIC_ENDPOINTS = [
 axiosInstance.interceptors.request.use((config) => {
   const token = localStorage.getItem('accessToken');
 
-  // 👉 получаем абсолютный путь (после host)
-  const url = new URL(config.url || '', config.baseURL).pathname;
-
   const isPublicGet =
-    config.method === 'get' &&
-    PUBLIC_GET_ENDPOINTS.some((route) => url.startsWith(route));
+    config.method === 'get' && PUBLIC_GET_ENDPOINTS.includes(config.url ?? '');
 
   const isPublicRequest = PUBLIC_ENDPOINTS.some((route) =>
-    url.startsWith(route)
+    config.url?.startsWith(route)
   );
 
   if (token && !isPublicGet && !isPublicRequest) {

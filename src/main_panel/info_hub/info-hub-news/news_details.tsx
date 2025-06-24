@@ -29,13 +29,11 @@ import {
   CommentActions,
   RepliesContainer,
   CommentAuthor,
-  AddCommentButton,
-  CommentArea,
   CommentSection,
   DetailsCard,
   DetailsImage,
   CommentInputWrapper,
-  InlineButton
+  InlineButton,
 } from './news-details.styled';
 import { useAuth } from '../../../hooks/useAuth';
 
@@ -103,7 +101,6 @@ const NewsDetails = () => {
 
   console.log('token in NewsDetails', token);
   console.log('isAuthenticated', isAuthenticated);
-
 
   const fetchComments = async () => {
     try {
@@ -352,14 +349,14 @@ const NewsDetails = () => {
                         }
                         style={{ marginTop: 10 }}
                       />
-                      <Button
+                      <ShowRepliesButton
                         type="primary"
                         style={{ marginTop: 6 }}
                         disabled={!replyTexts[comment.id]?.trim()}
                         onClick={() => handleAddReply(comment.id)}
                       >
                         Reply
-                      </Button>
+                      </ShowRepliesButton>
                     </>
                   ) : (
                     <Text type="secondary" style={{ marginTop: 10 }}>

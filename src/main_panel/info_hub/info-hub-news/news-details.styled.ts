@@ -128,15 +128,13 @@ export const ReplyCard = styled(Card)`
 export const ShowRepliesButton = styled(Button)`
   margin-top: 10px;
   font-size: 14px;
-  color: #426b1f;
-  background: none;
-  border: none;
   height: auto;
-  padding: 0;
+  background-color: #426b1f;
+  color: white;
 
   &:hover {
-    text-decoration: underline;
-    background: none;
+    background-color: #5d8828 !important;
+    border-color: #5d8828 !important;
   }
 `;
 

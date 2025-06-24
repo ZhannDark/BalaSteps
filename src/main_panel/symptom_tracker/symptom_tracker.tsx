@@ -21,6 +21,7 @@ import {
   UserOutlined,
   SettingOutlined,
   ClockCircleOutlined,
+  DownloadOutlined,
 } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axiosInstance from '../../main_panel/axios-instance';
@@ -56,6 +57,13 @@ interface Symptom {
   updated_at: string;
 }
 
+interface ExportPdfPayload {
+  child_id: number;
+  period: '3months' | '6months' | 'year' | 'custom';
+  custom_start?: string;
+  custom_end?: string;
+}
+
 interface Child {
   id: string;
   full_name: string;
@@ -77,6 +85,12 @@ const SymptomTracker = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [drawerSymptoms, setDrawerSymptoms] = useState<Symptom[]>([]);
+  const [aiModalOpen, setAiModalOpen] = useState(false);
+  const [aiForm] = Form.useForm();
+  const [pdfModalOpen, setPdfModalOpen] = useState(false);
+  const [pdfForm] = Form.useForm();
+  const [aiResult, setAiResult] = useState<string>('');
+  const period = Form.useWatch('period', pdfForm);
 
   const queryClient = useQueryClient();
 
@@ -218,6 +232,43 @@ const SymptomTracker = () => {
     setEditingId(null);
   };
 
+  const handleAiAnalyze = async (values: {
+    child_id: number;
+    date_from: string;
+    date_to: string;
+  }) => {
+    try {
+      const res = await axiosInstance.post('/symptoms/ai-analyze/', values);
+      setAiResult(res.data.result || JSON.stringify(res.data, null, 2));
+    } catch {
+      notification.error({
+        message: 'AI Analysis Failed',
+        description: 'Unable to analyze symptoms. Try again later.',
+      });
+    }
+  };
+
+  const handleDownloadPDF = async (values: ExportPdfPayload) => {
+    try {
+      const res = await axiosInstance.post('/symptoms/export-pdf/', values, {
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(
+        new Blob([res.data], { type: 'application/pdf' })
+      );
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'symptoms.pdf');
+      document.body.appendChild(link);
+      link.click();
+    } catch {
+      notification.error({
+        message: 'Download Failed',
+        description: 'Could not generate PDF. Check input and try again.',
+      });
+    }
+  };
+
   const dateCellRender = (date: Dayjs) => {
     const isFuture = date.isAfter(dayjs(), 'day');
     if (isFuture) return <DisabledDate />;
@@ -280,6 +331,19 @@ const SymptomTracker = () => {
             <Tooltip title="Click a day to view or add symptoms">
               <InfoCircleOutlined style={{ marginLeft: 10, color: '#999' }} />
             </Tooltip>
+            <AddSymptomButton
+              style={{ marginRight: 10, marginLeft: 'auto' }}
+              type="primary"
+              onClick={() => setAiModalOpen(true)}
+            >
+              Analyze with AI
+            </AddSymptomButton>
+            <AddSymptomButton
+              icon={<DownloadOutlined />}
+              onClick={() => setPdfModalOpen(true)}
+            >
+              Export PDF
+            </AddSymptomButton>
           </SymptomHeader>
 
           <Calendar
@@ -337,6 +401,129 @@ const SymptomTracker = () => {
                   {isEditMode ? 'Save Changes' : 'Add Symptom'}
                 </AddSymptomButton>
               </Form.Item>
+            </Form>
+          </Modal>
+
+          <Modal
+            title="AI Symptom Analysis"
+            open={aiModalOpen}
+            onCancel={() => setAiModalOpen(false)}
+            onOk={() => aiForm.submit()}
+            okText={aiResult ? 'Close' : 'Analyze'}
+            okButtonProps={{
+              style: { backgroundColor: '#426b1f', borderColor: 'white' },
+            }}
+            style={{ top: 100 }}
+          >
+            <Form layout="vertical" form={aiForm} onFinish={handleAiAnalyze}>
+              <Form.Item
+                name="child_id"
+                label="Select Child"
+                rules={[{ required: true }]}
+              >
+                <Select placeholder="Choose child">
+                  {children.map((child) => (
+                    <Option key={child.id} value={child.id}>
+                      {child.full_name}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+              <Form.Item
+                name="date_from"
+                label="Start Date"
+                rules={[{ required: true }]}
+              >
+                <Input type="date" />
+              </Form.Item>
+              <Form.Item
+                name="date_to"
+                label="End Date"
+                rules={[{ required: true }]}
+              >
+                <Input type="date" />
+              </Form.Item>
+            </Form>
+            {aiResult && (
+              <div
+                style={{
+                  marginTop: 16,
+                  padding: 10,
+                  border: '1px solid #ccc',
+                  borderRadius: 6,
+                }}
+              >
+                <strong>AI Result:</strong>
+                <pre style={{ whiteSpace: 'pre-wrap' }}>{aiResult}</pre>
+              </div>
+            )}
+          </Modal>
+
+          <Modal
+            title="Export Symptoms to PDF"
+            open={pdfModalOpen}
+            onCancel={() => setPdfModalOpen(false)}
+            onOk={() => pdfForm.submit()}
+            okText="Download PDF"
+            okButtonProps={{
+              style: { backgroundColor: '#426b1f', borderColor: 'white' },
+            }}
+            style={{ top: 100 }}
+          >
+            <Form layout="vertical" form={pdfForm} onFinish={handleDownloadPDF}>
+              <Form.Item
+                name="child_id"
+                label="Child"
+                rules={[{ required: true }]}
+              >
+                <Select placeholder="Select a child">
+                  {children.map((child) => (
+                    <Option key={child.id} value={child.id}>
+                      {child.full_name}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+              <Form.Item
+                name="period"
+                label="Period"
+                rules={[{ required: true }]}
+              >
+                <Select placeholder="Select a time period">
+                  <Option value="3_months">Last 3 months</Option>
+                  <Option value="6_months">Last 6 months</Option>
+                  <Option value="1_year">Last 1 year</Option>
+                  <Option value="custom">Custom</Option>
+                </Select>
+              </Form.Item>
+              {period === 'custom' && (
+                <>
+                  <Form.Item
+                    name="custom_start"
+                    label="Custom Start Date"
+                    rules={[
+                      {
+                        required: true,
+                        message: 'Start date required for custom range',
+                      },
+                    ]}
+                  >
+                    <Input type="date" />
+                  </Form.Item>
+                  <Form.Item
+                    name="custom_end"
+                    label="Custom End Date"
+                    rules={[
+                      {
+                        required: true,
+                        message: 'End date required for custom range',
+                      },
+                    ]}
+                  >
+                    <Input type="date" />
+                  </Form.Item>
+                </>
+              )}
             </Form>
           </Modal>
 
